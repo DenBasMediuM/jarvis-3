@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css?v=20260930a" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">J</div>
+        <div>
+          <div class="brand-name">Jarvis</div>
+          <div class="brand-sub">локальный ассистент</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="chat">Чат</button>
+        <button class="nav-btn" data-view="modules">Модули</button>
+        <button class="nav-btn" data-view="settings">ИИ</button>
+      </nav>
+      <p class="sidebar-note">Данные и пароли хранятся только на этом компьютере.</p>
+    </aside>
+
+    <main class="main">
+      <section id="view-chat" class="view active">
+        <header class="view-header">
+          <h1>Чат</h1>
+          <p>Спросите про планы или данные из подключённых модулей — например Gincore.</p>
+        </header>
+        <div id="messages" class="messages"></div>
+        <form id="chat-form" class="composer">
+          <textarea id="chat-input" rows="2" placeholder="Сколько в этом месяце выплачено з/п Юре Дубовому?" required></textarea>
+          <button type="submit" id="send-btn">Отправить</button>
+        </form>
+      </section>
+
+      <section id="view-modules" class="view">
+        <header class="view-header">
+          <h1>Модули</h1>
+          <p>Подключайте источники данных. Первый модуль — CRM Gincore.</p>
+        </header>
+        <div id="modules-list" class="cards"></div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <header class="view-header">
+          <h1>Настройки ИИ</h1>
+          <p>Любой OpenAI-совместимый endpoint. По умолчанию — локальный Ollama.</p>
+        </header>
+        <form id="llm-form" class="form-card">
+          <label>
+            Base URL
+            <input name="llm_base_url" type="url" placeholder="http://127.0.0.1:11434/v1" />
+          </label>
+          <label>
+            API key
+            <input name="llm_api_key" type="password" placeholder="ollama / sk-..." />
+          </label>
+          <label>
+            Модель
+            <input name="llm_model" type="text" placeholder="llama3.2" />
+          </label>
+          <button type="submit">Сохранить</button>
+          <p id="llm-status" class="status"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260930a"></script>
+</body>
+</html>

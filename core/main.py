@@ -1,0 +1,468 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from typing import Any
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from core.config import WEB_DIR, settings
+from core.crypto import SecretBox
+from core.db import Database
+from core.llm import LLMService
+from modules import load_modules
+from modules.base import BaseModule, ToolSpec
+from modules.cash_journal.parser import is_parts_attach_line
+from modules.gincore.module import GincoreModule
+
+
+db = Database(settings.resolved_db_path())
+secrets = SecretBox(settings.resolved_secret_key_path())
+modules: list[BaseModule] = []
+gincore_module: GincoreModule | None = None
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1)
+    conversation_id: int | None = None
+
+
+class ModuleSettingsUpdate(BaseModel):
+    values: dict[str, Any]
+
+
+class AppSettingsUpdate(BaseModel):
+    llm_base_url: str | None = None
+    llm_api_key: str | None = None
+    llm_model: str | None = None
+
+
+class CashJournalImportPreview(BaseModel):
+    amount: float
+    action: str
+    order_id: str | None = None
+    line_id: str | None = None
+    cashbox_id: str | None = None
+    note: str | None = None
+
+
+class CashJournalImportAccept(BaseModel):
+    amount: float
+    cashbox_id: str | None = None
+    kind: str = "client_order_cash_in"
+    order_id: str | None = None
+    currency_id: str = "3"
+    form_act: str = "pay_for_repair_form"
+    transaction_type: str = "2"
+    order_kind: str = "repair"
+    category_id: str | None = None
+    contractor_id: str | None = None
+    comment: str | None = None
+    without_contractor: bool = False
+    line_id: str | None = None
+    note: str | None = None
+
+
+def _module_settings_key(module_id: str) -> str:
+    return f"module:{module_id}"
+
+
+async def get_module_settings(module_id: str) -> dict[str, Any]:
+    raw = await db.get_setting(_module_settings_key(module_id), {}) or {}
+    module = next((m for m in modules if m.id == module_id), None)
+    if not module:
+        return raw
+    out = dict(raw)
+    for field in module.settings_schema():
+        if field.secret and field.key in out and out[field.key]:
+            try:
+                out[field.key] = secrets.decrypt(out[field.key])
+            except Exception:
+                pass
+        if field.key == "base_url" and not out.get(field.key):
+            out[field.key] = settings.default_gincore_base_url
+        if field.key == "enabled" and field.key not in out:
+            out[field.key] = True
+    return out
+
+
+async def public_module_settings(module_id: str) -> dict[str, Any]:
+    values = await get_module_settings(module_id)
+    module = next((m for m in modules if m.id == module_id), None)
+    if not module:
+        return values
+    public = dict(values)
+    for field in module.settings_schema():
+        if field.secret and public.get(field.key):
+            public[field.key] = "********"
+    return public
+
+
+def collect_tools() -> list[ToolSpec]:
+    tools: list[ToolSpec] = []
+    for module in modules:
+        tools.extend(module.tools())
+    return tools
+
+
+async def build_llm() -> LLMService:
+    app_cfg = await db.get_setting("app", {}) or {}
+    return LLMService(
+        base_url=app_cfg.get("llm_base_url") or settings.llm_base_url,
+        api_key=app_cfg.get("llm_api_key") or settings.llm_api_key,
+        model=app_cfg.get("llm_model") or settings.llm_model,
+        tools=collect_tools(),
+    )
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    global modules, gincore_module
+    settings.data_dir.mkdir(parents=True, exist_ok=True)
+    await db.connect()
+    modules = load_modules()
+    gincore_module = next((m for m in modules if isinstance(m, GincoreModule)), None)
+    if gincore_module is not None:
+        mod = gincore_module
+        mod.bind_settings_provider(lambda: getattr(mod, "_cached_settings", {}))
+    yield
+    await db.close()
+
+
+app = FastAPI(title="Jarvis", version="0.1.0", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+
+
+@app.get("/")
+async def index() -> FileResponse:
+    return FileResponse(
+        WEB_DIR / "index.html",
+        headers={"Cache-Control": "no-cache, must-revalidate"},
+    )
+
+
+@app.get("/api/health")
+async def health() -> dict[str, Any]:
+    return {"ok": True, "modules": [m.id for m in modules]}
+
+
+@app.get("/api/modules")
+async def list_modules() -> dict[str, Any]:
+    items = []
+    for module in modules:
+        items.append(
+            {
+                "id": module.id,
+                "name": module.name,
+                "description": module.description,
+                "settings": [
+                    {
+                        "key": f.key,
+                        "label": f.label,
+                        "type": f.type,
+                        "placeholder": f.placeholder,
+                        "help": f.help,
+                        "secret": f.secret,
+                    }
+                    for f in module.settings_schema()
+                ],
+                "values": await public_module_settings(module.id),
+            }
+        )
+    return {"modules": items}
+
+
+@app.put("/api/modules/{module_id}/settings")
+async def update_module_settings(module_id: str, body: ModuleSettingsUpdate) -> dict[str, Any]:
+    module = next((m for m in modules if m.id == module_id), None)
+    if not module:
+        raise HTTPException(404, "Module not found")
+
+    current = await get_module_settings(module_id)
+    schema = {f.key: f for f in module.settings_schema()}
+    merged = dict(current)
+
+    for key, value in body.values.items():
+        field = schema.get(key)
+        if not field:
+            continue
+        if field.secret and (value in (None, "", "********")):
+            continue
+        if field.type == "checkbox":
+            merged[key] = bool(value)
+        else:
+            merged[key] = value
+
+    stored = dict(merged)
+    for field in module.settings_schema():
+        if field.secret and stored.get(field.key):
+            stored[field.key] = secrets.encrypt(str(stored[field.key]))
+
+    await db.set_setting(_module_settings_key(module_id), stored)
+    await module.on_settings_saved(merged)
+    return {"ok": True, "values": await public_module_settings(module_id)}
+
+
+@app.post("/api/modules/gincore/test")
+async def test_gincore() -> dict[str, Any]:
+    if not gincore_module:
+        raise HTTPException(404, "Gincore module missing")
+    cfg = await get_module_settings("gincore")
+    gincore_module._cached_settings = cfg
+    try:
+        result = await gincore_module._test_connection({})
+        return {"ok": True, "result": result}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": str(exc)}
+
+
+async def _gincore_client():
+    if not gincore_module:
+        raise HTTPException(404, "Модуль Gincore не найден")
+    cfg = await get_module_settings("gincore")
+    gincore_module._cached_settings = cfg
+    try:
+        return gincore_module._client()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/cash-journal/import/preview")
+async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[str, Any]:
+    """Preview CRM form for the next journal line (payment, expense, or parts attach)."""
+    client = await _gincore_client()
+    try:
+        if body.action in ("cash_in", "card_in") and body.order_id:
+            preview = await client.get_order_payment_preview(body.order_id)
+            pay_form = await client.begin_client_order_payment(body.order_id, body.amount)
+            boxes = await client.list_cashboxes()
+            by_id = {str(b.get("id")): b for b in boxes if b.get("id")}
+            cashboxes = []
+            for cb in pay_form.get("cashboxes") or []:
+                extra = by_id.get(str(cb["id"])) or {}
+                cashboxes.append({**cb, "total_uah": extra.get("total_uah")})
+            return {
+                "ok": True,
+                "kind": "client_order_cash_in",
+                "line_id": body.line_id,
+                "amount": body.amount,
+                "action": body.action,
+                "order": preview,
+                "payment_form": {**pay_form, "cashboxes": cashboxes},
+            }
+
+        if body.action == "cash_out" and body.order_id:
+            if not is_parts_attach_line(
+                {
+                    "action": body.action,
+                    "order_id": body.order_id,
+                    "raw": body.note or "",
+                    "note": body.note or "",
+                }
+            ):
+                raise HTTPException(
+                    400,
+                    "Эта строка «из кассы» с номером — не привязка запчасти "
+                    "(нужен вид «123956 -256 …»)",
+                )
+            preview = await client.preview_parts_attach(
+                body.order_id,
+                body.amount,
+                note=body.note or "",
+            )
+            return {
+                **preview,
+                "line_id": body.line_id,
+                "action": body.action,
+            }
+
+        if body.action == "cash_out" and not body.order_id:
+            expense = await client.begin_cashbox_expense(body.cashbox_id)
+            boxes = await client.list_cashboxes()
+            by_id = {str(b.get("id")): b for b in boxes if b.get("id")}
+            cashboxes = []
+            for cb in expense.get("cashboxes") or []:
+                extra = by_id.get(str(cb["id"])) or {}
+                cashboxes.append({**cb, "total_uah": extra.get("total_uah")})
+            preferred = body.cashbox_id or expense.get("selected_cashbox_id")
+            if preferred and any(str(c["id"]) == str(preferred) for c in cashboxes):
+                selected = str(preferred)
+            else:
+                selected = expense.get("selected_cashbox_id")
+            return {
+                "ok": True,
+                "kind": "cashbox_expense",
+                "line_id": body.line_id,
+                "amount": body.amount,
+                "note": body.note or "",
+                "expense_form": {
+                    **expense,
+                    "cashboxes": cashboxes,
+                    "selected_cashbox_id": selected,
+                },
+            }
+
+        raise HTTPException(
+            400,
+            "Поддерживается: «в кассу»/«в карту» с квитанцией, "
+            "«из кассы» без заказа (расход) или «из кассы» с номером "
+            "(привязка запчасти)",
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        await client.aclose()
+
+
+@app.get("/api/cash-journal/import/contractors")
+async def cash_journal_import_contractors(category_id: str) -> dict[str, Any]:
+    client = await _gincore_client()
+    try:
+        items = await client.list_contractors_by_category(category_id)
+        return {"ok": True, "category_id": category_id, "contractors": items}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        await client.aclose()
+
+
+@app.post("/api/cash-journal/import/accept")
+async def cash_journal_import_accept(body: CashJournalImportAccept) -> dict[str, Any]:
+    """Accept payment, cash expense, or spare-parts attach into CRM."""
+    client = await _gincore_client()
+    try:
+        if body.kind == "parts_attach":
+            if not body.order_id:
+                raise HTTPException(400, "Нужен order_id для привязки запчасти")
+            result = await client.attach_spare_part(
+                body.order_id,
+                body.amount,
+                note=body.note or body.comment or "",
+            )
+            return {**result, "line_id": body.line_id}
+
+        if body.kind == "cashbox_expense":
+            if not body.cashbox_id:
+                raise HTTPException(400, "Выберите кассу")
+            if not body.category_id:
+                raise HTTPException(400, "Выберите статью расхода")
+            if not body.contractor_id and not body.without_contractor:
+                raise HTTPException(400, "Выберите контрагента")
+            result = await client.create_cashbox_expense(
+                cashbox_id=body.cashbox_id,
+                amount=body.amount,
+                category_id=body.category_id,
+                contractor_id=body.contractor_id,
+                comment=body.comment or "",
+                currency_id=body.currency_id,
+                without_contractor=body.without_contractor,
+            )
+            return {**result, "line_id": body.line_id}
+
+        if not body.order_id:
+            raise HTTPException(400, "Нужен order_id для оплаты по квитанции")
+        if not body.cashbox_id:
+            raise HTTPException(400, "Выберите кассу")
+        result = await client.accept_client_order_payment(
+            body.order_id,
+            cashbox_id=body.cashbox_id,
+            amount=body.amount,
+            currency_id=body.currency_id,
+            order_kind=body.order_kind,
+            form_act=body.form_act,
+            transaction_type=body.transaction_type,
+            issued=False,
+        )
+        return {**result, "line_id": body.line_id, "kind": "client_order_cash_in"}
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        await client.aclose()
+
+
+@app.get("/api/settings")
+async def get_app_settings() -> dict[str, Any]:
+    app_cfg = await db.get_setting("app", {}) or {}
+    return {
+        "llm_base_url": app_cfg.get("llm_base_url") or settings.llm_base_url,
+        "llm_api_key": "********" if (app_cfg.get("llm_api_key") or settings.llm_api_key) else "",
+        "llm_model": app_cfg.get("llm_model") or settings.llm_model,
+        "has_api_key": bool(app_cfg.get("llm_api_key") or settings.llm_api_key),
+    }
+
+
+@app.put("/api/settings")
+async def update_app_settings(body: AppSettingsUpdate) -> dict[str, Any]:
+    app_cfg = await db.get_setting("app", {}) or {}
+    if body.llm_base_url is not None:
+        app_cfg["llm_base_url"] = body.llm_base_url.strip()
+    if body.llm_model is not None:
+        app_cfg["llm_model"] = body.llm_model.strip()
+    if body.llm_api_key is not None and body.llm_api_key not in ("", "********"):
+        app_cfg["llm_api_key"] = body.llm_api_key
+    await db.set_setting("app", app_cfg)
+    return await get_app_settings()
+
+
+@app.get("/api/conversations")
+async def conversations() -> dict[str, Any]:
+    return {"conversations": await db.list_conversations()}
+
+
+@app.get("/api/conversations/{conversation_id}/messages")
+async def conversation_messages(conversation_id: int) -> dict[str, Any]:
+    return {"messages": await db.list_messages(conversation_id)}
+
+
+@app.post("/api/chat")
+async def chat(body: ChatRequest) -> dict[str, Any]:
+    conversation_id = await db.ensure_conversation(body.conversation_id)
+    await db.add_message(conversation_id, "user", body.message)
+
+    if gincore_module is not None:
+        gincore_module._cached_settings = await get_module_settings("gincore")
+
+    history_rows = await db.list_messages(conversation_id)
+    messages = [
+        {"role": row["role"], "content": row["content"]}
+        for row in history_rows
+        if row["role"] in {"user", "assistant"}
+    ]
+
+    llm = await build_llm()
+    try:
+        result = await llm.chat(messages)
+    except Exception as exc:  # noqa: BLE001
+        err = f"Ошибка LLM: {exc}"
+        await db.add_message(conversation_id, "assistant", err, meta={"error": True})
+        raise HTTPException(502, err) from exc
+
+    await db.add_message(
+        conversation_id,
+        "assistant",
+        result["content"],
+        meta={
+            "tool_traces": result.get("tool_traces"),
+            "charts": result.get("charts"),
+            "tables": result.get("tables"),
+            "cash_journals": result.get("cash_journals"),
+        },
+    )
+    return {
+        "conversation_id": conversation_id,
+        "message": result["content"],
+        "charts": result.get("charts") or [],
+        "tables": result.get("tables") or [],
+        "cash_journals": result.get("cash_journals") or [],
+        "tool_traces": result.get("tool_traces") or [],
+    }
+
+
+def create_app() -> FastAPI:
+    return app
