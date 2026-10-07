@@ -17,6 +17,7 @@ function showView(view) {
   if (view === "quality") {
     // Сначала показать вкладку, потом мерить столбцы (display:none даёт width=0).
     requestAnimationFrame(() => {
+      initQualityTabs();
       initQualityColResize();
       loadQualityOrders().then((sync) => {
         initQualityColResize();
@@ -2386,80 +2387,72 @@ function initQualityTips() {
   window.addEventListener("resize", () => hideQualityFloatTipNow());
 }
 
-function renderQualityOrders() {
-  const tbody = $("#quality-tbody");
-  if (!tbody) return;
-  hideQualityFloatTipNow();
-  initQualityTips();
-  const rows = sortQualityRows(qualityOrdersCache, qualitySort);
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = rows
-    .map((r) => {
-      const callsKpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
-      const callsCls =
-        callsKpi == null
-          ? "quality-muted"
-          : callsKpi >= 70
-            ? "is-good"
-            : callsKpi >= 40
-              ? "is-mid"
-              : "is-bad";
-      const callsTip = r.has_feed ? buildQualityCallsTipHtml(r) : "";
-      const calls = r.has_feed
-        ? `<span class="quality-tip-anchor quality-calls ${callsCls}" tabindex="0">${
-            callsKpi == null ? "—" : callsKpi
-          }<span class="quality-tip-content" hidden>${callsTip}</span></span>`
-        : "…";
-      const oid = escapeHtml(r.order_id || "");
-      const feed = r.has_feed
-        ? `<button type="button" class="quality-feed-btn" data-feed-order="${oid}" title="${escapeHtml(r.feed_synced_at || "Открыть ленту")}">открыть</button>`
-        : `<button type="button" class="quality-feed-btn" disabled>нет</button>`;
-      const link = r.url
-        ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${oid}</a>`
-        : oid;
-      const mgr = r.manager_no_answer_missed
-        ? `<span class="quality-mgr-flag" title="После согласования неуспешный исходящий, статус не «На согласовании»/«Не дозвонились»">статус?</span>`
-        : `<span class="quality-muted">—</span>`;
-      const rwN = Number(r.rework_count || 0);
-      const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
-      const rwCls =
-        rwKpi == null
-          ? "quality-muted"
-          : rwKpi >= 70
-            ? "is-good"
-            : rwKpi >= 40
-              ? "is-mid"
-              : "is-bad";
-      const rwTip = buildQualityReworkTipHtml(r);
-      const rework =
-        rwN > 0 && rwKpi != null
-          ? `<span class="quality-tip-anchor quality-rework ${rwCls}" tabindex="0">${rwKpi}<span class="quality-tip-content" hidden>${rwTip}</span></span>`
-          : `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${rwTip}</span></span>`;
-      const orderKpi = r.order_kpi != null ? Number(r.order_kpi) : null;
-      const orderCls =
-        orderKpi == null
-          ? "quality-muted"
-          : orderKpi >= 70
-            ? "is-good"
-            : orderKpi >= 40
-              ? "is-mid"
-              : "is-bad";
-      const orderTip = buildQualityOrderKpiTipHtml(r);
-      const orderKpiCell =
-        orderKpi == null
-          ? `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${orderTip}</span></span>`
-          : `<span class="quality-tip-anchor quality-order-kpi ${orderCls}" tabindex="0">${orderKpi}<span class="quality-tip-content" hidden>${orderTip}</span></span>`;
-      const rowCls = r.manager_no_answer_missed ? ' class="quality-row-flag"' : "";
-      const acceptedTip = r.accepted_at
-        ? `Принят: ${fmtQualityDate(r.accepted_at)}`
-        : "Дата приёмки неизвестна";
-      return `<tr${rowCls}>
+function buildQualityOrderRowHtml(r, { includeEngineer = true } = {}) {
+  const callsKpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
+  const callsCls =
+    callsKpi == null
+      ? "quality-muted"
+      : callsKpi >= 70
+        ? "is-good"
+        : callsKpi >= 40
+          ? "is-mid"
+          : "is-bad";
+  const callsTip = r.has_feed ? buildQualityCallsTipHtml(r) : "";
+  const calls = r.has_feed
+    ? `<span class="quality-tip-anchor quality-calls ${callsCls}" tabindex="0">${
+        callsKpi == null ? "—" : callsKpi
+      }<span class="quality-tip-content" hidden>${callsTip}</span></span>`
+    : "…";
+  const oid = escapeHtml(r.order_id || "");
+  const feed = r.has_feed
+    ? `<button type="button" class="quality-feed-btn" data-feed-order="${oid}" title="${escapeHtml(r.feed_synced_at || "Открыть ленту")}">открыть</button>`
+    : `<button type="button" class="quality-feed-btn" disabled>нет</button>`;
+  const link = r.url
+    ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${oid}</a>`
+    : oid;
+  const mgr = r.manager_no_answer_missed
+    ? `<span class="quality-mgr-flag" title="После согласования неуспешный исходящий, статус не «На согласовании»/«Не дозвонились»">статус?</span>`
+    : `<span class="quality-muted">—</span>`;
+  const rwN = Number(r.rework_count || 0);
+  const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
+  const rwCls =
+    rwKpi == null
+      ? "quality-muted"
+      : rwKpi >= 70
+        ? "is-good"
+        : rwKpi >= 40
+          ? "is-mid"
+          : "is-bad";
+  const rwTip = buildQualityReworkTipHtml(r);
+  const rework =
+    rwN > 0 && rwKpi != null
+      ? `<span class="quality-tip-anchor quality-rework ${rwCls}" tabindex="0">${rwKpi}<span class="quality-tip-content" hidden>${rwTip}</span></span>`
+      : `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${rwTip}</span></span>`;
+  const orderKpi = r.order_kpi != null ? Number(r.order_kpi) : null;
+  const orderCls =
+    orderKpi == null
+      ? "quality-muted"
+      : orderKpi >= 70
+        ? "is-good"
+        : orderKpi >= 40
+          ? "is-mid"
+          : "is-bad";
+  const orderTip = buildQualityOrderKpiTipHtml(r);
+  const orderKpiCell =
+    orderKpi == null
+      ? `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${orderTip}</span></span>`
+      : `<span class="quality-tip-anchor quality-order-kpi ${orderCls}" tabindex="0">${orderKpi}<span class="quality-tip-content" hidden>${orderTip}</span></span>`;
+  const rowCls = r.manager_no_answer_missed ? ' class="quality-row-flag"' : "";
+  const acceptedTip = r.accepted_at
+    ? `Принят: ${fmtQualityDate(r.accepted_at)}`
+    : "Дата приёмки неизвестна";
+  const engineerCell = includeEngineer
+    ? `<td>${escapeHtml(r.engineer || r.master_name || "—")}</td>`
+    : "";
+  return `<tr${rowCls}>
           <td>${link}</td>
           <td>${escapeHtml(r.status || "—")}</td>
-          <td>${escapeHtml(r.engineer || r.master_name || "—")}</td>
+          ${engineerCell}
           <td class="quality-device-cell" title="${escapeHtml(r.device || "")}" style="${qualityKpiHeatStyle(orderKpi)}">${escapeHtml((r.device || "—").slice(0, 28))}</td>
           <td class="${dayClass(r.total_days, 7, 14)}" title="${escapeHtml(acceptedTip)}">${fmtDays(r.total_days)}</td>
           <td class="${dayClass(r.wait_master_days, 2, 5)}">${fmtDays(r.wait_master_days)}</td>
@@ -2470,14 +2463,267 @@ function renderQualityOrders() {
           <td>${mgr}</td>
           <td>${feed}</td>
         </tr>`;
+}
+
+function qualityMasterName(row) {
+  return String(row?.engineer || row?.master_name || "").trim();
+}
+
+function qualityAvg(nums) {
+  const vals = nums.filter((n) => n != null && !Number.isNaN(Number(n))).map(Number);
+  if (!vals.length) return null;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+}
+
+function qualityMasterStats(name, rows) {
+  const avgKpi = qualityAvg(rows.map((r) => r.order_kpi));
+  return {
+    name,
+    count: rows.length,
+    avgKpi: avgKpi == null ? null : Math.round(avgKpi),
+    avgTotal: qualityAvg(rows.map((r) => r.total_days)),
+    avgWait: qualityAvg(rows.map((r) => r.wait_master_days)),
+    avgDiag: qualityAvg(rows.map((r) => r.diag_days)),
+    avgRework: qualityAvg(rows.filter((r) => r.rework_kpi != null).map((r) => r.rework_kpi)),
+    avgCalls: qualityAvg(rows.map((r) => r.calls_kpi)),
+    rows,
+  };
+}
+
+function groupQualityByMaster(rows) {
+  const map = new Map();
+  for (const r of rows || []) {
+    const key = qualityMasterName(r);
+    // Пустой мастер / «—» — не отдельный мастер, в срезы не включаем.
+    if (!key || key === "—" || key.toLowerCase() === "без мастера") continue;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  }
+  return [...map.entries()]
+    .map(([name, list]) => qualityMasterStats(name, list))
+    .sort((a, b) => {
+      const ka = a.avgKpi == null ? -1 : a.avgKpi;
+      const kb = b.avgKpi == null ? -1 : b.avgKpi;
+      if (kb !== ka) return kb - ka;
+      return a.name.localeCompare(b.name, "ru");
+    });
+}
+
+let qualityMastersChart = null;
+
+function renderQualityMastersTab() {
+  const root = $("#quality-masters-root");
+  if (!root) return;
+  initQualityTips();
+  const groups = groupQualityByMaster(qualityOrdersCache);
+  if (!groups.length) {
+    root.innerHTML = `<div class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</div>`;
+    return;
+  }
+  root.innerHTML = groups
+    .map((g) => {
+      const tone = qualityKpiTone(g.avgKpi);
+      const score =
+        g.avgKpi == null
+          ? `<span class="quality-master-kpi is-muted">—</span>`
+          : `<span class="quality-master-kpi is-${tone}"><span>${g.avgKpi}</span><small>/ 100</small></span>`;
+      const body = sortQualityRows(g.rows, { key: "kpi", dir: "desc" })
+        .map((r) => buildQualityOrderRowHtml(r, { includeEngineer: false }))
+        .join("");
+      return `<article class="quality-master-card">
+        <div class="quality-master-card-head">
+          <h3>${escapeHtml(g.name)}</h3>
+          ${score}
+          <span class="quality-master-meta">KPI мастера · ${g.count} заказ${
+            g.count % 10 === 1 && g.count % 100 !== 11
+              ? ""
+              : g.count % 10 >= 2 && g.count % 10 <= 4 && (g.count % 100 < 10 || g.count % 100 >= 20)
+                ? "а"
+                : "ов"
+          }</span>
+        </div>
+        <div class="quality-table-wrap">
+          <table class="quality-table">
+            <thead>
+              <tr>
+                <th>№</th><th>Статус</th><th>Устройство</th><th>Всего дн</th>
+                <th>До мастера</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th>
+                <th>KPI</th><th>Мен.</th><th>Лента</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      </article>`;
     })
     .join("");
+  root.querySelectorAll("[data-feed-order]").forEach((btn) => {
+    btn.addEventListener("click", () => openQualityFeed(btn.getAttribute("data-feed-order")));
+  });
+}
+
+function renderQualitySummaryTab() {
+  const tbody = $("#quality-summary-tbody");
+  const canvas = $("#quality-masters-chart");
+  if (!tbody) return;
+  const groups = groupQualityByMaster(qualityOrdersCache);
+  if (!groups.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="quality-empty">Нет данных</td></tr>`;
+    if (qualityMastersChart) {
+      qualityMastersChart.destroy();
+      qualityMastersChart = null;
+    }
+    return;
+  }
+  tbody.innerHTML = groups
+    .map((g) => {
+      const tone = qualityKpiTone(g.avgKpi);
+      const kpiCls =
+        g.avgKpi == null ? "quality-muted" : `quality-order-kpi is-${tone}`;
+      return `<tr>
+        <td>${escapeHtml(g.name)}</td>
+        <td>${g.count}</td>
+        <td class="${kpiCls}" style="${qualityKpiHeatStyle(g.avgKpi)}">${
+          g.avgKpi == null ? "—" : g.avgKpi
+        }</td>
+        <td class="${dayClass(g.avgTotal, 7, 14)}">${fmtDays(g.avgTotal)}</td>
+        <td class="${dayClass(g.avgWait, 2, 5)}">${fmtDays(g.avgWait)}</td>
+        <td class="${dayClass(g.avgDiag, 3, 7)}">${fmtDays(g.avgDiag)}</td>
+        <td>${g.avgRework == null ? "—" : Math.round(g.avgRework)}</td>
+        <td>${g.avgCalls == null ? "—" : Math.round(g.avgCalls)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  if (!canvas || typeof Chart === "undefined") return;
+  const wrap = canvas.parentElement;
+  if (wrap) {
+    wrap.style.height = `${Math.max(280, Math.min(640, 48 + groups.length * 34))}px`;
+  }
+  const labels = groups.map((g) => {
+    const parts = g.name.split(/\s+/);
+    if (parts.length >= 2) return `${parts[0]} ${parts[1][0]}.`;
+    return g.name.length > 18 ? `${g.name.slice(0, 16)}…` : g.name;
+  });
+  const values = groups.map((g) => (g.avgKpi == null ? 0 : g.avgKpi));
+  const colors = values.map((v) => {
+    const t = Math.pow(Math.max(0, Math.min(100, v)) / 100, 1.65);
+    const hue = Math.round(t * 118);
+    return `hsla(${hue}, 58%, 42%, 0.85)`;
+  });
+  if (qualityMastersChart) {
+    qualityMastersChart.destroy();
+    qualityMastersChart = null;
+  }
+  qualityMastersChart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Средний KPI",
+          data: values,
+          backgroundColor: colors,
+          borderColor: colors,
+          borderWidth: 0,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title(items) {
+              const i = items[0]?.dataIndex;
+              return i == null ? "" : groups[i].name;
+            },
+            label(ctx) {
+              const g = groups[ctx.dataIndex];
+              return `KPI ${g.avgKpi ?? "—"} · заказов ${g.count}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          min: 0,
+          max: 100,
+          ticks: { stepSize: 20 },
+          grid: { color: "rgba(28,36,48,0.06)" },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+function renderQualityOrders() {
+  const tbody = $("#quality-tbody");
+  if (!tbody) return;
+  hideQualityFloatTipNow();
+  initQualityTips();
+  const rows = sortQualityRows(qualityOrdersCache, qualitySort);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
+    renderQualityMastersTab();
+    renderQualitySummaryTab();
+    return;
+  }
+  tbody.innerHTML = rows.map((r) => buildQualityOrderRowHtml(r, { includeEngineer: true })).join("");
   tbody.querySelectorAll("[data-feed-order]").forEach((btn) => {
     btn.addEventListener("click", () => openQualityFeed(btn.getAttribute("data-feed-order")));
   });
-  // После перерисовки строк вернуть сохранённые ширины (иначе fixed-layout сжимает).
   const table = $("#quality-table");
   if (table) applyQualityColWidths(loadQualityColWidths(qualityColKeys(table)));
+  renderQualityMastersTab();
+  renderQualitySummaryTab();
+}
+
+const QUALITY_TAB_KEY = "jarvis.quality.tab";
+
+function setQualityTab(tab) {
+  const id = ["overview", "masters", "summary"].includes(tab) ? tab : "overview";
+  document.querySelectorAll(".quality-tab").forEach((btn) => {
+    const on = btn.getAttribute("data-quality-tab") === id;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll(".quality-tab-panel").forEach((panel) => {
+    const on = panel.id === `quality-tab-${id}`;
+    panel.classList.toggle("is-active", on);
+    panel.hidden = !on;
+  });
+  try {
+    localStorage.setItem(QUALITY_TAB_KEY, id);
+  } catch {
+    /* ignore */
+  }
+  if (id === "masters") renderQualityMastersTab();
+  if (id === "summary") renderQualitySummaryTab();
+}
+
+function initQualityTabs() {
+  const tabs = document.querySelectorAll(".quality-tab");
+  if (!tabs.length || tabs[0].dataset.ready) return;
+  tabs.forEach((btn) => {
+    btn.dataset.ready = "1";
+    btn.addEventListener("click", () => setQualityTab(btn.getAttribute("data-quality-tab")));
+  });
+  let saved = "overview";
+  try {
+    saved = localStorage.getItem(QUALITY_TAB_KEY) || "overview";
+  } catch {
+    saved = "overview";
+  }
+  setQualityTab(saved);
 }
 
 async function loadQualityOrders() {
@@ -2494,6 +2740,8 @@ async function loadQualityOrders() {
     qualityOrdersCache = data.orders || [];
     if (!qualityOrdersCache.length) {
       tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
+      renderQualityMastersTab();
+      renderQualitySummaryTab();
       return data.sync || null;
     }
     renderQualityOrders();
@@ -2893,6 +3141,7 @@ function initQualityPanelToggle() {
 }
 
 initQualityPanelToggle();
+initQualityTabs();
 
 addBubble(
   "assistant",

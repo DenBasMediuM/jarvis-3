@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261007-panel-toggle" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261007-one-scroll" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -58,7 +58,7 @@
           </div>
           <div id="quality-panel-body" class="quality-panel-body">
             <header class="view-header quality-header">
-              <p>Рабочие заказы (без Сахарова): сроки, ожидание мастера, диагностика, звонки. Лента кэшируется локально.</p>
+              <p>Рабочие заказы (без Сахарова): сроки, диагностика, звонки, KPI. Вкладки — общее, по мастерам и сводка. Лента кэшируется локально.</p>
             </header>
             <div class="quality-toolbar">
               <button type="button" id="quality-sync-btn" class="cj-import-open">Обновить из CRM</button>
@@ -82,42 +82,88 @@
             <div id="quality-calc-result" class="quality-calc-result" hidden></div>
           </div>
         </div>
-        <div class="quality-table-wrap">
-          <table class="quality-table" id="quality-table">
-            <colgroup id="quality-colgroup">
-              <col data-col="oid" />
-              <col data-col="status" />
-              <col data-col="engineer" />
-              <col data-col="device" />
-              <col data-col="total" />
-              <col data-col="wait" />
-              <col data-col="diag" />
-              <col data-col="rework" />
-              <col data-col="calls" />
-              <col data-col="kpi" />
-              <col data-col="mgr" />
-              <col data-col="feed" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th data-col="oid"><div class="quality-th-inner">№</div></th>
-                <th data-col="status"><div class="quality-th-inner">Статус</div></th>
-                <th data-col="engineer"><div class="quality-th-inner">Мастер</div></th>
-                <th data-col="device"><div class="quality-th-inner">Устройство</div></th>
-                <th data-col="total" title="Дней от приёмки до сегодня. Дата приёмки — при наведении на число"><div class="quality-th-inner">Всего дн</div></th>
-                <th data-col="wait" title="От приёмки до «Изменил мастера»"><div class="quality-th-inner">До мастера</div></th>
-                <th data-col="diag" title="От мастера до согласования"><div class="quality-th-inner">До диагн.</div></th>
-                <th data-col="rework" title="KPI доработок 0–100: меньше доработок и короче срок с последней — лучше. Подробности при наведении"><div class="quality-th-inner">Дораб.</div></th>
-                <th data-col="calls" title="Коммуникация 0–100. До заказа: только неуспешные входящие (+перезвон). После заказа: исходящие✓ хорошо, клиент сам — слабо, без перезвона — очень плохо"><div class="quality-th-inner">Звонки</div></th>
-                <th data-col="kpi" title="Итоговый KPI квитанции 0–100: сроки (всего / до мастера / до диагн.), доработки и звонки. Без флага «Мен.»"><div class="quality-th-inner">KPI</div></th>
-                <th data-col="mgr" title="После согласования неуспешный исходящий, а статус не «На согласовании» и не «Не дозвонились»"><div class="quality-th-inner">Мен.</div></th>
-                <th data-col="feed"><div class="quality-th-inner">Лента</div></th>
-              </tr>
-            </thead>
-            <tbody id="quality-tbody">
-              <tr><td colspan="12" class="quality-empty">Нажмите «Обновить из CRM»</td></tr>
-            </tbody>
-          </table>
+        <nav class="quality-tabs" role="tablist" aria-label="Разделы качества">
+          <button type="button" class="quality-tab is-active" data-quality-tab="overview" role="tab" aria-selected="true">Общее качество</button>
+          <button type="button" class="quality-tab" data-quality-tab="masters" role="tab" aria-selected="false">По мастерам</button>
+          <button type="button" class="quality-tab" data-quality-tab="summary" role="tab" aria-selected="false">Сводка по мастерам</button>
+        </nav>
+        <div class="quality-tab-panels">
+          <div id="quality-tab-overview" class="quality-tab-panel is-active" role="tabpanel">
+            <div class="quality-table-wrap">
+              <table class="quality-table" id="quality-table">
+                <colgroup id="quality-colgroup">
+                  <col data-col="oid" />
+                  <col data-col="status" />
+                  <col data-col="engineer" />
+                  <col data-col="device" />
+                  <col data-col="total" />
+                  <col data-col="wait" />
+                  <col data-col="diag" />
+                  <col data-col="rework" />
+                  <col data-col="calls" />
+                  <col data-col="kpi" />
+                  <col data-col="mgr" />
+                  <col data-col="feed" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th data-col="oid"><div class="quality-th-inner">№</div></th>
+                    <th data-col="status"><div class="quality-th-inner">Статус</div></th>
+                    <th data-col="engineer"><div class="quality-th-inner">Мастер</div></th>
+                    <th data-col="device"><div class="quality-th-inner">Устройство</div></th>
+                    <th data-col="total" title="Дней от приёмки до сегодня. Дата приёмки — при наведении на число"><div class="quality-th-inner">Всего дн</div></th>
+                    <th data-col="wait" title="От приёмки до «Изменил мастера»"><div class="quality-th-inner">До мастера</div></th>
+                    <th data-col="diag" title="От мастера до согласования"><div class="quality-th-inner">До диагн.</div></th>
+                    <th data-col="rework" title="KPI доработок 0–100"><div class="quality-th-inner">Дораб.</div></th>
+                    <th data-col="calls" title="Коммуникация 0–100"><div class="quality-th-inner">Звонки</div></th>
+                    <th data-col="kpi" title="Итоговый KPI квитанции 0–100"><div class="quality-th-inner">KPI</div></th>
+                    <th data-col="mgr" title="Флаг менеджера"><div class="quality-th-inner">Мен.</div></th>
+                    <th data-col="feed"><div class="quality-th-inner">Лента</div></th>
+                  </tr>
+                </thead>
+                <tbody id="quality-tbody">
+                  <tr><td colspan="12" class="quality-empty">Нажмите «Обновить из CRM»</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="quality-tab-masters" class="quality-tab-panel" role="tabpanel" hidden>
+            <p class="quality-tab-lead">Отдельные таблицы по мастерам из текущего списка. KPI мастера — среднее по квитанциям с оценкой.</p>
+            <div id="quality-masters-root" class="quality-masters-root"></div>
+          </div>
+          <div id="quality-tab-summary" class="quality-tab-panel" role="tabpanel" hidden>
+            <p class="quality-tab-lead">Сравнение мастеров: сводная таблица и график среднего KPI.</p>
+            <div class="quality-summary-layout">
+              <div class="quality-summary-chart-card">
+                <h3>Средний KPI по мастерам</h3>
+                <div class="quality-summary-chart-wrap">
+                  <canvas id="quality-masters-chart"></canvas>
+                </div>
+              </div>
+              <div class="quality-summary-table-card">
+                <h3>Сводная таблица</h3>
+                <div class="quality-table-wrap quality-summary-table-wrap">
+                  <table class="quality-table quality-summary-table" id="quality-summary-table">
+                    <thead>
+                      <tr>
+                        <th>Мастер</th>
+                        <th title="Число квитанций">Заказов</th>
+                        <th title="Средний итоговый KPI">KPI</th>
+                        <th title="Среднее «Всего дн»">Всего дн</th>
+                        <th title="Среднее «До мастера»">До маст.</th>
+                        <th title="Среднее «До диагн.»">До диагн.</th>
+                        <th title="Средний KPI доработок (только с доработками)">Дораб.</th>
+                        <th title="Средний KPI звонков">Звонки</th>
+                      </tr>
+                    </thead>
+                    <tbody id="quality-summary-tbody">
+                      <tr><td colspan="8" class="quality-empty">Нет данных</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -153,6 +199,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261007-panel-toggle"></script>
+  <script src="/static/app.js?v=20261007-one-scroll"></script>
 </body>
 </html>
