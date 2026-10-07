@@ -29,6 +29,36 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS quality_orders (
+  order_id TEXT PRIMARY KEY,
+  status TEXT,
+  engineer TEXT,
+  accepter TEXT,
+  manager TEXT,
+  device TEXT,
+  client TEXT,
+  location TEXT,
+  accepted_at TEXT,
+  repair_cost REAL,
+  list_fingerprint TEXT,
+  feed_json TEXT,
+  metrics_json TEXT,
+  list_synced_at TEXT,
+  feed_synced_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS quality_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  queued INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  started_at TEXT,
+  finished_at TEXT
+);
 """
 
 
@@ -135,3 +165,125 @@ class Database:
         )
         rows = await cur.fetchall()
         return [dict(row) for row in rows]
+
+    async def quality_upsert_order(self, row: dict[str, Any]) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO quality_orders(
+              order_id, status, engineer, accepter, manager, device, client,
+              location, accepted_at, repair_cost, list_fingerprint, feed_json,
+              metrics_json, list_synced_at, feed_synced_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(order_id) DO UPDATE SET
+              status = excluded.status,
+              engineer = excluded.engineer,
+              accepter = excluded.accepter,
+              manager = excluded.manager,
+              device = excluded.device,
+              client = excluded.client,
+              location = excluded.location,
+              accepted_at = COALESCE(excluded.accepted_at, quality_orders.accepted_at),
+              repair_cost = COALESCE(excluded.repair_cost, quality_orders.repair_cost),
+              list_fingerprint = excluded.list_fingerprint,
+              feed_json = COALESCE(excluded.feed_json, quality_orders.feed_json),
+              metrics_json = COALESCE(excluded.metrics_json, quality_orders.metrics_json),
+              list_synced_at = COALESCE(excluded.list_synced_at, quality_orders.list_synced_at),
+              feed_synced_at = COALESCE(excluded.feed_synced_at, quality_orders.feed_synced_at),
+              updated_at = datetime('now')
+            """,
+            (
+                row["order_id"],
+                row.get("status"),
+                row.get("engineer"),
+                row.get("accepter"),
+                row.get("manager"),
+                row.get("device"),
+                row.get("client"),
+                row.get("location"),
+                row.get("accepted_at"),
+                row.get("repair_cost"),
+                row.get("list_fingerprint"),
+                row.get("feed_json"),
+                row.get("metrics_json"),
+                row.get("list_synced_at"),
+                row.get("feed_synced_at"),
+            ),
+        )
+        await self.conn.commit()
+
+    async def quality_get_order(self, order_id: str) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM quality_orders WHERE order_id = ?", (str(order_id),)
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def quality_list_orders(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            "SELECT * FROM quality_orders ORDER BY accepted_at DESC, order_id DESC"
+        )
+        rows = await cur.fetchall()
+        return [dict(r) for r in rows]
+
+    async def quality_delete_missing(self, keep_ids: set[str]) -> int:
+        cur = await self.conn.execute("SELECT order_id FROM quality_orders")
+        existing = {str(r["order_id"]) for r in await cur.fetchall()}
+        drop = existing - keep_ids
+        for oid in drop:
+            await self.conn.execute(
+                "DELETE FROM quality_orders WHERE order_id = ?", (oid,)
+            )
+        if drop:
+            await self.conn.commit()
+        return len(drop)
+
+    async def quality_get_sync_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM quality_sync_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO quality_sync_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "queued": 0,
+                "message": None,
+                "started_at": None,
+                "finished_at": None,
+            }
+        return dict(row)
+
+    async def quality_set_sync_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.quality_get_sync_state()
+        current.update({k: v for k, v in fields.items() if v is not None or k in fields})
+        await self.conn.execute(
+            """
+            INSERT INTO quality_sync_state(
+              id, status, total, done, queued, message, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              queued = excluded.queued,
+              message = excluded.message,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                current.get("status") or "idle",
+                int(current.get("total") or 0),
+                int(current.get("done") or 0),
+                int(current.get("queued") or 0),
+                current.get("message"),
+                current.get("started_at"),
+                current.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.quality_get_sync_state()

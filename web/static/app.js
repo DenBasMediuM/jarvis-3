@@ -6,14 +6,33 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const messagesEl = $("#messages");
 
-document.querySelectorAll(".nav-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    btn.classList.add("active");
-    $(`#view-${btn.dataset.view}`).classList.add("active");
+function showView(view) {
+  document.querySelectorAll(".nav-btn").forEach((b) => {
+    b.classList.toggle("active", b.dataset.view === view);
   });
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  const el = $(`#view-${view}`);
+  if (el) el.classList.add("active");
+  document.querySelector(".app")?.classList.toggle("app--quality", view === "quality");
+  if (view === "quality") {
+    // Сначала показать вкладку, потом мерить столбцы (display:none даёт width=0).
+    requestAnimationFrame(() => {
+      initQualityColResize();
+      loadQualityOrders().then((sync) => {
+        initQualityColResize();
+        if (sync?.status === "running") startQualityPoll();
+      });
+    });
+  } else {
+    stopQualityPoll();
+  }
+}
+
+document.querySelectorAll(".nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => showView(btn.dataset.view));
 });
+
+$("#quality-back-btn")?.addEventListener("click", () => showView("chat"));
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -295,7 +314,11 @@ function parseMoneyLoose(raw) {
 }
 
 function isQuoteLine(raw) {
-  return /^\s*>/.test(String(raw || "").trim());
+  const s = String(raw || "")
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, "")
+    .replace(/\u00a0/g, " ")
+    .trim();
+  return /^>/.test(s);
 }
 
 function ensureLineMeta(data) {
@@ -304,7 +327,7 @@ function ensureLineMeta(data) {
       line.is_quote = true;
       line.action = "ignore";
     }
-    if (!line.is_checkpoint) {
+    if (!line.is_checkpoint && !line.is_quote) {
       const cp = parseBalanceCheckpoint(line.raw);
       if (cp) {
         line.is_checkpoint = true;
@@ -1527,6 +1550,1349 @@ async function loadModules() {
     });
   });
 }
+
+let qualityPollTimer = null;
+
+function fmtDays(v) {
+  if (v == null || v === "") return "—";
+  return String(v);
+}
+
+function dayClass(v, warnAt, badAt) {
+  if (v == null) return "quality-muted";
+  const n = Number(v);
+  if (Number.isNaN(n)) return "";
+  if (badAt != null && n >= badAt) return "quality-bad";
+  if (warnAt != null && n >= warnAt) return "quality-warn";
+  return "";
+}
+
+function formatSyncStatus(sync) {
+  if (!sync) return "—";
+  const st = sync.status || "idle";
+  const msg = sync.message || "";
+  if (st === "running") {
+    const done = sync.done || 0;
+    const total = sync.total || 0;
+    return `Обновление… ${done}/${total}${msg ? " · " + msg : ""}`;
+  }
+  if (st === "error") return `Ошибка: ${msg || "неизвестно"}`;
+  return msg || "Готово (данные из локального кэша)";
+}
+
+const QUALITY_COL_WIDTHS_KEY = "jarvis.quality.colWidths";
+const QUALITY_COL_MIN = 52;
+const QUALITY_COL_MAX = 480;
+/** Базовые ширины — если в localStorage нет ключа или данные битые. */
+const QUALITY_COL_DEFAULTS = {
+  oid: 78,
+  status: 150,
+  engineer: 170,
+  device: 170,
+  total: 78,
+  wait: 88,
+  diag: 82,
+  rework: 68,
+  calls: 68,
+  kpi: 64,
+  mgr: 58,
+  feed: 78,
+};
+let qualityColResizeReady = false;
+let qualityTextMeasureCtx = null;
+
+function qualityColKeys(table) {
+  return [...table.querySelectorAll("colgroup col[data-col]")].map((c) =>
+    c.getAttribute("data-col")
+  );
+}
+
+function sanitizeQualityColWidths(raw, keys) {
+  if (!raw || typeof raw !== "object") return {};
+  const keySet = keys && keys.length ? new Set(keys) : null;
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (keySet && !keySet.has(k)) continue;
+    const n = Math.round(Number(v));
+    if (!Number.isFinite(n) || n < QUALITY_COL_MIN) continue;
+    out[k] = Math.min(QUALITY_COL_MAX, n);
+  }
+  // Если почти всё «схлопнуто» — считаем кэш битым (после смены набора колонок).
+  const vals = Object.values(out);
+  if (vals.length >= 3) {
+    const tiny = vals.filter((w) => w <= 64).length;
+    if (tiny >= Math.ceil(vals.length * 0.6)) return {};
+  }
+  return out;
+}
+
+function loadQualityColWidths(keys) {
+  try {
+    const raw = localStorage.getItem(QUALITY_COL_WIDTHS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const clean = sanitizeQualityColWidths(parsed, keys);
+    // Перезаписать, если вычистили устаревшие/битые ключи.
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      JSON.stringify(parsed) !== JSON.stringify(clean)
+    ) {
+      if (Object.keys(clean).length) saveQualityColWidths(clean);
+      else localStorage.removeItem(QUALITY_COL_WIDTHS_KEY);
+    }
+    return clean;
+  } catch {
+    return {};
+  }
+}
+
+function saveQualityColWidths(map) {
+  try {
+    const table = $("#quality-table");
+    const keys = table ? qualityColKeys(table) : Object.keys(map || {});
+    const clean = sanitizeQualityColWidths(map, keys);
+    if (!Object.keys(clean).length) {
+      localStorage.removeItem(QUALITY_COL_WIDTHS_KEY);
+      return;
+    }
+    localStorage.setItem(QUALITY_COL_WIDTHS_KEY, JSON.stringify(clean));
+  } catch {
+    /* ignore */
+  }
+}
+
+function resolveQualityColWidths(table, override) {
+  const keys = qualityColKeys(table);
+  const saved = loadQualityColWidths(keys);
+  const map = {};
+  keys.forEach((key) => {
+    const fromOverride = override && override[key] != null ? Number(override[key]) : 0;
+    const fromSaved = saved[key] != null ? Number(saved[key]) : 0;
+    const fromDefault = QUALITY_COL_DEFAULTS[key] || 96;
+    const w = fromOverride >= QUALITY_COL_MIN
+      ? fromOverride
+      : fromSaved >= QUALITY_COL_MIN
+        ? fromSaved
+        : fromDefault;
+    map[key] = Math.min(QUALITY_COL_MAX, Math.round(w));
+  });
+  return map;
+}
+
+function measureQualityColWidths(table) {
+  const map = {};
+  table.querySelectorAll("thead th[data-col]").forEach((th) => {
+    const key = th.getAttribute("data-col");
+    const w = Math.round(th.getBoundingClientRect().width);
+    if (key && w >= QUALITY_COL_MIN) map[key] = Math.min(QUALITY_COL_MAX, w);
+  });
+  return map;
+}
+
+function applyQualityColWidths(widths) {
+  const table = $("#quality-table");
+  if (!table) return;
+  const map = resolveQualityColWidths(
+    table,
+    widths && Object.keys(widths).length ? widths : null,
+  );
+  let sum = 0;
+  qualityColKeys(table).forEach((key) => {
+    const col = table.querySelector(`colgroup col[data-col="${key}"]`);
+    const th = table.querySelector(`thead th[data-col="${key}"]`);
+    const w = map[key] || QUALITY_COL_DEFAULTS[key] || 96;
+    if (col) {
+      col.style.width = `${w}px`;
+      col.style.minWidth = `${w}px`;
+    }
+    if (th) {
+      th.style.width = `${w}px`;
+      th.style.minWidth = `${w}px`;
+      th.style.maxWidth = `${w}px`;
+    }
+    sum += w;
+  });
+  table.style.width = sum > 0 ? `${sum}px` : "";
+}
+
+function setQualityColWidth(table, key, widthPx) {
+  const w = Math.max(QUALITY_COL_MIN, Math.min(QUALITY_COL_MAX, Math.round(widthPx)));
+  const col = table.querySelector(`colgroup col[data-col="${key}"]`);
+  const th = table.querySelector(`thead th[data-col="${key}"]`);
+  if (col) {
+    col.style.width = `${w}px`;
+    col.style.minWidth = `${w}px`;
+  }
+  if (th) {
+    th.style.width = `${w}px`;
+    th.style.minWidth = `${w}px`;
+    th.style.maxWidth = `${w}px`;
+  }
+  let sum = 0;
+  qualityColKeys(table).forEach((k) => {
+    const c = table.querySelector(`colgroup col[data-col="${k}"]`);
+    const cw = parseInt(c?.style.width || "0", 10);
+    sum += cw >= QUALITY_COL_MIN ? cw : Math.round(
+      table.querySelector(`thead th[data-col="${k}"]`)?.getBoundingClientRect().width || 80
+    );
+  });
+  table.style.width = `${sum}px`;
+  return w;
+}
+
+function measureQualityTextWidth(text, font) {
+  if (!qualityTextMeasureCtx) {
+    const canvas = document.createElement("canvas");
+    qualityTextMeasureCtx = canvas.getContext("2d");
+  }
+  qualityTextMeasureCtx.font = font;
+  return qualityTextMeasureCtx.measureText(text || "").width;
+}
+
+function collectQualityColWidths(table) {
+  // Только явно заданные style.width — не снимать «схлопнутые» getBoundingClientRect.
+  const prev = loadQualityColWidths(qualityColKeys(table));
+  const map = {};
+  qualityColKeys(table).forEach((k) => {
+    const c = table.querySelector(`colgroup col[data-col="${k}"]`);
+    const cw = parseInt(c?.style.width || "0", 10);
+    if (cw >= QUALITY_COL_MIN) map[k] = Math.min(QUALITY_COL_MAX, cw);
+    else if (prev[k] >= QUALITY_COL_MIN) map[k] = prev[k];
+    else if (QUALITY_COL_DEFAULTS[k]) map[k] = QUALITY_COL_DEFAULTS[k];
+  });
+  return map;
+}
+
+function autoFitQualityCol(table, key) {
+  const keys = qualityColKeys(table);
+  const idx = keys.indexOf(key);
+  const th = table.querySelector(`thead th[data-col="${key}"]`);
+  if (idx < 0 || !th) return;
+  ensureQualityColBaseline(table);
+
+  let maxW = QUALITY_COL_MIN;
+  const inner = th.querySelector(".quality-th-inner") || th;
+  const labelEl = th.querySelector(".quality-th-label") || inner;
+  const thCs = getComputedStyle(inner);
+  const thFont = thCs.font || `${thCs.fontWeight} ${thCs.fontSize} ${thCs.fontFamily}`;
+  const thPad =
+    (parseFloat(thCs.paddingLeft) || 0) + (parseFloat(thCs.paddingRight) || 0);
+  const labelText = (labelEl.textContent || "").replace(/\s+/g, " ").trim();
+  // Запас под маркер сортировки.
+  maxW = Math.max(maxW, Math.ceil(measureQualityTextWidth(labelText, thFont) + thPad + 18));
+
+  table.querySelectorAll(`tbody tr td:nth-child(${idx + 1})`).forEach((td) => {
+    const cs = getComputedStyle(td);
+    const font = cs.font || `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    const text = (td.innerText || td.textContent || "").replace(/\s+/g, " ").trim();
+    maxW = Math.max(maxW, Math.ceil(measureQualityTextWidth(text, font) + pad + 2));
+  });
+
+  const w = setQualityColWidth(table, key, maxW);
+  const map = collectQualityColWidths(table);
+  map[key] = w;
+  saveQualityColWidths(map);
+  applyQualityColWidths(map);
+}
+
+function ensureQualityColBaseline(table) {
+  const view = $("#view-quality");
+  if (view && !view.classList.contains("active")) return;
+  applyQualityColWidths(loadQualityColWidths(qualityColKeys(table)));
+}
+
+function initQualityColResize() {
+  const table = $("#quality-table");
+  if (!table) return;
+  if (!qualityColResizeReady) {
+    qualityColResizeReady = true;
+    const headers = [...table.querySelectorAll("thead th[data-col]")];
+    headers.forEach((th, idx) => {
+      // У последнего столбца ручка не нужна — иначе пустая полоса справа.
+      if (idx === headers.length - 1) return;
+      const inner = th.querySelector(".quality-th-inner") || th;
+      if (inner.querySelector(".quality-col-grip")) return;
+      const grip = document.createElement("span");
+      grip.className = "quality-col-grip";
+      grip.title = "Перетащите ширину · двойной клик — по содержимому";
+      inner.appendChild(grip);
+
+      const startDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const key = th.getAttribute("data-col");
+        if (!key) return;
+        ensureQualityColBaseline(table);
+        const startX = e.clientX;
+        const startW = th.getBoundingClientRect().width;
+        let moved = false;
+        grip.classList.add("is-active");
+        document.body.classList.add("quality-col-resizing");
+
+        const onMove = (ev) => {
+          if (Math.abs(ev.clientX - startX) > 2) moved = true;
+          setQualityColWidth(table, key, startW + (ev.clientX - startX));
+        };
+        const onUp = () => {
+          grip.classList.remove("is-active");
+          document.body.classList.remove("quality-col-resizing");
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+          if (moved) {
+            qualityIgnoreSortClick = true;
+            setTimeout(() => {
+              qualityIgnoreSortClick = false;
+            }, 0);
+          }
+          const map = collectQualityColWidths(table);
+          saveQualityColWidths(map);
+          applyQualityColWidths(map);
+        };
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      };
+
+      grip.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const key = th.getAttribute("data-col");
+        if (!key) return;
+        qualityIgnoreSortClick = true;
+        setTimeout(() => {
+          qualityIgnoreSortClick = false;
+        }, 0);
+        autoFitQualityCol(table, key);
+      });
+
+      if (window.PointerEvent) grip.addEventListener("pointerdown", startDrag);
+      else grip.addEventListener("mousedown", startDrag);
+    });
+  }
+  ensureQualityColBaseline(table);
+}
+
+$("#quality-cols-reset")?.addEventListener("click", () => {
+  try {
+    localStorage.removeItem(QUALITY_COL_WIDTHS_KEY);
+  } catch {
+    /* ignore */
+  }
+  const table = $("#quality-table");
+  if (!table) return;
+  const defaults = {};
+  qualityColKeys(table).forEach((k) => {
+    defaults[k] = QUALITY_COL_DEFAULTS[k] || 96;
+  });
+  applyQualityColWidths(defaults);
+});
+
+const QUALITY_SORT_KEY = "jarvis.quality.sort";
+const QUALITY_SORT_NUMERIC = new Set([
+  "oid",
+  "total",
+  "wait",
+  "diag",
+  "rework",
+  "calls",
+  "kpi",
+  "mgr",
+  "feed",
+]);
+let qualityOrdersCache = [];
+let qualitySort = null; // { key, dir: 'asc'|'desc' }
+let qualitySortReady = false;
+let qualityIgnoreSortClick = false;
+
+function loadQualitySort() {
+  try {
+    const raw = localStorage.getItem(QUALITY_SORT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.key && (parsed.dir === "asc" || parsed.dir === "desc")) return parsed;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function saveQualitySort(sort) {
+  try {
+    if (!sort) localStorage.removeItem(QUALITY_SORT_KEY);
+    else localStorage.setItem(QUALITY_SORT_KEY, JSON.stringify(sort));
+  } catch {
+    /* ignore */
+  }
+}
+
+function qualitySortValue(row, key) {
+  switch (key) {
+    case "oid":
+      return Number(row.order_id) || 0;
+    case "status":
+      return String(row.status || "").toLowerCase();
+    case "engineer":
+      return String(row.engineer || row.master_name || "").toLowerCase();
+    case "device":
+      return String(row.device || "").toLowerCase();
+    case "total":
+      return row.total_days == null ? -1 : Number(row.total_days);
+    case "wait":
+      return row.wait_master_days == null ? -1 : Number(row.wait_master_days);
+    case "diag":
+      return row.diag_days == null ? -1 : Number(row.diag_days);
+    case "rework":
+      // Без доработок — лучше любого KPI (101): при desc сверху, при asc внизу.
+      if (row.rework_kpi == null) return 101;
+      return Number(row.rework_kpi);
+    case "calls":
+      return row.calls_kpi == null ? -1 : Number(row.calls_kpi);
+    case "kpi":
+      return row.order_kpi == null ? -1 : Number(row.order_kpi);
+    case "mgr":
+      return row.manager_no_answer_missed ? 1 : 0;
+    case "feed":
+      return row.has_feed ? 1 : 0;
+    default:
+      return "";
+  }
+}
+
+function sortQualityRows(rows, sort) {
+  if (!sort?.key || !rows?.length) return rows || [];
+  const dir = sort.dir === "desc" ? -1 : 1;
+  const key = sort.key;
+  return [...rows].sort((a, b) => {
+    const va = qualitySortValue(a, key);
+    const vb = qualitySortValue(b, key);
+    if (typeof va === "number" && typeof vb === "number") {
+      if (va === vb) return Number(b.order_id) - Number(a.order_id);
+      return (va - vb) * dir;
+    }
+    const cmp = String(va).localeCompare(String(vb), "ru", { sensitivity: "base" });
+    if (cmp === 0) return Number(b.order_id) - Number(a.order_id);
+    return cmp * dir;
+  });
+}
+
+function updateQualitySortIndicators() {
+  document.querySelectorAll("#quality-table thead th[data-col]").forEach((th) => {
+    const key = th.getAttribute("data-col");
+    const mark = th.querySelector(".quality-th-sort");
+    const active = qualitySort && qualitySort.key === key;
+    th.classList.toggle("is-sorted", !!active);
+    if (mark) {
+      mark.textContent = active ? (qualitySort.dir === "asc" ? "▲" : "▼") : "▲";
+    }
+  });
+}
+
+function initQualitySort() {
+  const table = $("#quality-table");
+  if (!table || qualitySortReady) {
+    updateQualitySortIndicators();
+    return;
+  }
+  qualitySortReady = true;
+  qualitySort = loadQualitySort();
+  if (
+    qualitySort?.key &&
+    !table.querySelector(`thead th[data-col="${qualitySort.key}"]`)
+  ) {
+    qualitySort = null;
+    saveQualitySort(null);
+  }
+
+  table.querySelectorAll("thead th[data-col]").forEach((th) => {
+    const inner = th.querySelector(".quality-th-inner");
+    if (!inner) return;
+    if (!inner.querySelector(".quality-th-label")) {
+      const label = document.createElement("span");
+      label.className = "quality-th-label";
+      // Move existing text nodes / content except grip into label
+      const grip = inner.querySelector(".quality-col-grip");
+      const nodes = [...inner.childNodes].filter((n) => n !== grip);
+      nodes.forEach((n) => label.appendChild(n));
+      inner.insertBefore(label, grip || null);
+    }
+    if (!inner.querySelector(".quality-th-sort")) {
+      const mark = document.createElement("span");
+      mark.className = "quality-th-sort";
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = "▲";
+      const grip = inner.querySelector(".quality-col-grip");
+      inner.insertBefore(mark, grip || null);
+    }
+    th.addEventListener("click", (e) => {
+      if (e.target?.closest?.(".quality-col-grip")) return;
+      if (document.body.classList.contains("quality-col-resizing")) return;
+      if (qualityIgnoreSortClick) return;
+      const key = th.getAttribute("data-col");
+      if (!key) return;
+      // Цикл: нет → первая → обратная → сброс.
+      if (qualitySort?.key === key) {
+        if (qualitySort.dir === (QUALITY_SORT_NUMERIC.has(key) ? "desc" : "asc")) {
+          qualitySort = {
+            key,
+            dir: qualitySort.dir === "asc" ? "desc" : "asc",
+          };
+        } else {
+          qualitySort = null;
+        }
+      } else {
+        qualitySort = {
+          key,
+          dir: QUALITY_SORT_NUMERIC.has(key) ? "desc" : "asc",
+        };
+      }
+      saveQualitySort(qualitySort);
+      updateQualitySortIndicators();
+      renderQualityOrders();
+    });
+  });
+  updateQualitySortIndicators();
+}
+
+function fmtQualityDate(s) {
+  if (!s) return "—";
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+  return String(s);
+}
+
+function qualityKpiTone(kpi) {
+  if (kpi == null) return "muted";
+  if (kpi >= 70) return "good";
+  if (kpi >= 40) return "mid";
+  return "bad";
+}
+
+/** Фон ячейки по KPI 0–100: красный → жёлтый → зелёный. */
+function qualityKpiHeatStyle(kpi) {
+  if (kpi == null || Number.isNaN(Number(kpi))) return "";
+  // Красная зона до ~55, жёлтая середина узкая, зелёный только у высоких.
+  // t=0 → red, t=1 → green; степень >1 сильнее тянет низкие KPI к красному.
+  const raw = Math.max(0, Math.min(100, Number(kpi))) / 100;
+  const t = Math.pow(raw, 1.65);
+  const hue = Math.round(t * 118); // 0=red … ~118=green
+  const sat = Math.round(58 + 22 * (1 - t)); // насыщеннее на плохих
+  const light = Math.round(44 + 4 * t);
+  const alpha = (0.28 + 0.22 * (1 - t)).toFixed(3); // KPI 30 ≈ заметно красный
+  return `background-color: hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
+}
+
+function qualityTipLi(text, tone) {
+  return `<li class="${tone ? `is-${tone}` : ""}">${escapeHtml(text)}</li>`;
+}
+
+function buildQualityCallsTipHtml(r) {
+  const inOk = r.calls_inbound_ok ?? r.calls_inbound ?? 0;
+  const inFail = r.calls_inbound_fail ?? 0;
+  const outOk = r.calls_outbound_ok ?? 0;
+  const outFail = r.calls_outbound_fail ?? 0;
+  const missed = r.calls_missed ?? 0;
+  const missUnrec = r.calls_missed_unrecovered ?? 0;
+  const missRec = r.calls_missed_recovered ?? 0;
+  const preOk = r.calls_pre_inbound_ok ?? 0;
+  const preSame = r.calls_pre_miss_same_day ?? 0;
+  const preBefore = r.calls_pre_miss_before_visit ?? 0;
+  const preUntil = r.calls_pre_miss_until_visit ?? 0;
+  const kpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
+  const tone = qualityKpiTone(kpi);
+
+  const preItems = [];
+  if (preOk) preItems.push(qualityTipLi(`Приняли входящий: ${preOk} — норма, без штрафа`, "good"));
+  if (preSame) {
+    preItems.push(
+      qualityTipLi(
+        `Не взяли, но в тот же день связались (повторный вх. или наш исходящий): ${preSame}`,
+        "mid",
+      ),
+    );
+  }
+  if (preBefore) {
+    preItems.push(
+      qualityTipLi(`Связались позже, но до сдачи устройства: ${preBefore}`, "mid"),
+    );
+  }
+  if (preUntil) {
+    preItems.push(
+      qualityTipLi(`До сдачи так и не связались: ${preUntil} — сильно снижает оценку`, "bad"),
+    );
+  }
+
+  const postItems = [];
+  if (missUnrec) {
+    postItems.push(
+      qualityTipLi(`Пропущенный без перезвона в тот же день: ${missUnrec}`, "bad"),
+    );
+  }
+  if (missRec) {
+    postItems.push(
+      qualityTipLi(`Пропущенный, перезвонили в тот же день: ${missRec}`, "good"),
+    );
+  }
+  if (r.callback_same_day) {
+    postItems.push(
+      qualityTipLi(`Дней, когда был перезвон в тот же день: ${r.callback_same_day}`),
+    );
+  }
+
+  const score =
+    kpi == null
+      ? `<div class="quality-float-tip-score is-muted">Нет данных</div>
+         <p class="quality-float-tip-note">В ленте нет звонков для оценки коммуникации.</p>`
+      : `<div class="quality-float-tip-score is-${tone}"><span>${kpi}</span><small>/ 100</small></div>`;
+
+  return `
+    <div class="quality-float-tip-head">Коммуникация</div>
+    ${score}
+    <div class="quality-float-tip-block">
+      <div class="quality-float-tip-label">Звонки по заказу</div>
+      <ul>
+        <li>Исходящие: <strong>${outOk}</strong> успешных · <strong>${outFail}</strong> неуспешных</li>
+        <li>Входящие: <strong>${inOk}</strong> успешных · <strong>${inFail}</strong> неуспешных${
+          missed ? ` · пропущено <strong>${missed}</strong>` : ""
+        }</li>
+      </ul>
+    </div>
+    ${
+      preItems.length
+        ? `<div class="quality-float-tip-block">
+            <div class="quality-float-tip-label">До создания заказа</div>
+            <ul>${preItems.join("")}</ul>
+          </div>`
+        : ""
+    }
+    ${
+      postItems.length
+        ? `<div class="quality-float-tip-block">
+            <div class="quality-float-tip-label">После создания заказа</div>
+            <ul>${postItems.join("")}</ul>
+          </div>`
+        : ""
+    }
+    ${
+      kpi != null && !preItems.length && !postItems.length
+        ? `<p class="quality-float-tip-note">Особых проблем с дозвоном не зафиксировано — оценка по успешности звонков.</p>`
+        : ""
+    }
+  `;
+}
+
+function buildQualityReworkTipHtml(r) {
+  const rwN = Number(r.rework_count || 0);
+  const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
+  if (rwN <= 0 || rwKpi == null) {
+    return `
+      <div class="quality-float-tip-head">Доработки</div>
+      <div class="quality-float-tip-score is-good"><span>—</span></div>
+      <p class="quality-float-tip-note">Приёмов на доработку не было.</p>
+    `;
+  }
+  const tone = qualityKpiTone(rwKpi);
+  const diag = r.rework_diag_days;
+  const repair = r.rework_repair_days;
+  const total = r.rework_total_days;
+  const since = fmtQualityDate(r.last_rework_at);
+  const why = [];
+  if (rwN === 1) why.push(qualityTipLi("Первая доработка: −20 к оценке", "mid"));
+  else why.push(qualityTipLi(`${rwN} приёма на доработку: −20 за первую и −25 за каждую следующую`, "bad"));
+  if (repair == null) {
+    why.push(
+      qualityTipLi(
+        "Ремонт после доработки ещё не начат — долгая диагностика штрафуется сильнее",
+        "bad",
+      ),
+    );
+  } else if (Number(diag) >= 7 || Number(repair) >= 7 || Number(total) >= 10) {
+    why.push(qualityTipLi("Долгий цикл после последней доработки снижает оценку", "mid"));
+  }
+
+  return `
+    <div class="quality-float-tip-head">Доработки</div>
+    <div class="quality-float-tip-score is-${tone}"><span>${rwKpi}</span><small>/ 100</small></div>
+    <div class="quality-float-tip-block">
+      <div class="quality-float-tip-label">Сводка</div>
+      <ul>
+        <li>Приёмов на доработку: <strong>${rwN}</strong></li>
+        <li>Последний приём: <strong>${escapeHtml(since)}</strong></li>
+      </ul>
+    </div>
+    <div class="quality-float-tip-block">
+      <div class="quality-float-tip-label">С последней доработки</div>
+      <ul>
+        <li>Диагностика: <strong>${diag == null ? "—" : `${fmtDays(diag)} дн`}</strong></li>
+        <li>Ремонт: <strong>${
+          repair == null ? "ещё не начат" : `${fmtDays(repair)} дн`
+        }</strong></li>
+        <li>Всего: <strong>${total == null ? "—" : `${fmtDays(total)} дн`}</strong></li>
+      </ul>
+    </div>
+    ${
+      why.length
+        ? `<div class="quality-float-tip-block">
+            <div class="quality-float-tip-label">Что влияет на оценку</div>
+            <ul>${why.join("")}</ul>
+          </div>`
+        : ""
+    }
+  `;
+}
+
+function buildQualityOrderKpiTipHtml(r) {
+  const kpi = r.order_kpi != null ? Number(r.order_kpi) : null;
+  const tone = qualityKpiTone(kpi);
+  const parts = Array.isArray(r.order_kpi_parts) ? r.order_kpi_parts : [];
+  const score =
+    kpi == null
+      ? `<div class="quality-float-tip-score is-muted">Нет данных</div>`
+      : `<div class="quality-float-tip-score is-${tone}"><span>${kpi}</span><small>/ 100</small></div>`;
+  const rows = parts
+    .map((p) => {
+      const pt = qualityKpiTone(p.score);
+      const detail = String(p.detail || "").trim();
+      return `<li class="is-${pt}"><strong>${escapeHtml(p.label)}</strong> → <strong>${
+        p.score
+      }/100</strong>${
+        detail ? ` <span class="quality-float-tip-muted">(${escapeHtml(detail)})</span>` : ""
+      } · вес ${p.weight_pct ?? "—"}%</li>`;
+    })
+    .join("");
+  return `
+    <div class="quality-float-tip-head">Итоговый KPI</div>
+    ${score}
+    <div class="quality-float-tip-block">
+      <div class="quality-float-tip-label">Оценка компонентов (не «количество»)</div>
+      <ul>${
+        rows ||
+        "<li>Недостаточно данных для оценки</li>"
+      }</ul>
+    </div>
+    <p class="quality-float-tip-note">В «Дораб.» и «Звонки» число — это балл 0–100, не счётчик. «Мен.» не входит. Нет звонков — веса перенормируются.</p>
+  `;
+}
+
+let qualityFloatTipEl = null;
+let qualityFloatTipAnchor = null;
+let qualityFloatTipHideTimer = null;
+let qualityTipsReady = false;
+
+function ensureQualityFloatTip() {
+  if (qualityFloatTipEl) return qualityFloatTipEl;
+  qualityFloatTipEl = document.createElement("div");
+  qualityFloatTipEl.className = "quality-float-tip";
+  qualityFloatTipEl.hidden = true;
+  qualityFloatTipEl.setAttribute("role", "tooltip");
+  document.body.appendChild(qualityFloatTipEl);
+  qualityFloatTipEl.addEventListener("mouseenter", () => {
+    if (qualityFloatTipHideTimer) {
+      clearTimeout(qualityFloatTipHideTimer);
+      qualityFloatTipHideTimer = null;
+    }
+  });
+  qualityFloatTipEl.addEventListener("mouseleave", () => hideQualityFloatTipSoon());
+  return qualityFloatTipEl;
+}
+
+function positionQualityFloatTip(anchor) {
+  const tip = ensureQualityFloatTip();
+  const rect = anchor.getBoundingClientRect();
+  const pad = 10;
+  const tipW = tip.offsetWidth || 320;
+  const tipH = tip.offsetHeight || 180;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  left = Math.max(pad, Math.min(left, window.innerWidth - tipW - pad));
+  let top = rect.bottom + 8;
+  if (top + tipH > window.innerHeight - pad && rect.top > tipH + 16) {
+    top = rect.top - tipH - 8;
+  }
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
+}
+
+function showQualityFloatTip(anchor) {
+  const content = anchor.querySelector(".quality-tip-content");
+  if (!content) return;
+  if (qualityFloatTipHideTimer) {
+    clearTimeout(qualityFloatTipHideTimer);
+    qualityFloatTipHideTimer = null;
+  }
+  const tip = ensureQualityFloatTip();
+  tip.innerHTML = content.innerHTML;
+  tip.hidden = false;
+  qualityFloatTipAnchor = anchor;
+  positionQualityFloatTip(anchor);
+}
+
+function hideQualityFloatTipSoon() {
+  if (qualityFloatTipHideTimer) clearTimeout(qualityFloatTipHideTimer);
+  qualityFloatTipHideTimer = setTimeout(() => {
+    if (!qualityFloatTipEl) return;
+    qualityFloatTipEl.hidden = true;
+    qualityFloatTipEl.innerHTML = "";
+    qualityFloatTipAnchor = null;
+    qualityFloatTipHideTimer = null;
+  }, 120);
+}
+
+function hideQualityFloatTipNow() {
+  if (qualityFloatTipHideTimer) {
+    clearTimeout(qualityFloatTipHideTimer);
+    qualityFloatTipHideTimer = null;
+  }
+  if (qualityFloatTipEl) {
+    qualityFloatTipEl.hidden = true;
+    qualityFloatTipEl.innerHTML = "";
+  }
+  qualityFloatTipAnchor = null;
+}
+
+function initQualityTips() {
+  if (qualityTipsReady) return;
+  const table = $("#quality-table");
+  if (!table) return;
+  qualityTipsReady = true;
+  table.addEventListener("mouseover", (e) => {
+    const a = e.target.closest?.(".quality-tip-anchor");
+    if (!a || !table.contains(a)) return;
+    if (qualityFloatTipAnchor === a && qualityFloatTipEl && !qualityFloatTipEl.hidden) return;
+    showQualityFloatTip(a);
+  });
+  table.addEventListener("mouseout", (e) => {
+    const a = e.target.closest?.(".quality-tip-anchor");
+    if (!a) return;
+    const related = e.relatedTarget;
+    if (related && (a.contains(related) || qualityFloatTipEl?.contains(related))) return;
+    hideQualityFloatTipSoon();
+  });
+  table.addEventListener("focusin", (e) => {
+    const a = e.target.closest?.(".quality-tip-anchor");
+    if (a && table.contains(a)) showQualityFloatTip(a);
+  });
+  table.addEventListener("focusout", (e) => {
+    const a = e.target.closest?.(".quality-tip-anchor");
+    if (!a) return;
+    const related = e.relatedTarget;
+    if (related && (a.contains(related) || qualityFloatTipEl?.contains(related))) return;
+    hideQualityFloatTipSoon();
+  });
+  window.addEventListener("scroll", () => hideQualityFloatTipNow(), true);
+  window.addEventListener("resize", () => hideQualityFloatTipNow());
+}
+
+function renderQualityOrders() {
+  const tbody = $("#quality-tbody");
+  if (!tbody) return;
+  hideQualityFloatTipNow();
+  initQualityTips();
+  const rows = sortQualityRows(qualityOrdersCache, qualitySort);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows
+    .map((r) => {
+      const callsKpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
+      const callsCls =
+        callsKpi == null
+          ? "quality-muted"
+          : callsKpi >= 70
+            ? "is-good"
+            : callsKpi >= 40
+              ? "is-mid"
+              : "is-bad";
+      const callsTip = r.has_feed ? buildQualityCallsTipHtml(r) : "";
+      const calls = r.has_feed
+        ? `<span class="quality-tip-anchor quality-calls ${callsCls}" tabindex="0">${
+            callsKpi == null ? "—" : callsKpi
+          }<span class="quality-tip-content" hidden>${callsTip}</span></span>`
+        : "…";
+      const oid = escapeHtml(r.order_id || "");
+      const feed = r.has_feed
+        ? `<button type="button" class="quality-feed-btn" data-feed-order="${oid}" title="${escapeHtml(r.feed_synced_at || "Открыть ленту")}">открыть</button>`
+        : `<button type="button" class="quality-feed-btn" disabled>нет</button>`;
+      const link = r.url
+        ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${oid}</a>`
+        : oid;
+      const mgr = r.manager_no_answer_missed
+        ? `<span class="quality-mgr-flag" title="После согласования неуспешный исходящий, статус не «На согласовании»/«Не дозвонились»">статус?</span>`
+        : `<span class="quality-muted">—</span>`;
+      const rwN = Number(r.rework_count || 0);
+      const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
+      const rwCls =
+        rwKpi == null
+          ? "quality-muted"
+          : rwKpi >= 70
+            ? "is-good"
+            : rwKpi >= 40
+              ? "is-mid"
+              : "is-bad";
+      const rwTip = buildQualityReworkTipHtml(r);
+      const rework =
+        rwN > 0 && rwKpi != null
+          ? `<span class="quality-tip-anchor quality-rework ${rwCls}" tabindex="0">${rwKpi}<span class="quality-tip-content" hidden>${rwTip}</span></span>`
+          : `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${rwTip}</span></span>`;
+      const orderKpi = r.order_kpi != null ? Number(r.order_kpi) : null;
+      const orderCls =
+        orderKpi == null
+          ? "quality-muted"
+          : orderKpi >= 70
+            ? "is-good"
+            : orderKpi >= 40
+              ? "is-mid"
+              : "is-bad";
+      const orderTip = buildQualityOrderKpiTipHtml(r);
+      const orderKpiCell =
+        orderKpi == null
+          ? `<span class="quality-tip-anchor quality-muted" tabindex="0">—<span class="quality-tip-content" hidden>${orderTip}</span></span>`
+          : `<span class="quality-tip-anchor quality-order-kpi ${orderCls}" tabindex="0">${orderKpi}<span class="quality-tip-content" hidden>${orderTip}</span></span>`;
+      const rowCls = r.manager_no_answer_missed ? ' class="quality-row-flag"' : "";
+      const acceptedTip = r.accepted_at
+        ? `Принят: ${fmtQualityDate(r.accepted_at)}`
+        : "Дата приёмки неизвестна";
+      return `<tr${rowCls}>
+          <td>${link}</td>
+          <td>${escapeHtml(r.status || "—")}</td>
+          <td>${escapeHtml(r.engineer || r.master_name || "—")}</td>
+          <td class="quality-device-cell" title="${escapeHtml(r.device || "")}" style="${qualityKpiHeatStyle(orderKpi)}">${escapeHtml((r.device || "—").slice(0, 28))}</td>
+          <td class="${dayClass(r.total_days, 7, 14)}" title="${escapeHtml(acceptedTip)}">${fmtDays(r.total_days)}</td>
+          <td class="${dayClass(r.wait_master_days, 2, 5)}">${fmtDays(r.wait_master_days)}</td>
+          <td class="${dayClass(r.diag_days, 3, 7)}" title="${escapeHtml(r.agreement_source || "")}">${fmtDays(r.diag_days)}</td>
+          <td>${rework}</td>
+          <td>${calls}</td>
+          <td>${orderKpiCell}</td>
+          <td>${mgr}</td>
+          <td>${feed}</td>
+        </tr>`;
+    })
+    .join("");
+  tbody.querySelectorAll("[data-feed-order]").forEach((btn) => {
+    btn.addEventListener("click", () => openQualityFeed(btn.getAttribute("data-feed-order")));
+  });
+  // После перерисовки строк вернуть сохранённые ширины (иначе fixed-layout сжимает).
+  const table = $("#quality-table");
+  if (table) applyQualityColWidths(loadQualityColWidths(qualityColKeys(table)));
+}
+
+async function loadQualityOrders() {
+  const tbody = $("#quality-tbody");
+  const statusEl = $("#quality-sync-status");
+  if (!tbody) return null;
+  initQualityColResize();
+  initQualitySort();
+  try {
+    const res = await fetch("/api/quality/orders");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = formatSyncStatus(data.sync);
+    qualityOrdersCache = data.orders || [];
+    if (!qualityOrdersCache.length) {
+      tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
+      return data.sync || null;
+    }
+    renderQualityOrders();
+    return data.sync || null;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="12" class="quality-empty">Ошибка: ${escapeHtml(err.message || err)}</td></tr>`;
+    return null;
+  }
+}
+
+function qualityFeedKindLabel(ev) {
+  const kind = ev.kind || "";
+  if (kind === "call") {
+    const ok = ev.call_ok;
+    const mark = ok === true ? "✓" : ok === false ? "✗" : "";
+    const cls =
+      ok === true ? "is-call-ok" : ok === false ? "is-call-fail" : "is-call";
+    if (ev.call_dir === "inbound") return { label: `вх.${mark}`, cls };
+    if (ev.call_dir === "outbound") return { label: `исх.${mark}`, cls };
+    if (ev.call_dir === "missed") return { label: "проп.✗", cls: "is-call-fail" };
+    return { label: `звонок${mark}`, cls };
+  }
+  if (kind === "master_changed") return { label: "мастер", cls: "is-master" };
+  if (kind === "status_changed") return { label: "статус", cls: "is-status" };
+  return { label: "комм.", cls: "" };
+}
+
+function closeQualityFeedModal() {
+  document.getElementById("quality-feed-modal")?.remove();
+}
+
+async function openQualityFeed(orderId) {
+  if (!orderId) return;
+  closeQualityFeedModal();
+  const overlay = document.createElement("div");
+  overlay.id = "quality-feed-modal";
+  overlay.className = "cj-import-overlay quality-feed-overlay";
+  const card = document.createElement("div");
+  card.className = "cj-import-card";
+  card.innerHTML = `<div class="cj-import-loading">Загрузка ленты №${escapeHtml(orderId)}…</div>`;
+  overlay.appendChild(card);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeQualityFeedModal();
+  });
+  document.body.appendChild(overlay);
+  try {
+    const res = await fetch(`/api/quality/orders/${encodeURIComponent(orderId)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    const o = data.order || {};
+    const feed = o.feed || [];
+    const feedHtml = feed.length
+      ? feed
+          .map((f) => {
+            const k = qualityFeedKindLabel(f);
+            return `<div class="cj-feed-row">
+              <span class="cj-feed-date">${escapeHtml(f.date || f.date_iso || "")}</span>
+              <span class="quality-feed-kind ${k.cls}">${escapeHtml(k.label)}</span>
+              <span class="cj-feed-author">${escapeHtml(f.author || "")}</span>
+              <span class="cj-feed-text">${escapeHtml(f.text || "")}</span>
+            </div>`;
+          })
+          .join("")
+      : "<em>Лента пуста</em>";
+    const crm = o.url
+      ? `<a href="${escapeHtml(o.url)}" target="_blank" rel="noopener">открыть в CRM</a>`
+      : "";
+    const m = o.metrics || {};
+    const mgrFlag = m.manager_no_answer_missed
+      ? `<span class="quality-mgr-flag" title="После согласования неуспешный исходящий, статус не «На согласовании»/«Не дозвонились»">статус?</span>`
+      : "";
+    const reworkMeta =
+      Number(m.rework_count || 0) > 0
+        ? `<span>Дораб.: <strong>${m.rework_kpi ?? "—"}/100</strong> · ${m.rework_count}× с ${escapeHtml(m.last_rework_at || "—")} · диаг ${fmtDays(m.rework_diag_days)} / рем ${fmtDays(m.rework_repair_days)} / всего ${fmtDays(m.rework_total_days)}</span>`
+        : "";
+    card.innerHTML = `
+      <div class="cj-import-head">
+        <strong>Лента · №${escapeHtml(o.order_id || orderId)}</strong>
+        <button type="button" class="quality-back-btn" data-close>Закрыть</button>
+      </div>
+      <div class="quality-feed-meta">
+        <span>Статус: <strong>${escapeHtml(o.status || "—")}</strong></span>
+        <span>Мастер: <strong>${escapeHtml(o.engineer || "—")}</strong></span>
+        <span>Устройство: <strong>${escapeHtml(o.device || "—")}</strong></span>
+        <span>Принят: <strong>${escapeHtml(o.accepted_at || "—")}</strong></span>
+        <span>Событий: <strong>${feed.length}</strong></span>
+        <span>Кэш: <strong>${escapeHtml(o.feed_synced_at || "—")}</strong></span>
+        <span>KPI: <strong>${m.order_kpi != null ? `${m.order_kpi}/100` : "—"}</strong></span>
+        ${reworkMeta}
+        ${mgrFlag}
+        ${crm}
+      </div>
+      <div class="quality-feed-body"><div class="cj-feed">${feedHtml}</div></div>
+    `;
+    card.querySelector("[data-close]")?.addEventListener("click", closeQualityFeedModal);
+  } catch (err) {
+    card.innerHTML = `<div class="cj-import-error">Ошибка: ${escapeHtml(err.message || err)}</div>
+      <div class="cj-import-actions"></div>`;
+    const actions = card.querySelector(".cj-import-actions");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cj-import-btn is-muted";
+    b.textContent = "Закрыть";
+    b.addEventListener("click", closeQualityFeedModal);
+    actions?.appendChild(b);
+  }
+}
+
+function stopQualityPoll() {
+  if (qualityPollTimer) {
+    clearTimeout(qualityPollTimer);
+    qualityPollTimer = null;
+  }
+}
+
+/** Poll only while sync is running; stops itself when idle/error. */
+function startQualityPoll() {
+  stopQualityPoll();
+  const tick = async () => {
+    qualityPollTimer = null;
+    const sync = await loadQualityOrders();
+    if (sync?.status === "running") {
+      qualityPollTimer = setTimeout(tick, 2000);
+      return;
+    }
+    const btn = $("#quality-sync-btn");
+    const forceBtn = $("#quality-force-btn");
+    if (btn) btn.disabled = false;
+    if (forceBtn) forceBtn.disabled = false;
+  };
+  qualityPollTimer = setTimeout(tick, 500);
+}
+
+async function runQualitySync(force = false) {
+  const statusEl = $("#quality-sync-status");
+  const btn = $("#quality-sync-btn");
+  const forceBtn = $("#quality-force-btn");
+  if (btn) btn.disabled = true;
+  if (forceBtn) forceBtn.disabled = true;
+  if (statusEl) statusEl.textContent = force ? "Полный пересбор…" : "Старт обновления…";
+  try {
+    const res = await fetch("/api/quality/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: !!force }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    startQualityPoll();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+    if (btn) btn.disabled = false;
+    if (forceBtn) forceBtn.disabled = false;
+  }
+}
+
+$("#quality-sync-btn")?.addEventListener("click", () => runQualitySync(false));
+$("#quality-force-btn")?.addEventListener("click", () => {
+  if (confirm("Перекачать ленту по всем заказам из списка? Это ~300 запросов к CRM (несколько минут).")) {
+    runQualitySync(true);
+  }
+});
+
+function renderQualityCalcResult(order) {
+  const box = $("#quality-calc-result");
+  if (!box) return;
+  const m = order.metrics || {};
+  const kpi = m.order_kpi != null ? Number(m.order_kpi) : null;
+  const tone = qualityKpiTone(kpi);
+  const parts = Array.isArray(m.order_kpi_parts) ? m.order_kpi_parts : [];
+  const partsHtml = parts.length
+    ? parts
+        .map((p) => {
+          const pt = qualityKpiTone(p.score);
+          return `<li class="is-${pt}"><strong>${escapeHtml(p.label)}</strong> → ${
+            p.score
+          }/100 · вес ${p.weight_pct ?? "—"}%<br /><span class="quality-muted">${escapeHtml(
+            String(p.detail || ""),
+          )}</span></li>`;
+        })
+        .join("")
+    : "<li>Нет компонентов</li>";
+
+  const rwN = Number(m.rework_count || 0);
+  const crm = order.url
+    ? `<a href="${escapeHtml(order.url)}" target="_blank" rel="noopener">открыть в CRM</a>`
+    : "";
+  const oid = escapeHtml(order.order_id || "");
+
+  box.hidden = false;
+  if (kpi != null) {
+    const t = Math.pow(Math.max(0, Math.min(100, kpi)) / 100, 1.65);
+    const hue = Math.round(t * 118);
+    box.style.background = `linear-gradient(135deg, hsla(${hue}, 55%, 96%, 0.95), rgba(255,255,255,0.85))`;
+  } else {
+    box.style.background = "";
+  }
+
+  box.innerHTML = `
+    <div class="quality-calc-head">
+      <strong>KPI · №${oid}</strong>
+      <span class="quality-calc-score is-${tone}">${
+        kpi == null ? "—" : `<span>${kpi}</span><small>/ 100</small>`
+      }</span>
+    </div>
+    <div class="quality-calc-meta">
+      <span>Статус: <strong>${escapeHtml(order.status || "—")}</strong></span>
+      <span>Мастер: <strong>${escapeHtml(order.engineer || "—")}</strong></span>
+      <span>Устройство: <strong>${escapeHtml(order.device || "—")}</strong></span>
+      <span>Принят: <strong>${escapeHtml(fmtQualityDate(order.accepted_at) || "—")}</strong></span>
+      <span>Расчёт до: <strong>${
+        m.is_closed
+          ? `выдачи ${escapeHtml(fmtQualityDate(m.closed_at) || m.as_of || "—")}`
+          : m.is_ready
+            ? `готовности ${escapeHtml(fmtQualityDate(m.ready_at || m.as_of) || "—")}`
+            : escapeHtml(fmtQualityDate(m.as_of) || "сегодня")
+      }</strong></span>
+      <span>Событий в ленте: <strong>${order.feed_count ?? (order.feed || []).length}</strong></span>
+      <span>Обновлено из CRM: <strong>${escapeHtml(order.feed_synced_at || "—")}</strong></span>
+      ${
+        m.manager_no_answer_missed
+          ? `<span class="quality-mgr-flag">Мен.: статус?</span>`
+          : ""
+      }
+      ${crm}
+    </div>
+    <div class="quality-calc-grid">
+      <div class="quality-calc-card">
+        <h4>Итоговый KPI</h4>
+        <ul>${partsHtml}</ul>
+      </div>
+      <div class="quality-calc-card">
+        <h4>Сроки</h4>
+        <ul>
+          <li>Всего в ремонте: <strong>${fmtDays(m.total_days)}</strong> дн</li>
+          <li>До мастера: <strong>${fmtDays(m.wait_master_days)}</strong> дн${
+            m.master_assigned_at
+              ? ` <span class="quality-muted">(с ${escapeHtml(fmtQualityDate(m.master_assigned_at))})</span>`
+              : ""
+          }</li>
+          <li>До диагн./согласования: <strong>${fmtDays(m.diag_days)}</strong> дн${
+            m.agreement_at
+              ? ` <span class="quality-muted">(до ${escapeHtml(fmtQualityDate(m.agreement_at))})</span>`
+              : ""
+          }</li>
+          ${
+            m.agreement_source
+              ? `<li class="quality-muted">Источник согласования: ${escapeHtml(m.agreement_source)}</li>`
+              : ""
+          }
+        </ul>
+      </div>
+      <div class="quality-calc-card">
+        <h4>Доработки</h4>
+        <ul>
+          <li>Приёмов: <strong>${rwN}</strong></li>
+          <li>KPI доработок: <strong>${
+            m.rework_kpi == null ? "— (не было)" : `${m.rework_kpi}/100`
+          }</strong></li>
+          <li>Последний приём: <strong>${escapeHtml(fmtQualityDate(m.last_rework_at) || "—")}</strong></li>
+          <li>С последней — диаг: <strong>${fmtDays(m.rework_diag_days)}</strong> дн</li>
+          <li>С последней — ремонт: <strong>${
+            m.rework_repair_days == null && rwN > 0
+              ? "ещё не начат"
+              : `${fmtDays(m.rework_repair_days)} дн`
+          }</strong></li>
+          <li>С последней — всего: <strong>${fmtDays(m.rework_total_days)}</strong> дн</li>
+        </ul>
+      </div>
+      <div class="quality-calc-card">
+        <h4>Звонки / коммуникация</h4>
+        <ul>
+          <li>KPI: <strong>${m.calls_kpi == null ? "—" : `${m.calls_kpi}/100`}</strong></li>
+          <li>Исходящие: <strong>${m.calls_outbound_ok ?? 0}</strong> ✓ · <strong>${
+            m.calls_outbound_fail ?? 0
+          }</strong> ✗</li>
+          <li>Входящие: <strong>${m.calls_inbound_ok ?? 0}</strong> ✓ · <strong>${
+            m.calls_inbound_fail ?? 0
+          }</strong> ✗ · проп. <strong>${m.calls_missed ?? 0}</strong></li>
+          <li>До заказа принятые вх.: <strong>${m.calls_pre_inbound_ok ?? 0}</strong></li>
+          <li>До заказа: связались в тот же день: <strong>${m.calls_pre_miss_same_day ?? 0}</strong></li>
+          <li>До заказа: связались до сдачи: <strong>${m.calls_pre_miss_before_visit ?? 0}</strong></li>
+          <li>До заказа: не связались до сдачи: <strong>${m.calls_pre_miss_until_visit ?? 0}</strong></li>
+          <li>После: без перезвона в тот же день: <strong>${m.calls_missed_unrecovered ?? 0}</strong></li>
+          <li>После: перезвонили в тот же день: <strong>${m.calls_missed_recovered ?? 0}</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="quality-calc-actions">
+      <button type="button" class="cj-import-btn is-muted" data-calc-feed="${oid}">Открыть ленту</button>
+      <button type="button" class="cj-import-btn is-muted" data-calc-close>Скрыть</button>
+    </div>
+  `;
+  box.querySelector("[data-calc-feed]")?.addEventListener("click", () => {
+    openQualityFeed(order.order_id);
+  });
+  box.querySelector("[data-calc-close]")?.addEventListener("click", () => {
+    box.hidden = true;
+    box.innerHTML = "";
+  });
+}
+
+async function runQualityCalc() {
+  const input = $("#quality-calc-input");
+  const status = $("#quality-calc-status");
+  const btn = $("#quality-calc-btn");
+  const box = $("#quality-calc-result");
+  const raw = String(input?.value || "").trim().replace(/[^\d]/g, "");
+  if (!raw) {
+    if (status) {
+      status.textContent = "Введите номер квитанции";
+      status.classList.add("is-error");
+    }
+    input?.focus();
+    return;
+  }
+  if (input) input.value = raw;
+  if (status) {
+    status.textContent = "Загружаю из CRM…";
+    status.classList.remove("is-error");
+  }
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(`/api/quality/calc/${encodeURIComponent(raw)}`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = data.detail || data.error || res.statusText;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    const order = data.order || {};
+    if (!order.feed_count && !(order.feed || []).length && !order.accepted_at) {
+      throw new Error(`По №${raw} CRM не вернул данных для расчёта`);
+    }
+    renderQualityCalcResult(order);
+    const m = order.metrics || {};
+    const asOf = m.closed_at
+      ? `выдана ${fmtQualityDate(m.closed_at)}`
+      : m.ready_at
+        ? `готова ${fmtQualityDate(m.ready_at)}`
+        : `на дату ${fmtQualityDate(m.as_of) || "сегодня"}`;
+    if (status) status.textContent = `Готово · №${raw} · ${asOf}`;
+  } catch (err) {
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+    if (status) {
+      status.textContent = err.message || String(err);
+      status.classList.add("is-error");
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+$("#quality-calc-btn")?.addEventListener("click", () => runQualityCalc());
+$("#quality-calc-input")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    runQualityCalc();
+  }
+});
+
+const QUALITY_PANEL_KEY = "jarvis.quality.panelCollapsed";
+
+function applyQualityPanelCollapsed(collapsed) {
+  const view = $("#view-quality");
+  const btn = $("#quality-panel-toggle");
+  if (!view || !btn) return;
+  view.classList.toggle("is-panel-collapsed", !!collapsed);
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  btn.textContent = collapsed ? "Развернуть" : "Свернуть";
+  try {
+    localStorage.setItem(QUALITY_PANEL_KEY, collapsed ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
+function initQualityPanelToggle() {
+  const btn = $("#quality-panel-toggle");
+  if (!btn || btn.dataset.ready) return;
+  btn.dataset.ready = "1";
+  let collapsed = false;
+  try {
+    collapsed = localStorage.getItem(QUALITY_PANEL_KEY) === "1";
+  } catch {
+    collapsed = false;
+  }
+  applyQualityPanelCollapsed(collapsed);
+  btn.addEventListener("click", () => {
+    const view = $("#view-quality");
+    applyQualityPanelCollapsed(!view?.classList.contains("is-panel-collapsed"));
+  });
+}
+
+initQualityPanelToggle();
 
 addBubble(
   "assistant",

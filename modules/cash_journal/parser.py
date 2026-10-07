@@ -43,6 +43,12 @@ ORDER_SIGNED = re.compile(
     r"(?:\s*(?:грн|uah|₴))?",
     re.IGNORECASE,
 )
+# «124417 срочная 750» / «124424 предоплата 500» — сумма в конце, без знака
+ORDER_LABEL_AMT = re.compile(
+    rf"^(?P<order>\d{{4,}})\s+(?P<label>(?![+\-−–]).+?)\s+(?P<amount>{MONEY_NUM})\s*$",
+    re.UNICODE,
+)
+_BIDI_RE = re.compile(r"[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]")
 
 # With or without currency: "-4000 грн ЗП", "-200 смс", "+750 пред", "-5к аренда"
 SIGNED_FIRST = re.compile(
@@ -97,7 +103,8 @@ def _norm_sign(ch: str) -> str:
 
 
 def _norm_space(text: str) -> str:
-    return re.sub(r"\s+", " ", text.replace("\xa0", " ")).strip()
+    s = _BIDI_RE.sub("", (text or "").replace("\xa0", " "))
+    return re.sub(r"\s+", " ", s).strip()
 
 
 def strip_prefix(line: str) -> str:
@@ -122,6 +129,8 @@ def _strip_chat_labels(body: str) -> str:
     списка как unrecognized — ломается порядок строк.
     """
     s = _norm_space(body)
+    if _is_quote_line(s):
+        return s
     while True:
         # не трогаем «касса: N» / «карта: N»
         if OPENING_CASH.match(s) or OPENING_CARD.match(s) or CASH_FACT.match(s):
@@ -619,6 +628,23 @@ def _parse_operation_lines(body: str) -> list[JournalOp]:
         )
         return [main, *extras]
 
+    m = ORDER_LABEL_AMT.match(body)
+    if m:
+        val = parse_money(m.group("amount"))
+        label = _norm_space(m.group("label"))
+        if val is not None and label and not re.fullmatch(rf"{MONEY_NUM}", label):
+            bucket = _bucket_for_amount(body, m.start("amount"), m.end("amount"))
+            amount = _cash_portion_amount(body, abs(val), bucket)
+            return [
+                JournalOp(
+                    amount=amount,
+                    bucket=bucket,
+                    note=body,
+                    order_id=m.group("order"),
+                    raw=body,
+                )
+            ]
+
     m = SIGNED_FIRST.match(body)
     if m:
         val = parse_money(m.group("amount"))
@@ -657,6 +683,18 @@ def _strip_balance_suffix(rest: str) -> str:
     return re.sub(r"(?i)(?:грн|uah|₴)\.?\s*$", "", s).strip()
 
 
+def _is_ignorable_balance_rest(rest: str) -> bool:
+    """Хвост у «Касса: 925 (-75 получается по записям в ТГ)» — не операция."""
+    s = _norm_space(rest)
+    if not s:
+        return True
+    if re.fullmatch(r"\([^)]*\)", s):
+        return True
+    if re.search(r"получается\s+по\s+запис", s, re.I):
+        return True
+    return False
+
+
 def _parse_balance_markers(body: str) -> tuple[float | None, float | None, str]:
     """«Касса: N», «Каса: N», «касса факт N», «Карта: N» → суммы и хвост."""
     body = _norm_space(body)
@@ -671,6 +709,8 @@ def _parse_balance_markers(body: str) -> tuple[float | None, float | None, str]:
     if card_m:
         rest = OPENING_CARD.sub(" ", rest, count=1)
     rest = _strip_balance_suffix(rest)
+    if _is_ignorable_balance_rest(rest):
+        rest = ""
     written_cash: float | None = None
     if cash_m:
         written_cash = float(parse_money(cash_m.group(1)) or 0)
@@ -691,7 +731,14 @@ def _collect_bodies(text: str) -> tuple[float | None, float | None, list[str]]:
     bodies: list[str] = []
 
     for line in normalize_journal_text(text).split("\n"):
-        body = _strip_chat_labels(strip_prefix(line))
+        body = strip_prefix(line)
+        body = _norm_space(body)
+        if not body:
+            continue
+        if _is_quote_line(body):
+            bodies.append(body)
+            continue
+        body = _strip_chat_labels(body)
         if not body:
             continue
         written_cash, written_card, rest = _parse_balance_markers(body)
@@ -760,7 +807,7 @@ def _looks_like_balance_remark(body: str) -> bool:
 
 def _is_quote_line(body: str) -> bool:
     """Telegram-цитата в ответе («> 123430 -2060 зч») — не операция."""
-    s = _norm_space(body).lstrip("\ufeff")
+    s = _norm_space(body)
     return bool(re.match(r"^>\s*", s))
 
 
@@ -949,16 +996,19 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
 
 def _loose_amount_from_text(text: str) -> float | None:
     """Best-effort amount for unrecognized lines (for the interactive editor)."""
+    s = _norm_space(text or "")
+    m_order = re.match(rf"^(\d{{4,}})\s+(?![+\-−–])", s)
+    search_in = s[m_order.end() :] if m_order else s
     m = re.search(
         rf"(?<!\d)([+\-−–])\s*({MONEY_NUM})",
-        text or "",
+        search_in,
     )
     if m:
         val = parse_money(m.group(2))
         if val is None:
             return None
         return (-abs(val)) if _norm_sign(m.group(1)) == "-" else abs(val)
-    m = re.search(rf"(?<!\d)({MONEY_NUM})\s*(?:грн|uah|₴)?", text or "", re.I)
+    m = re.search(rf"(?<!\d)({MONEY_NUM})\s*(?:грн|uah|₴)?", search_in, re.I)
     if m:
         return parse_money(m.group(1))
     return None
@@ -978,7 +1028,8 @@ def _guess_unrecognized_action(raw: str, amount: float | None) -> str:
     if re.search(
         r"спустил\w*\s+сверху|остальное\s+забрал|рассчитается|"
         r"сегодня\s+\w+\s+расчет|пояснен|комментар|"
-        r"^>\s*|спілкувал|в\s+лс\b",
+        r"^>\s*|спілкувал|в\s+лс\b|"
+        r"^налом?\s+|получается\s+по\s+запис",
         n,
     ):
         return "ignore"
@@ -1116,7 +1167,7 @@ def _build_cash_journal_widget(result: JournalResult) -> dict[str, Any]:
                 "source": "unrecognized",
                 "is_quote": _is_quote_line(raw),
             }
-            if cp:
+            if cp and not line["is_quote"]:
                 line["is_checkpoint"] = True
                 line["action"] = "ignore"
                 line["checkpoint"] = cp

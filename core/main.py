@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -16,12 +17,14 @@ from modules import load_modules
 from modules.base import BaseModule, ToolSpec
 from modules.cash_journal.parser import is_parts_attach_line
 from modules.gincore.module import GincoreModule
+from modules.gincore.quality import QualityService, compute_quality_metrics
 
 
 db = Database(settings.resolved_db_path())
 secrets = SecretBox(settings.resolved_secret_key_path())
 modules: list[BaseModule] = []
 gincore_module: GincoreModule | None = None
+quality_service: QualityService | None = None
 
 
 class ChatRequest(BaseModel):
@@ -119,7 +122,7 @@ async def build_llm() -> LLMService:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global modules, gincore_module
+    global modules, gincore_module, quality_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -127,6 +130,13 @@ async def lifespan(_: FastAPI):
     if gincore_module is not None:
         mod = gincore_module
         mod.bind_settings_provider(lambda: getattr(mod, "_cached_settings", {}))
+
+    async def _quality_client():
+        client = await _gincore_client()
+        await client.ensure_login()
+        return client
+
+    quality_service = QualityService(db, _quality_client)
     yield
     await db.close()
 
@@ -139,7 +149,10 @@ app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 async def index() -> FileResponse:
     return FileResponse(
         WEB_DIR / "index.html",
-        headers={"Cache-Control": "no-cache, must-revalidate"},
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+        },
     )
 
 
@@ -408,6 +421,132 @@ async def update_app_settings(body: AppSettingsUpdate) -> dict[str, Any]:
         app_cfg["llm_api_key"] = body.llm_api_key
     await db.set_setting("app", app_cfg)
     return await get_app_settings()
+
+
+class QualitySyncRequest(BaseModel):
+    force: bool = False
+
+
+def _quality_base_url() -> str:
+    base = settings.default_gincore_base_url
+    return base.rstrip("/") if base else ""
+
+
+async def _quality_order_url(order_id: str) -> str:
+    base = _quality_base_url()
+    if gincore_module is not None:
+        cfg = await get_module_settings("gincore")
+        base = (cfg.get("base_url") or base).rstrip("/")
+    return f"{base}/orders/{order_id}"
+
+
+@app.get("/api/quality/orders")
+async def quality_orders() -> dict[str, Any]:
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    data = await quality_service.list_rows()
+    for row in data.get("orders") or []:
+        oid = row.get("order_id")
+        if oid:
+            row["url"] = await _quality_order_url(str(oid))
+    return data
+
+
+@app.get("/api/quality/orders/{order_id}")
+async def quality_order_detail(order_id: str) -> dict[str, Any]:
+    """Cached order row + full live feed from local DB (no CRM call)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    row = await db.quality_get_order(str(order_id))
+    if not row:
+        raise HTTPException(404, f"Заказ {order_id} не найден в кэше")
+    feed: list[Any] = []
+    if row.get("feed_json"):
+        try:
+            feed = json.loads(row["feed_json"])
+        except json.JSONDecodeError:
+            feed = []
+    metrics = compute_quality_metrics(
+        accepted_at=row.get("accepted_at"),
+        repair_cost=row.get("repair_cost"),
+        feed=feed,
+        engineer=row.get("engineer"),
+        status=row.get("status"),
+    )
+    # Newest first for reading (stored chronological).
+    feed_view = list(reversed(feed)) if feed else []
+    return {
+        "ok": True,
+        "order": {
+            "order_id": row["order_id"],
+            "status": row.get("status"),
+            "engineer": row.get("engineer"),
+            "device": row.get("device"),
+            "client": row.get("client"),
+            "location": row.get("location"),
+            "accepted_at": row.get("accepted_at"),
+            "repair_cost": row.get("repair_cost"),
+            "feed_synced_at": row.get("feed_synced_at"),
+            "url": await _quality_order_url(str(row["order_id"])),
+            "metrics": metrics,
+            "feed": feed_view,
+            "feed_count": len(feed_view),
+        },
+    }
+
+
+@app.post("/api/quality/calc/{order_id}")
+async def quality_calc(order_id: str) -> dict[str, Any]:
+    """Подтянуть квитанцию из CRM и посчитать KPI (в т.ч. закрытые / вне кэша)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    try:
+        data = await quality_service.calc_order(str(order_id))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    feed = data.get("feed") or []
+    feed_view = list(reversed(feed)) if feed else []
+    return {
+        "ok": True,
+        "source": "crm",
+        "order": {
+            "order_id": data.get("order_id"),
+            "status": data.get("status"),
+            "engineer": data.get("engineer"),
+            "device": data.get("device"),
+            "client": data.get("client"),
+            "location": data.get("location"),
+            "accepted_at": data.get("accepted_at"),
+            "repair_cost": data.get("repair_cost"),
+            "feed_synced_at": data.get("feed_synced_at"),
+            "url": await _quality_order_url(str(data.get("order_id") or order_id)),
+            "metrics": data.get("metrics") or {},
+            "feed": feed_view,
+            "feed_count": len(feed_view),
+        },
+    }
+
+
+@app.get("/api/quality/sync")
+async def quality_sync_status() -> dict[str, Any]:
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    return {"ok": True, "sync": await db.quality_get_sync_state()}
+
+
+@app.post("/api/quality/sync")
+async def quality_sync_start(body: QualitySyncRequest | None = None) -> dict[str, Any]:
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    force = bool(body.force) if body else False
+    try:
+        return await quality_service.start_sync(force=force)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/api/conversations")

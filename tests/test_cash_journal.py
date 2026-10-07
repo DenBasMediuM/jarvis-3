@@ -569,6 +569,64 @@ def test_parts_attach_journal_line():
     assert is_parts_attach_line(zp) is False
 
 
+SAMPLE_05_10 = """
+[05.10.2026 08:01] Денис Исаев: Касса: 925 (-75 получается по записям в ТГ)
+Карта: 1121
+[05.10.2026 08:59] Марго в ответ Денис Исаев:
+> ‎⁨Касса: 925 (-75 получается по записям в ТГ) Карта: 1121⁩
+налом 925
+[05.10.2026 10:00] Марго: 123973 +2500
+[05.10.2026 10:41] Марго: 124417 срочная 750
+[05.10.2026 11:42] Марго: 124388 +400
+[05.10.2026 11:50] Марго: 123600 +3900
+[05.10.2026 12:40] Марго: 124424 предоплата 500
+[05.10.2026 13:08] Марго: 124417 +1500
+[05.10.2026 13:16] Марго: Касса: 10475
+[05.10.2026 15:28] Марго: 124170 -270 на зч (прокладка)
+[05.10.2026 15:29] Марго: 124348 -200 зч (пачкорд)
+[05.10.2026 15:29] Марго: 124268 -300 зч (термодатчики)
+[05.10.2026 15:31] Марго: -2575 ЗП Вовчук остаток за 16.09
+[05.10.2026 15:31] Марго: -655 ЗП Вовчук за 24.09
+[05.10.2026 15:40] Марго: -1000 ЗП Марго
+[05.10.2026 15:42] Марго: Касса: 5475
+[05.10.2026 16:09] Марго: -1000 ЗП Садоян (аванс)
+[05.10.2026 16:40] Марго: 122866 -1400 зч (материнка)
+[05.10.2026 17:28] Марго: 124405 +400
+[05.10.2026 18:38] Марго: Касса: 3475
+"""
+
+
+def test_order_label_amount_and_nalom_opening():
+    """«124417 срочная 750», «налом 925», цитата и сверки 10475/5475/3475."""
+    out = reconcile_cash_journal(SAMPLE_05_10)
+    cj = out["cash_journal"]
+    assert cj["opening_cash"] == 925
+    assert cj["opening_card"] == 1121
+    assert cj["closing_cash"] == 3475
+    assert cj["closing_card"] == 1121
+
+    rush = next(l for l in cj["lines"] if "срочная" in (l.get("raw") or ""))
+    assert rush["amount"] == 750
+    assert rush["order_id"] == "124417"
+    assert rush["action"] == "cash_in"
+
+    prepay = next(l for l in cj["lines"] if "предоплата" in (l.get("raw") or ""))
+    assert prepay["amount"] == 500
+    assert prepay["order_id"] == "124424"
+    assert prepay["action"] == "cash_in"
+
+    assert not any(l.get("amount") == 124417 and "срочная" in (l.get("raw") or "") for l in cj["lines"])
+    assert not any((l.get("raw") or "").strip() in ("1121", "1121\u2069") for l in cj["lines"])
+    nalom = [l for l in cj["lines"] if "налом" in (l.get("raw") or "")]
+    assert all(l["action"] == "ignore" for l in nalom)
+
+    cps = [l["written_cash"] for l in cj["lines"] if l.get("is_checkpoint") and l.get("written_cash")]
+    assert cps == [10475, 5475, 3475]
+    assert all(l.get("cash_match") is True for l in cj["lines"] if l.get("is_checkpoint"))
+    quotes = [l for l in cj["lines"] if l.get("is_quote")]
+    assert quotes and all(l["action"] == "ignore" for l in quotes)
+
+
 def test_breakdown_comma_amount_line():
     from modules.cash_journal.parser import _is_breakdown_line
 
