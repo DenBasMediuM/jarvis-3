@@ -219,22 +219,22 @@ function updateSortIndicators(table, sort) {
 }
 
 function bindTableSort(table, getSort, setSort, onChange) {
-  if (!table || table.dataset.sortBound === "1") {
-    updateSortIndicators(table, getSort());
-    return;
-  }
-  table.dataset.sortBound = "1";
-  table.querySelectorAll("thead th[data-col]").forEach((th) => {
-    th.addEventListener("click", () => {
-      const key = th.getAttribute("data-col");
-      if (!key) return;
-      const next = cycleSort(getSort(), key);
-      setSort(next);
-      updateSortIndicators(table, next);
-      onChange();
-    });
-  });
+  if (!table) return;
   updateSortIndicators(table, getSort());
+  if (table.dataset.sortBound === "1") return;
+  table.dataset.sortBound = "1";
+  // Делегирование: клик по любой части заголовка (label/стрелка).
+  table.tHead?.addEventListener("click", (e) => {
+    const th = e.target.closest?.("th[data-col]");
+    if (!th || !table.contains(th)) return;
+    e.preventDefault();
+    const key = th.getAttribute("data-col");
+    if (!key) return;
+    const next = cycleSort(getSort(), key);
+    setSort(next);
+    updateSortIndicators(table, next);
+    onChange();
+  });
 }
 
 function masterHeaderHtml() {
@@ -412,7 +412,8 @@ function buildOrderKpiTip(r) {
 }
 
 function tipCell(innerHtml, tipHtml, extraClass = "") {
-  return `<span class="tip-anchor ${extraClass}" tabindex="0">${innerHtml}<span class="tip-content" hidden>${tipHtml}</span></span>`;
+  // div, не span: в подсказке есть блочные теги — span ломает DOM таблицы.
+  return `<div class="tip-anchor ${extraClass}" tabindex="0">${innerHtml}<div class="tip-content" hidden>${tipHtml}</div></div>`;
 }
 
 function ensureFloatTip() {
@@ -671,16 +672,17 @@ function renderMasters() {
   `;
 
   root.querySelectorAll(".master-table").forEach((table) => {
-    updateSortIndicators(table, mastersSort);
-    table.querySelectorAll("thead th[data-col]").forEach((th) => {
-      th.addEventListener("click", () => {
-        const key = th.getAttribute("data-col");
-        if (!key) return;
-        mastersSort = cycleSort(mastersSort, key);
+    // Сортировка общая для всех таблиц мастеров.
+    table.dataset.sortBound = "";
+    bindTableSort(
+      table,
+      () => mastersSort,
+      (s) => {
+        mastersSort = s || { key: "kpi", dir: "asc" };
         saveSort(SORT_MASTERS_KEY, mastersSort);
-        renderMasters();
-      });
-    });
+      },
+      () => renderMasters(),
+    );
   });
 
   root.querySelectorAll(".master-card-head").forEach((btn) => {
@@ -1056,7 +1058,7 @@ function setTab(id) {
 
 async function boot() {
   bindTips();
-  overviewSort = loadSort(SORT_OVERVIEW_KEY);
+  overviewSort = loadSort(SORT_OVERVIEW_KEY) || { key: "kpi", dir: "asc" };
   mastersSort = loadSort(SORT_MASTERS_KEY) || { key: "kpi", dir: "asc" };
   summarySort = loadSort(SORT_SUMMARY_KEY) || { key: "kpi", dir: "desc" };
   document.querySelectorAll(".tab").forEach((btn) => {

@@ -123,17 +123,23 @@ main { flex: 1; min-height: 0; }
 }
 .th-sort {
   flex: 0 0 auto;
-  font-size: 0.7rem;
-  color: transparent;
-  width: 0.75em;
+  font-size: 0.72rem;
+  color: rgba(93, 107, 124, 0.45);
+  width: 0.85em;
   line-height: 1;
 }
-.qtable th.is-sorted .th-sort,
 .qtable th[data-col]:hover .th-sort {
   color: var(--muted);
 }
 .qtable th.is-sorted .th-sort {
   color: var(--accent);
+  font-weight: 700;
+}
+.qtable thead th {
+  position: sticky;
+  top: 52px;
+  z-index: 6;
+  box-shadow: 0 1px 0 var(--line);
 }
 .qtable a { color: var(--accent); font-weight: 650; text-decoration: none; }
 .qtable a:hover { text-decoration: underline; }
@@ -265,9 +271,11 @@ main { flex: 1; min-height: 0; }
 .chart-wrap.is-dynamics { height: min(420px, 48vh); min-height: 300px; }
 
 .tip-anchor {
+  display: inline-block;
   position: relative;
   cursor: help;
   border-bottom: 1px dotted rgba(28, 36, 48, 0.25);
+  max-width: 100%;
 }
 .tip-content { display: none !important; }
 
