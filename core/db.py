@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,24 @@ CREATE TABLE IF NOT EXISTS quality_sync_state (
   message TEXT,
   started_at TEXT,
   finished_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS quality_daily_stats (
+  day TEXT PRIMARY KEY,
+  orders_count INTEGER NOT NULL DEFAULT 0,
+  avg_total_days REAL,
+  avg_wait_master_days REAL,
+  avg_diag_days REAL,
+  avg_rework_kpi REAL,
+  avg_calls_kpi REAL,
+  avg_order_kpi REAL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS quality_analysis (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  analysis_json TEXT NOT NULL,
+  generated_at TEXT NOT NULL
 );
 """
 
@@ -287,3 +306,79 @@ class Database:
         )
         await self.conn.commit()
         return await self.quality_get_sync_state()
+
+    async def quality_upsert_daily_stats(self, row: dict[str, Any]) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO quality_daily_stats(
+              day, orders_count, avg_total_days, avg_wait_master_days, avg_diag_days,
+              avg_rework_kpi, avg_calls_kpi, avg_order_kpi, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(day) DO UPDATE SET
+              orders_count = excluded.orders_count,
+              avg_total_days = excluded.avg_total_days,
+              avg_wait_master_days = excluded.avg_wait_master_days,
+              avg_diag_days = excluded.avg_diag_days,
+              avg_rework_kpi = excluded.avg_rework_kpi,
+              avg_calls_kpi = excluded.avg_calls_kpi,
+              avg_order_kpi = excluded.avg_order_kpi,
+              updated_at = excluded.updated_at
+            """,
+            (
+                row["day"],
+                int(row.get("orders_count") or 0),
+                row.get("avg_total_days"),
+                row.get("avg_wait_master_days"),
+                row.get("avg_diag_days"),
+                row.get("avg_rework_kpi"),
+                row.get("avg_calls_kpi"),
+                row.get("avg_order_kpi"),
+                row.get("updated_at"),
+            ),
+        )
+        await self.conn.commit()
+
+    async def quality_list_daily_stats(self, *, limit: int = 365) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM (
+              SELECT * FROM quality_daily_stats
+              ORDER BY day DESC
+              LIMIT ?
+            ) AS recent
+            ORDER BY day ASC
+            """,
+            (max(1, int(limit)),),
+        )
+        rows = await cur.fetchall()
+        return [dict(r) for r in rows]
+
+    async def quality_save_analysis(self, analysis: dict[str, Any]) -> None:
+        generated_at = analysis.get("generated_at") or datetime.now(timezone.utc).isoformat()
+        await self.conn.execute(
+            """
+            INSERT INTO quality_analysis(id, analysis_json, generated_at)
+            VALUES (1, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              analysis_json = excluded.analysis_json,
+              generated_at = excluded.generated_at
+            """,
+            (json.dumps(analysis, ensure_ascii=False), generated_at),
+        )
+        await self.conn.commit()
+
+    async def quality_get_analysis(self) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT analysis_json, generated_at FROM quality_analysis WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        try:
+            data = json.loads(row["analysis_json"] or "{}")
+        except json.JSONDecodeError:
+            return None
+        if isinstance(data, dict):
+            data.setdefault("generated_at", row["generated_at"])
+            return data
+        return None

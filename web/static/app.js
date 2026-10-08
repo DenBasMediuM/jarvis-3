@@ -2689,8 +2689,480 @@ function renderQualityOrders() {
 
 const QUALITY_TAB_KEY = "jarvis.quality.tab";
 
+let qualityDailyStatsCache = [];
+let qualityAnalysisCache = null;
+let qualityDynamicsKpiChart = null;
+let qualityDynamicsDaysChart = null;
+
+function qualityAnalysisSeverityLabel(sev) {
+  if (sev === "critical") return "критично";
+  if (sev === "high") return "высокий";
+  if (sev === "medium") return "средний";
+  if (sev === "watch") return "наблюдение";
+  return sev || "—";
+}
+
+function qualityFmtDelta(key, v) {
+  if (v == null || Number.isNaN(Number(v))) return "—";
+  const n = Number(v);
+  const isDays = String(key).includes("days");
+  const sign = n > 0 ? "+" : "";
+  const unit = isDays ? " дн" : "";
+  let tone = "is-flat";
+  if (isDays) {
+    if (n <= -1) tone = "is-up";
+    else if (n >= 1) tone = "is-down";
+  } else if (n >= 2) tone = "is-up";
+  else if (n <= -2) tone = "is-down";
+  return `<span class="quality-delta ${tone}">${sign}${n.toFixed(1)}${unit}</span>`;
+}
+
+function renderQualityAnalysisTab() {
+  const empty = $("#quality-analysis-empty");
+  const root = $("#quality-analysis-root");
+  if (!root) return;
+  const a = qualityAnalysisCache;
+  if (!a || !a.orders_count) {
+    if (empty) empty.hidden = false;
+    root.hidden = true;
+    root.innerHTML = "";
+    return;
+  }
+  if (empty) empty.hidden = true;
+  root.hidden = false;
+
+  const health = a.health || {};
+  const portfolio = a.portfolio || {};
+  const bands = portfolio.kpi_bands || {};
+  const dyn = a.dynamics || {};
+  const deltas = dyn.deltas || {};
+  const masters = a.masters || {};
+  const score = health.score;
+  const scoreTone =
+    score == null ? "unknown" : score >= 75 ? "good" : score >= 55 ? "mid" : score >= 40 ? "tense" : "bad";
+
+  const metric = (label, value, hint) => `
+    <div class="quality-analysis-metric" title="${escapeHtml(hint || "")}">
+      <span class="quality-analysis-metric-label">${escapeHtml(label)}</span>
+      <strong>${value == null || value === "" ? "—" : escapeHtml(String(value))}</strong>
+    </div>`;
+
+  const fmtNum = (v, digits = 1) =>
+    v == null || Number.isNaN(Number(v)) ? "—" : Number(v).toFixed(digits);
+
+  const narrativeHtml = (dyn.narrative || [])
+    .map((t) => `<li>${escapeHtml(t)}</li>`)
+    .join("");
+
+  const deltaRows = [
+    ["avg_order_kpi", "Средний KPI"],
+    ["avg_calls_kpi", "Звонки"],
+    ["avg_rework_kpi", "Дораб."],
+    ["avg_total_days", "Всего дн"],
+    ["avg_wait_master_days", "До мастера"],
+    ["avg_diag_days", "До диагн."],
+  ]
+    .map(
+      ([key, title]) =>
+        `<div class="quality-analysis-delta-row"><span>${escapeHtml(title)}</span>${qualityFmtDelta(
+          key,
+          deltas[key],
+        )}</div>`,
+    )
+    .join("");
+
+  const focusHtml = (a.focus_areas || [])
+    .map((f) => {
+      const acts = (f.actions || [])
+        .map((x) => `<li>${escapeHtml(x)}</li>`)
+        .join("");
+      return `
+        <article class="quality-analysis-focus is-${escapeHtml(f.severity || "medium")}">
+          <header>
+            <h4>${escapeHtml(f.title || "Фокус")}</h4>
+            <span class="quality-sev is-${escapeHtml(f.severity || "medium")}">${escapeHtml(
+              qualityAnalysisSeverityLabel(f.severity),
+            )}</span>
+          </header>
+          <p>${escapeHtml(f.detail || "")}</p>
+          ${acts ? `<ul class="quality-analysis-actions">${acts}</ul>` : ""}
+        </article>`;
+    })
+    .join("");
+
+  const positivesHtml = (a.positives || [])
+    .map((t) => `<li>${escapeHtml(t)}</li>`)
+    .join("");
+
+  const masterList = (rows, emptyText) => {
+    if (!rows?.length) return `<p class="quality-muted">${escapeHtml(emptyText)}</p>`;
+    return `<ul class="quality-analysis-masters">${rows
+      .map(
+        (m) => `<li>
+          <strong>${escapeHtml(m.name || "—")}</strong>
+          <span>KPI ${m.avg_kpi == null ? "—" : m.avg_kpi}</span>
+          <span>${m.count || 0} зак.</span>
+          <span>дораб. ${m.rework_orders || 0}</span>
+          <span>${
+            m.avg_total_days == null ? "—" : `${Number(m.avg_total_days).toFixed(1)} дн`
+          }</span>
+        </li>`,
+      )
+      .join("")}</ul>`;
+  };
+
+  const urgentHtml = (a.urgent || [])
+    .map((u, idx) => {
+      const oid = escapeHtml(u.order_id || "");
+      const link = u.url
+        ? `<a href="${escapeHtml(u.url)}" target="_blank" rel="noopener">№${oid}</a>`
+        : `№${oid}`;
+      const reasons = (u.reasons || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+      const acts = (u.actions || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+      const kpiTone = qualityKpiTone(u.order_kpi);
+      return `
+        <article class="quality-urgent-card is-${escapeHtml(u.severity || "medium")}">
+          <header class="quality-urgent-head">
+            <div class="quality-urgent-title">
+              <span class="quality-urgent-rank">${idx + 1}</span>
+              ${link}
+              <span class="quality-sev is-${escapeHtml(u.severity || "medium")}">${escapeHtml(
+                qualityAnalysisSeverityLabel(u.severity),
+              )}</span>
+              <span class="quality-urgent-score" title="Балл срочности">срочн. ${escapeHtml(
+                String(u.urgency ?? "—"),
+              )}</span>
+            </div>
+            <div class="quality-urgent-meta">
+              <span class="quality-kpi-chip is-${kpiTone}">KPI ${
+                u.order_kpi == null ? "—" : u.order_kpi
+              }</span>
+              <span>${escapeHtml(u.status || "—")}</span>
+              <span>${escapeHtml(u.engineer || "—")}</span>
+              <span>${escapeHtml(u.device || "—")}</span>
+              <span>${u.total_days == null ? "—" : `${u.total_days} дн`}</span>
+              ${u.rework_count ? `<span>дораб. ×${u.rework_count}</span>` : ""}
+            </div>
+          </header>
+          <div class="quality-urgent-cols">
+            <div>
+              <h5>Почему срочно</h5>
+              <ul>${reasons || "<li>—</li>"}</ul>
+            </div>
+            <div>
+              <h5>Что сделать сейчас</h5>
+              <ul class="quality-analysis-actions">${acts || "<li>—</li>"}</ul>
+            </div>
+          </div>
+        </article>`;
+    })
+    .join("");
+
+  const generated = fmtQualityDate(a.generated_at) || a.generated_at || "—";
+  const dynLabel =
+    dyn.points > 0
+      ? `снимков: ${dyn.points}${dyn.prev_day ? ` · Δ к ${fmtQualityDate(dyn.prev_day) || dyn.prev_day}` : ""}${
+          dyn.curr_day ? ` · текущий ${fmtQualityDate(dyn.curr_day) || dyn.curr_day}` : ""
+        }`
+      : "снимков динамики пока нет";
+
+  root.innerHTML = `
+    <section class="quality-analysis-hero is-${scoreTone}">
+      <div class="quality-analysis-score">
+        <span class="quality-analysis-score-num">${score == null ? "—" : score}</span>
+        <span class="quality-analysis-score-den">/100</span>
+        <span class="quality-analysis-score-label">${escapeHtml(health.label || "—")}</span>
+      </div>
+      <div class="quality-analysis-hero-text">
+        <h3>Текущий анализ</h3>
+        <p class="quality-analysis-headline">${escapeHtml(a.headline || "")}</p>
+        <p class="quality-analysis-summary">${escapeHtml(health.summary || "")}</p>
+        <p class="quality-analysis-meta">Собран: ${escapeHtml(String(generated))} · заказов ${
+          a.orders_count
+        } · срочных в разборе ${a.urgent_total ?? (a.urgent || []).length} · ${escapeHtml(dynLabel)}</p>
+      </div>
+    </section>
+
+    <section class="quality-analysis-section">
+      <h3>Портфель сейчас</h3>
+      <div class="quality-analysis-metrics">
+        ${metric("Средний KPI", fmtNum(portfolio.avg_order_kpi, 1))}
+        ${metric("Звонки", fmtNum(portfolio.avg_calls_kpi, 1))}
+        ${metric("Дораб.", fmtNum(portfolio.avg_rework_kpi, 1), "Без доработок = 100")}
+        ${metric("Всего дн", fmtNum(portfolio.avg_total_days, 1))}
+        ${metric("До мастера", fmtNum(portfolio.avg_wait_master_days, 1))}
+        ${metric("До диагн.", fmtNum(portfolio.avg_diag_days, 1))}
+        ${metric("KPI ≥70", bands.good ?? 0)}
+        ${metric("KPI 40–69", bands.mid ?? 0)}
+        ${metric("KPI <40", bands.bad ?? 0)}
+        ${metric("Доработок", portfolio.rework_orders ?? 0)}
+        ${metric("≥45 дн", portfolio.long_orders_45d ?? 0)}
+        ${metric("Флаги мен.", portfolio.manager_flags ?? 0)}
+        ${metric("Слабые звонки", portfolio.weak_calls ?? 0)}
+        ${metric("Без мастера", portfolio.no_master_count ?? 0)}
+      </div>
+    </section>
+
+    <section class="quality-analysis-section">
+      <h3>Динамика к прошлому снимку</h3>
+      <div class="quality-analysis-dynamics-grid">
+        <div class="quality-analysis-deltas">${deltaRows}</div>
+        <ul class="quality-analysis-narrative">${
+          narrativeHtml || "<li>Нет изменений для комментария</li>"
+        }</ul>
+      </div>
+    </section>
+
+    <div class="quality-analysis-split">
+      <section class="quality-analysis-section">
+        <h3>Зоны внимания</h3>
+        <div class="quality-analysis-focus-list">${
+          focusHtml || `<p class="quality-muted">Явных зон внимания не выделено.</p>`
+        }</div>
+      </section>
+      <section class="quality-analysis-section">
+        <h3>Что уже хорошо</h3>
+        <ul class="quality-analysis-positives">${positivesHtml || "<li>—</li>"}</ul>
+        <h3 class="quality-analysis-subh">Мастера · лидеры</h3>
+        ${masterList(masters.best, "Нет данных")}
+        <h3 class="quality-analysis-subh">Мастера · слабее (от 3+ заказов)</h3>
+        ${masterList(masters.worst, "Нет мастеров с 3+ заказами и KPI")}
+      </section>
+    </div>
+
+    <section class="quality-analysis-section quality-analysis-urgent-section">
+      <h3>Квитанции, требующие срочного внимания
+        <span class="quality-analysis-count">${a.urgent_total ?? (a.urgent || []).length}</span>
+      </h3>
+      <p class="quality-tab-lead quality-analysis-urgent-lead">
+        Топ до 30 по баллу срочности: низкий KPI, долгий цикл, доработки, флаги менеджера, слабая коммуникация.
+        Для каждой — причины и конкретные действия.
+      </p>
+      <div class="quality-urgent-list">${
+        urgentHtml || `<p class="quality-muted">Срочных квитанций сейчас нет.</p>`
+      }</div>
+    </section>
+  `;
+}
+
+async function loadQualityAnalysis() {
+  try {
+    const res = await fetch("/api/quality/analysis");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    qualityAnalysisCache = data.analysis || null;
+  } catch {
+    qualityAnalysisCache = null;
+  }
+  const active = document.querySelector(".quality-tab.is-active")?.getAttribute("data-quality-tab");
+  if (active === "analysis") renderQualityAnalysisTab();
+}
+
+async function sendQualityAnalysisToTelegram() {
+  const btn = $("#quality-tg-btn");
+  const status = $("#quality-tg-status");
+  if (btn) btn.disabled = true;
+  if (status) {
+    status.hidden = false;
+    status.textContent = "Отправка…";
+    status.classList.remove("is-error", "is-ok");
+  }
+  try {
+    const res = await fetch("/api/quality/analysis/telegram", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = data.detail || data.error || res.statusText;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    if (status) {
+      status.textContent = `Отправлено ${data.sent ?? "—"} сообщ.`;
+      status.classList.add("is-ok");
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = err.message || String(err);
+      status.classList.add("is-error");
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+$("#quality-tg-btn")?.addEventListener("click", () => sendQualityAnalysisToTelegram());
+
+function fmtQualityChartDay(iso) {
+  if (!iso) return "";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return String(iso);
+  return `${m[3]}.${m[2]}`;
+}
+
+function destroyQualityDynamicsCharts() {
+  if (qualityDynamicsKpiChart) {
+    qualityDynamicsKpiChart.destroy();
+    qualityDynamicsKpiChart = null;
+  }
+  if (qualityDynamicsDaysChart) {
+    qualityDynamicsDaysChart.destroy();
+    qualityDynamicsDaysChart = null;
+  }
+}
+
+function renderQualityDynamicsTab() {
+  const empty = $("#quality-dynamics-empty");
+  const body = $("#quality-dynamics-body");
+  const meta = $("#quality-dynamics-meta");
+  const days = qualityDailyStatsCache || [];
+  if (!days.length) {
+    destroyQualityDynamicsCharts();
+    if (empty) empty.hidden = false;
+    if (body) body.hidden = true;
+    return;
+  }
+  if (empty) empty.hidden = true;
+  if (body) body.hidden = false;
+  if (meta) {
+    const first = days[0]?.day;
+    const last = days[days.length - 1]?.day;
+    meta.textContent = `Точек: ${days.length} · с ${fmtQualityDate(first)} по ${fmtQualityDate(last)} · заказов в последнем снимке: ${
+      days[days.length - 1]?.orders_count ?? "—"
+    }`;
+  }
+  if (typeof Chart === "undefined") return;
+  const labels = days.map((d) => fmtQualityChartDay(d.day));
+  const series = (key) => days.map((d) => (d[key] == null ? null : Number(d[key])));
+
+  destroyQualityDynamicsCharts();
+  const kpiCanvas = $("#quality-dynamics-kpi-chart");
+  const daysCanvas = $("#quality-dynamics-days-chart");
+  const lineOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { position: "bottom" },
+      tooltip: {
+        callbacks: {
+          title(items) {
+            const i = items[0]?.dataIndex;
+            return i == null ? "" : fmtQualityDate(days[i]?.day);
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+        grid: { color: "rgba(28,36,48,0.05)" },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: "rgba(28,36,48,0.06)" },
+      },
+    },
+  };
+
+  if (kpiCanvas) {
+    qualityDynamicsKpiChart = new Chart(kpiCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "KPI",
+            data: series("avg_order_kpi"),
+            borderColor: "#0f6e56",
+            backgroundColor: "rgba(15,110,86,0.12)",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+          {
+            label: "Звонки",
+            data: series("avg_calls_kpi"),
+            borderColor: "#1a5f8a",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+          {
+            label: "Дораб.",
+            data: series("avg_rework_kpi"),
+            borderColor: "#c45c26",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+        ],
+      },
+      options: {
+        ...lineOpts,
+        scales: {
+          ...lineOpts.scales,
+          y: { ...lineOpts.scales.y, min: 0, max: 100 },
+        },
+      },
+    });
+  }
+  if (daysCanvas) {
+    qualityDynamicsDaysChart = new Chart(daysCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Всего дн",
+            data: series("avg_total_days"),
+            borderColor: "#a12828",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+          {
+            label: "До мастера",
+            data: series("avg_wait_master_days"),
+            borderColor: "#a15c12",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+          {
+            label: "До диагн.",
+            data: series("avg_diag_days"),
+            borderColor: "#5d6b7c",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            spanGaps: true,
+            pointRadius: 3,
+          },
+        ],
+      },
+      options: lineOpts,
+    });
+  }
+}
+
+async function loadQualityDailyStats() {
+  try {
+    const res = await fetch("/api/quality/daily-stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    qualityDailyStatsCache = data.days || [];
+  } catch {
+    qualityDailyStatsCache = [];
+  }
+  const active = document.querySelector(".quality-tab.is-active")?.getAttribute("data-quality-tab");
+  if (active === "dynamics") renderQualityDynamicsTab();
+}
+
 function setQualityTab(tab) {
-  const id = ["overview", "masters", "summary"].includes(tab) ? tab : "overview";
+  const id = ["overview", "masters", "summary", "dynamics", "analysis"].includes(tab)
+    ? tab
+    : "overview";
   document.querySelectorAll(".quality-tab").forEach((btn) => {
     const on = btn.getAttribute("data-quality-tab") === id;
     btn.classList.toggle("is-active", on);
@@ -2708,6 +3180,12 @@ function setQualityTab(tab) {
   }
   if (id === "masters") renderQualityMastersTab();
   if (id === "summary") renderQualitySummaryTab();
+  if (id === "dynamics") {
+    loadQualityDailyStats().then(() => renderQualityDynamicsTab());
+  }
+  if (id === "analysis") {
+    loadQualityAnalysis().then(() => renderQualityAnalysisTab());
+  }
 }
 
 function initQualityTabs() {
@@ -2871,6 +3349,9 @@ function startQualityPoll() {
     const forceBtn = $("#quality-force-btn");
     if (btn) btn.disabled = false;
     if (forceBtn) forceBtn.disabled = false;
+    // После sync обновить динамику и анализ (пересобраны на сервере).
+    loadQualityDailyStats();
+    loadQualityAnalysis();
   };
   qualityPollTimer = setTimeout(tick, 500);
 }

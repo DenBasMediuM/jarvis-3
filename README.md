@@ -69,10 +69,18 @@ jarvis-3/
 
 ## Переменные окружения (опционально)
 
+Создайте файл `.env` в корне проекта (можно скопировать `.env.example`):
+
 ```bash
 JARVIS_HOST=127.0.0.1
 JARVIS_PORT=8787
 JARVIS_LLM_BASE_URL=http://127.0.0.1:11434/v1
 JARVIS_LLM_API_KEY=ollama
 JARVIS_LLM_MODEL=llama3.2
+
+# Telegram (кнопка «Отправить в ТГ текущий анализ»)
+JARVIS_TELEGRAM_BOT_TOKEN=123456:ABC...   # токен от @BotFather
+JARVIS_TELEGRAM_CHAT_ID=-1001234567890    # id чата / группы
 ```
+
+После правок `.env` перезапустите `python run.py`.

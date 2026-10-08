@@ -17,7 +17,9 @@ from modules import load_modules
 from modules.base import BaseModule, ToolSpec
 from modules.cash_journal.parser import is_parts_attach_line
 from modules.gincore.module import GincoreModule
+from core.telegram import send_telegram_messages, telegram_configured
 from modules.gincore.quality import QualityService, compute_quality_metrics
+from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 
 
 db = Database(settings.resolved_db_path())
@@ -527,6 +529,68 @@ async def quality_calc(order_id: str) -> dict[str, Any]:
             "feed_count": len(feed_view),
         },
     }
+
+
+@app.get("/api/quality/daily-stats")
+async def quality_daily_stats() -> dict[str, Any]:
+    """История средних метрик по дням (точки только за дни с обновлением из CRM)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    rows = await quality_service.daily_stats(limit=730)
+    return {"ok": True, "days": rows, "count": len(rows)}
+
+
+@app.get("/api/quality/analysis")
+async def quality_analysis() -> dict[str, Any]:
+    """Последний сохранённый разбор (пересобирается после sync из CRM)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    data = await quality_service.get_analysis()
+    if not data:
+        # Есть кэш заказов, но анализ ещё не писали — собрать без CRM.
+        listed = await quality_service.list_rows()
+        if listed.get("orders"):
+            data = await quality_service.rebuild_analysis()
+        else:
+            return {"ok": True, "analysis": None, "message": "Анализа ещё нет — обновите из CRM"}
+    for item in data.get("urgent") or []:
+        oid = item.get("order_id")
+        if oid and not item.get("url"):
+            item["url"] = await _quality_order_url(str(oid))
+    return {"ok": True, "analysis": data}
+
+
+@app.post("/api/quality/analysis/telegram")
+async def quality_analysis_telegram() -> dict[str, Any]:
+    """Отправить сокращённый текущий анализ в Telegram (блок = отдельное сообщение)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    if not telegram_configured():
+        raise HTTPException(
+            400,
+            "Telegram не настроен. В файле .env в корне jarvis-3 укажите:\n"
+            "JARVIS_TELEGRAM_BOT_TOKEN=токен_от_BotFather\n"
+            "JARVIS_TELEGRAM_CHAT_ID=id_чата\n"
+            "Затем перезапустите сервер.",
+        )
+    data = await quality_service.get_analysis()
+    if not data:
+        listed = await quality_service.list_rows()
+        if listed.get("orders"):
+            data = await quality_service.rebuild_analysis()
+    if not data or not data.get("orders_count"):
+        raise HTTPException(400, "Анализа ещё нет — сначала обновите из CRM")
+    base = _quality_base_url()
+    for item in data.get("urgent") or []:
+        oid = item.get("order_id")
+        if oid and not item.get("url"):
+            item["url"] = await _quality_order_url(str(oid))
+    blocks = format_quality_analysis_tg_blocks(data, order_base_url=base)
+    try:
+        sent = await send_telegram_messages(blocks)
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"ok": True, "sent": sent, "blocks": len(blocks)}
 
 
 @app.get("/api/quality/sync")

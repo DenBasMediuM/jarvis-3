@@ -1097,6 +1097,489 @@ def compute_quality_metrics(
     }
 
 
+def _avg_nums(vals: list[Any]) -> float | None:
+    nums = [float(v) for v in vals if v is not None and str(v) != ""]
+    if not nums:
+        return None
+    return round(sum(nums) / len(nums), 2)
+
+
+def build_daily_quality_snapshot(
+    orders: list[dict[str, Any]],
+    *,
+    day: date | None = None,
+) -> dict[str, Any]:
+    """Средние по столбцам таблицы качества (без «Мен.») на дату.
+
+    Дораб.: нет доработок = 100 (как в итоговом KPI), иначе балл 0–100.
+    """
+    day = day or date.today()
+    rework_scores = [
+        100.0 if o.get("rework_kpi") is None else float(o["rework_kpi"]) for o in orders
+    ]
+    return {
+        "day": day.isoformat(),
+        "orders_count": len(orders),
+        "avg_total_days": _avg_nums([o.get("total_days") for o in orders]),
+        "avg_wait_master_days": _avg_nums([o.get("wait_master_days") for o in orders]),
+        "avg_diag_days": _avg_nums([o.get("diag_days") for o in orders]),
+        "avg_rework_kpi": _avg_nums(rework_scores),
+        "avg_calls_kpi": _avg_nums([o.get("calls_kpi") for o in orders]),
+        "avg_order_kpi": _avg_nums([o.get("order_kpi") for o in orders]),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def _num(v: Any) -> float | None:
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _engineer_label(o: dict[str, Any]) -> str:
+    name = str(o.get("engineer") or o.get("master_name") or "").strip()
+    return name or "—"
+
+
+def _assess_order_urgency(o: dict[str, Any]) -> dict[str, Any] | None:
+    """Срочность квитанции: score + причины + действия."""
+    score = 0
+    reasons: list[str] = []
+    actions: list[str] = []
+    severity = "watch"
+
+    kpi = _num(o.get("order_kpi"))
+    if kpi is not None:
+        if kpi < 30:
+            score += 42
+            reasons.append(f"Итоговый KPI {int(kpi)}/100 — критически низкий")
+            actions.append(
+                "Разобрать ленту целиком: сроки, звонки, доработки; назначить ответственного и срок"
+            )
+        elif kpi < 45:
+            score += 26
+            reasons.append(f"Итоговый KPI {int(kpi)}/100 — слабый")
+            actions.append("Проверить узкие места по KPI (сроки / коммуникация / доработки)")
+
+    total = _num(o.get("total_days"))
+    if total is not None:
+        if total >= 90:
+            score += 32
+            reasons.append(f"В работе уже {int(total)} дн")
+            actions.append("Срочная эскалация: статус клиенту, план закрытия или возврат")
+        elif total >= 45:
+            score += 20
+            reasons.append(f"Долгий цикл — {int(total)} дн")
+            actions.append("Сверить статус с реальностью и ускорить следующий шаг")
+        elif total >= 21:
+            score += 10
+            reasons.append(f"Цикл {int(total)} дн — выше нормы")
+
+    wait = _num(o.get("wait_master_days"))
+    if wait is not None and wait >= 5:
+        score += 12
+        reasons.append(f"До назначения мастера {int(wait)} дн")
+        actions.append("Назначить мастера сегодня или зафиксировать причину ожидания")
+
+    diag = _num(o.get("diag_days"))
+    if diag is not None and diag >= 10:
+        score += 14
+        reasons.append(f"Диагностика/согласование тянется {int(diag)} дн")
+        actions.append("Дожать согласование с клиентом или статус ожидания запчасти/отказа")
+
+    rw_n = int(o.get("rework_count") or 0)
+    if rw_n > 0:
+        rw_kpi = _num(o.get("rework_kpi"))
+        rw_total = _num(o.get("rework_total_days"))
+        if rw_kpi is not None and rw_kpi < 35:
+            score += 28
+            bit = f", {int(rw_total)} дн с приёма" if rw_total is not None else ""
+            reasons.append(f"Доработка с KPI {int(rw_kpi)}{bit}")
+            actions.append(
+                "Приоритизировать доработку: диагноз → смета → старт ремонта, держать клиента в курсе"
+            )
+        if o.get("rework_repair_days") is None and (_num(o.get("rework_diag_days")) or 0) >= 10:
+            score += 18
+            reasons.append("После доработки ремонт ещё не начат, долгая диагностика")
+            actions.append("Назначить инженера и зафиксировать план работ по доработке")
+        if rw_n >= 2:
+            score += 10
+            reasons.append(f"Повторные доработки: {rw_n}×")
+            actions.append("Проверить качество предыдущего ремонта и комплектующие")
+
+    if o.get("manager_no_answer_missed"):
+        score += 22
+        reasons.append(
+            "Флаг менеджера: неуспешный исходящий после согласования без корректного статуса"
+        )
+        actions.append(
+            "Перезвонить клиенту и выставить «На согласовании» / «Не дозвонились» / рабочий статус"
+        )
+
+    calls = _num(o.get("calls_kpi"))
+    miss_unrec = int(o.get("calls_missed_unrecovered") or 0)
+    pre_until = int(o.get("calls_pre_miss_until_visit") or 0)
+    if calls is not None and calls < 35:
+        score += 16
+        reasons.append(f"Коммуникация {int(calls)}/100")
+        actions.append("Закрыть пропуски перезвоном в тот же день; не оставлять без контакта")
+    if miss_unrec >= 2:
+        score += 10
+        reasons.append(f"Пропущенные без перезвона в тот же день: {miss_unrec}")
+        actions.append("Поставить правило: каждый пропуск — исходящий в тот же день")
+    if pre_until >= 1:
+        score += 8
+        reasons.append(f"До заказа не связались до сдачи: {pre_until}")
+
+    status = str(o.get("status") or "")
+    st_l = status.lower()
+    if "доработ" in st_l or "доробк" in st_l:
+        score += 8
+        reasons.append(f"Текущий статус: {status}")
+    if "не дозвони" in st_l:
+        score += 6
+        reasons.append("Статус «Не дозвонились» — нужен повторный контакт")
+        actions.append("Запланировать повторные звонки и обновить статус после контакта")
+
+    if score < 22 or not reasons:
+        return None
+    if score >= 55:
+        severity = "critical"
+    elif score >= 35:
+        severity = "high"
+    else:
+        severity = "medium"
+
+    # unique actions preserve order
+    seen: set[str] = set()
+    uniq_actions: list[str] = []
+    for a in actions:
+        if a not in seen:
+            seen.add(a)
+            uniq_actions.append(a)
+
+    return {
+        "order_id": str(o.get("order_id") or ""),
+        "url": o.get("url"),
+        "status": status or "—",
+        "engineer": _engineer_label(o),
+        "device": (o.get("device") or "—")[:80],
+        "order_kpi": int(kpi) if kpi is not None else None,
+        "total_days": int(total) if total is not None else None,
+        "calls_kpi": int(calls) if calls is not None else None,
+        "rework_count": rw_n,
+        "urgency": score,
+        "severity": severity,
+        "reasons": reasons,
+        "actions": uniq_actions[:5],
+    }
+
+
+def build_quality_analysis(
+    orders: list[dict[str, Any]],
+    daily_stats: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Подробный операционный разбор текущего списка + динамики."""
+    now = datetime.now(timezone.utc).isoformat()
+    n = len(orders)
+    if n == 0:
+        return {
+            "generated_at": now,
+            "orders_count": 0,
+            "headline": "Нет заказов в рабочем списке — анализ пуст.",
+            "health": {"score": None, "label": "нет данных", "summary": ""},
+            "portfolio": {},
+            "dynamics": {"points": 0, "deltas": {}, "narrative": []},
+            "masters": {"best": [], "worst": [], "no_master_count": 0},
+            "urgent": [],
+            "focus_areas": [],
+            "positives": [],
+        }
+
+    kpis = [_num(o.get("order_kpi")) for o in orders]
+    kpi_vals = [k for k in kpis if k is not None]
+    avg_kpi = _avg_nums(kpi_vals)
+    good = sum(1 for k in kpi_vals if k >= 70)
+    mid = sum(1 for k in kpi_vals if 40 <= k < 70)
+    bad = sum(1 for k in kpi_vals if k < 40)
+    rework_orders = [o for o in orders if int(o.get("rework_count") or 0) > 0]
+    mgr_flags = sum(1 for o in orders if o.get("manager_no_answer_missed"))
+    no_master = sum(
+        1
+        for o in orders
+        if not str(o.get("engineer") or o.get("master_name") or "").strip()
+    )
+    long_total = sum(1 for o in orders if (_num(o.get("total_days")) or 0) >= 45)
+    weak_calls = sum(1 for o in orders if (_num(o.get("calls_kpi")) or 100) < 40)
+    snap = build_daily_quality_snapshot(orders)
+
+    # Health score ~ avg KPI adjusted by share of bad/critical
+    health_score = None
+    if avg_kpi is not None:
+        penalty = (bad / n) * 25 + (mgr_flags / n) * 10 + (long_total / n) * 15
+        health_score = max(0, min(100, int(round(avg_kpi - penalty))))
+    if health_score is None:
+        label = "нет данных"
+    elif health_score >= 75:
+        label = "стабильно"
+    elif health_score >= 55:
+        label = "средне"
+    elif health_score >= 40:
+        label = "напряжённо"
+    else:
+        label = "критично"
+
+    # Masters
+    by_master: dict[str, list[dict[str, Any]]] = {}
+    for o in orders:
+        name = str(o.get("engineer") or o.get("master_name") or "").strip()
+        if not name:
+            continue
+        by_master.setdefault(name, []).append(o)
+    master_rows: list[dict[str, Any]] = []
+    for name, rows in by_master.items():
+        mk = _avg_nums([_num(r.get("order_kpi")) for r in rows])
+        master_rows.append(
+            {
+                "name": name,
+                "count": len(rows),
+                "avg_kpi": int(round(mk)) if mk is not None else None,
+                "rework_orders": sum(1 for r in rows if int(r.get("rework_count") or 0) > 0),
+                "avg_total_days": _avg_nums([_num(r.get("total_days")) for r in rows]),
+            }
+        )
+    master_rows.sort(
+        key=lambda m: (m["avg_kpi"] is not None, m["avg_kpi"] or -1, m["count"]),
+        reverse=True,
+    )
+    best_masters = [m for m in master_rows if m["avg_kpi"] is not None][:5]
+    worst_masters = sorted(
+        [m for m in master_rows if m["avg_kpi"] is not None and m["count"] >= 3],
+        key=lambda m: (m["avg_kpi"], -m["count"]),
+    )[:5]
+
+    # Dynamics
+    daily = list(daily_stats or [])
+    deltas: dict[str, float | None] = {}
+    narrative: list[str] = []
+    prev_day = curr_day = None
+    if len(daily) >= 1:
+        curr = daily[-1]
+        curr_day = curr.get("day")
+        if len(daily) >= 2:
+            prev = daily[-2]
+            prev_day = prev.get("day")
+            for key, title in (
+                ("avg_order_kpi", "Средний KPI"),
+                ("avg_calls_kpi", "Звонки"),
+                ("avg_rework_kpi", "Дораб."),
+                ("avg_total_days", "Всего дн"),
+                ("avg_wait_master_days", "До мастера"),
+                ("avg_diag_days", "До диагн."),
+            ):
+                a, b = _num(prev.get(key)), _num(curr.get(key))
+                if a is None or b is None:
+                    deltas[key] = None
+                    continue
+                dlt = round(b - a, 2)
+                deltas[key] = dlt
+                if key.startswith("avg_") and "days" in key:
+                    if dlt <= -1:
+                        narrative.append(f"{title}: улучшение на {abs(dlt):.1f} дн к {prev_day}")
+                    elif dlt >= 1:
+                        narrative.append(f"{title}: ухудшение на {dlt:.1f} дн к {prev_day}")
+                else:
+                    if dlt >= 2:
+                        narrative.append(f"{title}: +{dlt:.1f} к {prev_day}")
+                    elif dlt <= -2:
+                        narrative.append(f"{title}: {dlt:.1f} к {prev_day}")
+        else:
+            narrative.append(
+                f"В динамике пока одна точка ({curr_day}) — тренд появится после следующего дня обновления"
+            )
+    else:
+        narrative.append("Снимков динамики ещё нет — появятся после обновлений из CRM")
+
+    # Urgent
+    urgent_raw = []
+    for o in orders:
+        u = _assess_order_urgency(o)
+        if u:
+            urgent_raw.append(u)
+    urgent_raw.sort(key=lambda x: (-x["urgency"], x.get("order_kpi") or 999))
+    urgent = urgent_raw[:30]
+    crit_n = sum(1 for u in urgent_raw if u["severity"] == "critical")
+    high_n = sum(1 for u in urgent_raw if u["severity"] == "high")
+
+    # Focus areas
+    focus: list[dict[str, Any]] = []
+    if bad / n >= 0.2:
+        focus.append(
+            {
+                "title": "Много слабых KPI",
+                "severity": "high",
+                "detail": f"{bad} из {n} квитанций с KPI < 40 ({100 * bad / n:.0f}%).",
+                "actions": [
+                    "Отфильтровать по KPI возрастанию и разобрать топ-20 худших",
+                    "Сверить, не копятся ли «хвосты» без движения статуса",
+                ],
+            }
+        )
+    if long_total >= 15:
+        focus.append(
+            {
+                "title": "Долгие заказы",
+                "severity": "high" if long_total >= 40 else "medium",
+                "detail": f"{long_total} заказов в работе ≥ 45 дней.",
+                "actions": [
+                    "Ежедневный разбор «хвоста» >45 дн с мастерами",
+                    "Клиентам по зависшим — статус и срок решения",
+                ],
+            }
+        )
+    if rework_orders:
+        stuck_rw = [
+            o
+            for o in rework_orders
+            if o.get("rework_repair_days") is None
+            and (_num(o.get("rework_diag_days")) or 0) >= 10
+        ]
+        focus.append(
+            {
+                "title": "Доработки",
+                "severity": "high" if len(stuck_rw) >= 5 else "medium",
+                "detail": (
+                    f"{len(rework_orders)} заказов с доработками"
+                    + (f", из них {len(stuck_rw)} без старта ремонта ≥10 дн" if stuck_rw else "")
+                    + "."
+                ),
+                "actions": [
+                    "Отдельный контроль доработок: диагноз → смета → ремонт",
+                    "Не держать доработки в «диагностике» без плана",
+                ],
+            }
+        )
+    if weak_calls >= 20:
+        focus.append(
+            {
+                "title": "Коммуникация",
+                "severity": "medium",
+                "detail": f"{weak_calls} заказов со слабыми звонками (KPI < 40).",
+                "actions": [
+                    "Правило: пропуск → исходящий в тот же день",
+                    "Проверить менеджерские флаги и статусы после неуспешных исходящих",
+                ],
+            }
+        )
+    if mgr_flags:
+        focus.append(
+            {
+                "title": "Флаги менеджера",
+                "severity": "medium" if mgr_flags < 10 else "high",
+                "detail": f"{mgr_flags} квитанций с флагом «Мен.» после согласования.",
+                "actions": [
+                    "Пройти список флагов и привести статусы в соответствие контакту",
+                ],
+            }
+        )
+    if worst_masters:
+        names = ", ".join(
+            f"{m['name']} ({m['avg_kpi']})" for m in worst_masters[:3] if m["avg_kpi"] is not None
+        )
+        focus.append(
+            {
+                "title": "Мастера с низким средним KPI",
+                "severity": "medium",
+                "detail": f"Слабее всего (от 3+ заказов): {names}.",
+                "actions": [
+                    "Разбор портфеля с мастером: долгие и доработки",
+                    "Не перегружать новыми приёмками, пока не разгружен хвост",
+                ],
+            }
+        )
+
+    positives: list[str] = []
+    if good / n >= 0.45:
+        positives.append(f"{good} заказов ({100 * good / n:.0f}%) с KPI ≥ 70 — хороший костяк")
+    if avg_kpi is not None and avg_kpi >= 65:
+        positives.append(f"Средний KPI списка {avg_kpi:.1f} — приемлемый уровень")
+    if deltas.get("avg_order_kpi") is not None and (deltas["avg_order_kpi"] or 0) >= 2:
+        positives.append(f"Средний KPI вырос на {deltas['avg_order_kpi']} к прошлому снимку")
+    if deltas.get("avg_total_days") is not None and (deltas["avg_total_days"] or 0) <= -2:
+        positives.append(
+            f"Средний срок сократился на {abs(deltas['avg_total_days']):.1f} дн к прошлому снимку"
+        )
+    if best_masters:
+        positives.append(
+            "Лидеры по KPI: "
+            + ", ".join(f"{m['name']} ({m['avg_kpi']})" for m in best_masters[:3])
+        )
+    if not positives:
+        positives.append("Фиксируйте ежедневные снимки — по ним проще видеть прогресс")
+
+    headline_parts = [
+        f"В списке {n} заказов",
+        f"здоровье {health_score}/100 ({label})" if health_score is not None else label,
+    ]
+    if urgent_raw:
+        headline_parts.append(
+            f"требуют внимания {len(urgent_raw)} (критич. {crit_n}, высоких {high_n})"
+        )
+    if avg_kpi is not None:
+        headline_parts.append(f"средний KPI {avg_kpi:.1f}")
+
+    health_summary = (
+        f"Распределение KPI: хорошо ≥70 — {good}, средне 40–69 — {mid}, слабо <40 — {bad}. "
+        f"Доработок: {len(rework_orders)}. Флагов менеджера: {mgr_flags}. "
+        f"Без мастера в карточке: {no_master}."
+    )
+
+    return {
+        "generated_at": now,
+        "orders_count": n,
+        "headline": ". ".join(headline_parts) + ".",
+        "health": {
+            "score": health_score,
+            "label": label,
+            "summary": health_summary,
+        },
+        "portfolio": {
+            "avg_order_kpi": snap.get("avg_order_kpi"),
+            "avg_calls_kpi": snap.get("avg_calls_kpi"),
+            "avg_rework_kpi": snap.get("avg_rework_kpi"),
+            "avg_total_days": snap.get("avg_total_days"),
+            "avg_wait_master_days": snap.get("avg_wait_master_days"),
+            "avg_diag_days": snap.get("avg_diag_days"),
+            "kpi_bands": {"good": good, "mid": mid, "bad": bad, "unknown": n - len(kpi_vals)},
+            "rework_orders": len(rework_orders),
+            "manager_flags": mgr_flags,
+            "long_orders_45d": long_total,
+            "weak_calls": weak_calls,
+            "no_master_count": no_master,
+        },
+        "dynamics": {
+            "points": len(daily),
+            "prev_day": prev_day,
+            "curr_day": curr_day,
+            "deltas": deltas,
+            "narrative": narrative,
+        },
+        "masters": {
+            "best": best_masters,
+            "worst": worst_masters,
+            "no_master_count": no_master,
+            "masters_count": len(master_rows),
+        },
+        "urgent": urgent,
+        "urgent_total": len(urgent_raw),
+        "focus_areas": focus,
+        "positives": positives,
+    }
+
+
 class QualityService:
     def __init__(self, db: Any, client_factory: Any) -> None:
         self.db = db
@@ -1288,9 +1771,22 @@ class QualityService:
                     }
                 )
 
+            try:
+                snap = await self.snapshot_daily_stats()
+                day_msg = f", снимок {snap['day']}" if snap else ""
+            except Exception:  # noqa: BLE001
+                day_msg = ""
+            try:
+                analysis = await self.rebuild_analysis()
+                urg = int((analysis or {}).get("urgent_total") or 0)
+                day_msg += f", анализ (срочно {urg})"
+            except Exception:  # noqa: BLE001
+                pass
             await self.db.quality_set_sync_state(
                 status="idle",
-                message=f"Готово: {len(listed)} в списке, обновлено лент {len(queue)}",
+                message=(
+                    f"Готово: {len(listed)} в списке, обновлено лент {len(queue)}{day_msg}"
+                ),
                 finished_at=datetime.now(timezone.utc).isoformat(),
                 done=len(queue),
                 total=len(queue),
@@ -1308,6 +1804,31 @@ class QualityService:
                     await client.aclose()
                 except Exception:  # noqa: BLE001
                     pass
+
+    async def snapshot_daily_stats(self, *, day: date | None = None) -> dict[str, Any] | None:
+        """Средние метрики текущего списка → запись/обновление за день."""
+        data = await self.list_rows()
+        orders = data.get("orders") or []
+        if not orders:
+            return None
+        snap = build_daily_quality_snapshot(orders, day=day or date.today())
+        await self.db.quality_upsert_daily_stats(snap)
+        return snap
+
+    async def daily_stats(self, *, limit: int = 365) -> list[dict[str, Any]]:
+        return await self.db.quality_list_daily_stats(limit=limit)
+
+    async def rebuild_analysis(self) -> dict[str, Any]:
+        """Пересобрать подробный анализ по текущему кэшу + динамике."""
+        data = await self.list_rows()
+        orders = data.get("orders") or []
+        daily = await self.db.quality_list_daily_stats(limit=730)
+        analysis = build_quality_analysis(orders, daily)
+        await self.db.quality_save_analysis(analysis)
+        return analysis
+
+    async def get_analysis(self) -> dict[str, Any] | None:
+        return await self.db.quality_get_analysis()
 
     async def _sync_one_feed(self, client: GincoreClient, order_id: str) -> dict[str, Any]:
         html = await client.fetch_order_html(order_id)

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261007-one-scroll" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261008-tg" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -58,7 +58,7 @@
           </div>
           <div id="quality-panel-body" class="quality-panel-body">
             <header class="view-header quality-header">
-              <p>Рабочие заказы (без Сахарова): сроки, диагностика, звонки, KPI. Вкладки — общее, по мастерам и сводка. Лента кэшируется локально.</p>
+              <p>Рабочие заказы (без Сахарова): сроки, диагностика, звонки, KPI. Вкладки — общее, мастера, динамика и текущий анализ. Лента кэшируется локально.</p>
             </header>
             <div class="quality-toolbar">
               <button type="button" id="quality-sync-btn" class="cj-import-open">Обновить из CRM</button>
@@ -86,6 +86,8 @@
           <button type="button" class="quality-tab is-active" data-quality-tab="overview" role="tab" aria-selected="true">Общее качество</button>
           <button type="button" class="quality-tab" data-quality-tab="masters" role="tab" aria-selected="false">По мастерам</button>
           <button type="button" class="quality-tab" data-quality-tab="summary" role="tab" aria-selected="false">Сводка по мастерам</button>
+          <button type="button" class="quality-tab" data-quality-tab="dynamics" role="tab" aria-selected="false">KPI в динамике</button>
+          <button type="button" class="quality-tab" data-quality-tab="analysis" role="tab" aria-selected="false">Текущий анализ</button>
         </nav>
         <div class="quality-tab-panels">
           <div id="quality-tab-overview" class="quality-tab-panel is-active" role="tabpanel">
@@ -164,6 +166,48 @@
               </div>
             </div>
           </div>
+          <div id="quality-tab-dynamics" class="quality-tab-panel" role="tabpanel" hidden>
+            <p class="quality-tab-lead">
+              Средние по рабочему списку на каждый день обновления из CRM.
+              Дни без обновления пропускаются. В «Дораб.» без доработок = 100. «Мен.» не учитывается.
+            </p>
+            <div id="quality-dynamics-empty" class="quality-dynamics-empty" hidden>
+              Пока нет точек. Сделайте «Обновить из CRM» — появится снимок за сегодня.
+            </div>
+            <div id="quality-dynamics-body" class="quality-dynamics-body" hidden>
+              <div class="quality-dynamics-meta" id="quality-dynamics-meta"></div>
+              <div class="quality-dynamics-charts">
+                <div class="quality-dynamics-card">
+                  <h3>KPI (0–100)</h3>
+                  <div class="quality-dynamics-chart-wrap">
+                    <canvas id="quality-dynamics-kpi-chart"></canvas>
+                  </div>
+                </div>
+                <div class="quality-dynamics-card">
+                  <h3>Сроки, дни</h3>
+                  <div class="quality-dynamics-chart-wrap">
+                    <canvas id="quality-dynamics-days-chart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="quality-tab-analysis" class="quality-tab-panel" role="tabpanel" hidden>
+            <div class="quality-analysis-toolbar">
+              <p class="quality-tab-lead">
+                Операционный разбор текущего списка и динамики. Пересобирается автоматически после
+                «Обновить из CRM» или «Полный пересбор лент».
+              </p>
+              <div class="quality-analysis-tg-row">
+                <button type="button" id="quality-tg-btn" class="cj-import-open">Отправить в ТГ текущий анализ</button>
+                <span id="quality-tg-status" class="quality-tg-status" hidden></span>
+              </div>
+            </div>
+            <div id="quality-analysis-empty" class="quality-dynamics-empty" hidden>
+              Анализа ещё нет. Сделайте «Обновить из CRM» — появится полный разбор.
+            </div>
+            <div id="quality-analysis-root" class="quality-analysis-root" hidden></div>
+          </div>
         </div>
       </section>
 
@@ -199,6 +243,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261007-one-scroll"></script>
+  <script src="/static/app.js?v=20261008-tg"></script>
 </body>
 </html>

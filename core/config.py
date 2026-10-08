@@ -26,6 +26,13 @@ class Settings(BaseSettings):
 
     default_gincore_base_url: str = "https://itserviceoutsourcing.gincore.net"
 
+    # Telegram: токен бота от @BotFather и id чата (куда слать анализ).
+    # Файл .env в корне проекта:
+    #   JARVIS_TELEGRAM_BOT_TOKEN=123456:ABC...
+    #   JARVIS_TELEGRAM_CHAT_ID=-1001234567890
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+
     def resolved_db_path(self) -> Path:
         return self.db_path or (self.data_dir / "jarvis.db")
 
