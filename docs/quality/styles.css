@@ -104,6 +104,36 @@ main { flex: 1; min-height: 0; }
 .qtable th {
   background: #f7f4ee;
   font-weight: 650;
+  user-select: none;
+}
+.qtable th[data-col] { cursor: pointer; }
+.qtable th[data-col]:hover { background: #efe9dc; }
+.qtable th.is-sorted { color: var(--accent); }
+.th-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.th-sort {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  color: transparent;
+  width: 0.75em;
+  line-height: 1;
+}
+.qtable th.is-sorted .th-sort,
+.qtable th[data-col]:hover .th-sort {
+  color: var(--muted);
+}
+.qtable th.is-sorted .th-sort {
+  color: var(--accent);
 }
 .qtable a { color: var(--accent); font-weight: 650; text-decoration: none; }
 .qtable a:hover { text-decoration: underline; }

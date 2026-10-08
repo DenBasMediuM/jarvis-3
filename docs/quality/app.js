@@ -1,6 +1,21 @@
 /* GitHub Pages viewer for Jarvis quality snapshot (data.json). */
 const DATA_URL = "./data.json";
 const MASTERS_COLLAPSE_KEY = "jarvis.pages.masters.collapsed";
+const SORT_OVERVIEW_KEY = "jarvis.pages.sort.overview";
+const SORT_MASTERS_KEY = "jarvis.pages.sort.masters";
+const SORT_SUMMARY_KEY = "jarvis.pages.sort.summary";
+
+const SORT_NUMERIC = new Set([
+  "oid",
+  "total",
+  "wait",
+  "diag",
+  "rework",
+  "calls",
+  "kpi",
+  "mgr",
+  "count",
+]);
 
 let DATA = null;
 let chartMasters = null;
@@ -10,6 +25,9 @@ let floatTipEl = null;
 let floatTipAnchor = null;
 let floatTipHideTimer = null;
 let tipsBound = false;
+let overviewSort = null;
+let mastersSort = { key: "kpi", dir: "asc" };
+let summarySort = { key: "kpi", dir: "desc" };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -68,6 +86,176 @@ function avg(nums) {
   const vals = nums.filter((n) => n != null && !Number.isNaN(Number(n))).map(Number);
   if (!vals.length) return null;
   return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+}
+
+function loadSort(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.key && (parsed.dir === "asc" || parsed.dir === "desc")) return parsed;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function saveSort(key, sort) {
+  try {
+    if (!sort) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(sort));
+  } catch {
+    /* ignore */
+  }
+}
+
+function orderSortValue(row, key) {
+  switch (key) {
+    case "oid":
+      return Number(row.order_id) || 0;
+    case "status":
+      return String(row.status || "").toLowerCase();
+    case "engineer":
+      return String(row.engineer || row.master_name || "").toLowerCase();
+    case "device":
+      return String(row.device || "").toLowerCase();
+    case "total":
+      return row.total_days == null ? -1 : Number(row.total_days);
+    case "wait":
+      return row.wait_master_days == null ? -1 : Number(row.wait_master_days);
+    case "diag":
+      return row.diag_days == null ? -1 : Number(row.diag_days);
+    case "rework":
+      if (row.rework_kpi == null) return 101;
+      return Number(row.rework_kpi);
+    case "calls":
+      return row.calls_kpi == null ? -1 : Number(row.calls_kpi);
+    case "kpi":
+      return row.order_kpi == null ? -1 : Number(row.order_kpi);
+    case "mgr":
+      return row.manager_no_answer_missed ? 1 : 0;
+    default:
+      return "";
+  }
+}
+
+function sortOrders(rows, sort) {
+  if (!sort?.key || !rows?.length) return rows || [];
+  const dir = sort.dir === "desc" ? -1 : 1;
+  const key = sort.key;
+  return [...rows].sort((a, b) => {
+    const va = orderSortValue(a, key);
+    const vb = orderSortValue(b, key);
+    if (typeof va === "number" && typeof vb === "number") {
+      if (va === vb) return Number(b.order_id) - Number(a.order_id);
+      return (va - vb) * dir;
+    }
+    const cmp = String(va).localeCompare(String(vb), "ru", { sensitivity: "base" });
+    if (cmp === 0) return Number(b.order_id) - Number(a.order_id);
+    return cmp * dir;
+  });
+}
+
+function summarySortValue(g, key) {
+  switch (key) {
+    case "name":
+      return String(g.name || "").toLowerCase();
+    case "count":
+      return Number(g.count) || 0;
+    case "kpi":
+      return g.avgKpi == null ? -1 : Number(g.avgKpi);
+    case "total":
+      return g.avgTotal == null ? -1 : Number(g.avgTotal);
+    case "wait":
+      return g.avgWait == null ? -1 : Number(g.avgWait);
+    case "diag":
+      return g.avgDiag == null ? -1 : Number(g.avgDiag);
+    case "rework":
+      return g.avgRework == null ? 101 : Number(g.avgRework);
+    case "calls":
+      return g.avgCalls == null ? -1 : Number(g.avgCalls);
+    default:
+      return "";
+  }
+}
+
+function sortSummaryGroups(groups, sort) {
+  if (!sort?.key || !groups?.length) return groups || [];
+  const dir = sort.dir === "desc" ? -1 : 1;
+  const key = sort.key;
+  return [...groups].sort((a, b) => {
+    const va = summarySortValue(a, key);
+    const vb = summarySortValue(b, key);
+    if (typeof va === "number" && typeof vb === "number") {
+      if (va === vb) return String(a.name).localeCompare(String(b.name), "ru");
+      return (va - vb) * dir;
+    }
+    const cmp = String(va).localeCompare(String(vb), "ru", { sensitivity: "base" });
+    if (cmp === 0) return (b.count || 0) - (a.count || 0);
+    return cmp * dir;
+  });
+}
+
+function cycleSort(current, key) {
+  if (current?.key === key) {
+    const firstDir = SORT_NUMERIC.has(key) ? "desc" : "asc";
+    if (current.dir === firstDir) {
+      return { key, dir: current.dir === "asc" ? "desc" : "asc" };
+    }
+    return null;
+  }
+  return { key, dir: SORT_NUMERIC.has(key) ? "desc" : "asc" };
+}
+
+function updateSortIndicators(table, sort) {
+  if (!table) return;
+  table.querySelectorAll("thead th[data-col]").forEach((th) => {
+    const key = th.getAttribute("data-col");
+    const mark = th.querySelector(".th-sort");
+    const active = sort && sort.key === key;
+    th.classList.toggle("is-sorted", !!active);
+    if (mark) mark.textContent = active ? (sort.dir === "asc" ? "▲" : "▼") : "▲";
+  });
+}
+
+function bindTableSort(table, getSort, setSort, onChange) {
+  if (!table || table.dataset.sortBound === "1") {
+    updateSortIndicators(table, getSort());
+    return;
+  }
+  table.dataset.sortBound = "1";
+  table.querySelectorAll("thead th[data-col]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.getAttribute("data-col");
+      if (!key) return;
+      const next = cycleSort(getSort(), key);
+      setSort(next);
+      updateSortIndicators(table, next);
+      onChange();
+    });
+  });
+  updateSortIndicators(table, getSort());
+}
+
+function masterHeaderHtml() {
+  const cols = [
+    ["oid", "№"],
+    ["status", "Статус"],
+    ["device", "Устройство"],
+    ["total", "Всего дн"],
+    ["wait", "До мастера"],
+    ["diag", "До диагн."],
+    ["rework", "Дораб."],
+    ["calls", "Звонки"],
+    ["kpi", "KPI"],
+    ["mgr", "Мен."],
+  ];
+  return cols
+    .map(
+      ([key, label]) =>
+        `<th data-col="${key}"><div class="th-inner"><span class="th-label">${label}</span><span class="th-sort" aria-hidden="true">▲</span></div></th>`,
+    )
+    .join("");
 }
 
 function tipLi(text, tone) {
@@ -404,13 +592,25 @@ function renderOverview() {
   if (table && !table.querySelector("colgroup")) {
     table.insertAdjacentHTML("afterbegin", OVERVIEW_COLS);
   }
+  if (table) {
+    bindTableSort(
+      table,
+      () => overviewSort,
+      (s) => {
+        overviewSort = s;
+        saveSort(SORT_OVERVIEW_KEY, s);
+      },
+      () => renderOverview(),
+    );
+  }
   const orders = DATA?.orders || [];
   if (!orders.length) {
     tbody.innerHTML = `<tr><td colspan="11" class="muted">Нет данных. Обновите из CRM локально и сделайте git push.</td></tr>`;
     return;
   }
-  const sorted = [...orders].sort((a, b) => (a.order_kpi ?? 999) - (b.order_kpi ?? 999));
+  const sorted = overviewSort ? sortOrders(orders, overviewSort) : orders;
   tbody.innerHTML = sorted.map((r) => orderRowHtml(r)).join("");
+  updateSortIndicators(table, overviewSort);
 }
 
 function loadCollapsedMasters() {
@@ -446,8 +646,7 @@ function renderMasters() {
       .map((g) => {
         const key = g.name;
         const isCol = collapsed.has(key);
-        const rows = [...g.rows]
-          .sort((a, b) => (a.order_kpi ?? 999) - (b.order_kpi ?? 999))
+        const rows = (mastersSort ? sortOrders(g.rows, mastersSort) : g.rows)
           .map((r) => orderRowHtml(r, { engineer: false }))
           .join("");
         return `<article class="master-card${isCol ? " is-collapsed" : ""}" data-master="${esc(key)}">
@@ -461,10 +660,7 @@ function renderMasters() {
             <div class="table-wrap">
               <table class="qtable master-table">
                 ${MASTER_COLS}
-                <thead><tr>
-                  <th>№</th><th>Статус</th><th>Устройство</th><th>Всего дн</th>
-                  <th>До мастера</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th><th>KPI</th><th>Мен.</th>
-                </tr></thead>
+                <thead><tr>${masterHeaderHtml()}</tr></thead>
                 <tbody>${rows}</tbody>
               </table>
             </div>
@@ -473,6 +669,19 @@ function renderMasters() {
       })
       .join("")}
   `;
+
+  root.querySelectorAll(".master-table").forEach((table) => {
+    updateSortIndicators(table, mastersSort);
+    table.querySelectorAll("thead th[data-col]").forEach((th) => {
+      th.addEventListener("click", () => {
+        const key = th.getAttribute("data-col");
+        if (!key) return;
+        mastersSort = cycleSort(mastersSort, key);
+        saveSort(SORT_MASTERS_KEY, mastersSort);
+        renderMasters();
+      });
+    });
+  });
 
   root.querySelectorAll(".master-card-head").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -514,11 +723,24 @@ function kpiBarColor(kpi) {
 
 function renderSummary() {
   const groups = groupByMaster(DATA?.orders || []);
+  const table = $("#table-summary");
   const tbody = $("#tbody-summary");
-  if (!groups.length) {
+  if (table) {
+    bindTableSort(
+      table,
+      () => summarySort,
+      (s) => {
+        summarySort = s;
+        saveSort(SORT_SUMMARY_KEY, s);
+      },
+      () => renderSummary(),
+    );
+  }
+  const sortedGroups = summarySort ? sortSummaryGroups(groups, summarySort) : groups;
+  if (!sortedGroups.length) {
     tbody.innerHTML = `<tr><td colspan="8" class="muted">Нет данных</td></tr>`;
   } else {
-    tbody.innerHTML = groups
+    tbody.innerHTML = sortedGroups
       .map(
         (g) => `<tr>
         <td>${esc(g.name)}</td>
@@ -533,13 +755,14 @@ function renderSummary() {
       )
       .join("");
   }
+  updateSortIndicators(table, summarySort);
   if (typeof Chart === "undefined") return;
   const canvas = $("#chart-masters");
   const wrap = canvas?.closest(".chart-wrap");
   if (!canvas) return;
   if (chartMasters) chartMasters.destroy();
 
-  // Горизонтальные полосы: имена слева (вертикальный список), KPI вправо.
+  // График: слабее сверху → сильнее снизу (независимо от сортировки таблицы).
   const rows = [...groups].sort((a, b) => (a.avgKpi ?? -1) - (b.avgKpi ?? -1));
   if (wrap) wrap.style.setProperty("--summary-n", String(Math.max(rows.length, 8)));
 
@@ -833,6 +1056,9 @@ function setTab(id) {
 
 async function boot() {
   bindTips();
+  overviewSort = loadSort(SORT_OVERVIEW_KEY);
+  mastersSort = loadSort(SORT_MASTERS_KEY) || { key: "kpi", dir: "asc" };
+  summarySort = loadSort(SORT_SUMMARY_KEY) || { key: "kpi", dir: "desc" };
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.dataset.tab));
   });

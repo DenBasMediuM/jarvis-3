@@ -35,14 +35,17 @@
           <table class="qtable" id="table-overview">
             <thead>
               <tr>
-                <th>№</th><th>Статус</th><th>Мастер</th><th>Устройство</th>
-                <th title="Дней от приёмки">Всего дн</th>
-                <th title="От приёмки до назначения мастера">До мастера</th>
-                <th title="От мастера до согласования">До диагн.</th>
-                <th title="KPI доработок 0–100 — наведите">Дораб.</th>
-                <th title="KPI коммуникации 0–100 — наведите">Звонки</th>
-                <th title="Итоговый KPI — наведите для разбора">KPI</th>
-                <th>Мен.</th>
+                <th data-col="oid"><div class="th-inner"><span class="th-label">№</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="status"><div class="th-inner"><span class="th-label">Статус</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="engineer"><div class="th-inner"><span class="th-label">Мастер</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="device"><div class="th-inner"><span class="th-label">Устройство</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="total" title="Дней от приёмки"><div class="th-inner"><span class="th-label">Всего дн</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="wait" title="От приёмки до назначения мастера"><div class="th-inner"><span class="th-label">До мастера</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="diag" title="От мастера до согласования"><div class="th-inner"><span class="th-label">До диагн.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="rework" title="KPI доработок 0–100 — наведите"><div class="th-inner"><span class="th-label">Дораб.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="calls" title="KPI коммуникации 0–100 — наведите"><div class="th-inner"><span class="th-label">Звонки</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="kpi" title="Итоговый KPI — наведите для разбора"><div class="th-inner"><span class="th-label">KPI</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                <th data-col="mgr"><div class="th-inner"><span class="th-label">Мен.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
               </tr>
             </thead>
             <tbody id="tbody-overview"></tbody>
@@ -66,11 +69,17 @@
           <div class="card">
             <h3>Сводная таблица</h3>
             <div class="table-wrap">
-              <table class="qtable" style="table-layout: auto">
+              <table class="qtable" id="table-summary" style="table-layout: auto">
                 <thead>
                   <tr>
-                    <th>Мастер</th><th>Заказов</th><th>KPI</th><th>Всего дн</th>
-                    <th>До маст.</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th>
+                    <th data-col="name"><div class="th-inner"><span class="th-label">Мастер</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="count"><div class="th-inner"><span class="th-label">Заказов</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="kpi"><div class="th-inner"><span class="th-label">KPI</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="total"><div class="th-inner"><span class="th-label">Всего дн</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="wait"><div class="th-inner"><span class="th-label">До маст.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="diag"><div class="th-inner"><span class="th-label">До диагн.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="rework"><div class="th-inner"><span class="th-label">Дораб.</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
+                    <th data-col="calls"><div class="th-inner"><span class="th-label">Звонки</span><span class="th-sort" aria-hidden="true">▲</span></div></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-summary"></tbody>
