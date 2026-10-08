@@ -32,12 +32,17 @@
     <main>
       <section id="panel-overview" class="panel is-active">
         <div class="table-wrap">
-          <table class="qtable">
+          <table class="qtable" id="table-overview">
             <thead>
               <tr>
                 <th>№</th><th>Статус</th><th>Мастер</th><th>Устройство</th>
-                <th>Всего дн</th><th>До мастера</th><th>До диагн.</th>
-                <th>Дораб.</th><th>Звонки</th><th>KPI</th><th>Мен.</th>
+                <th title="Дней от приёмки">Всего дн</th>
+                <th title="От приёмки до назначения мастера">До мастера</th>
+                <th title="От мастера до согласования">До диагн.</th>
+                <th title="KPI доработок 0–100 — наведите">Дораб.</th>
+                <th title="KPI коммуникации 0–100 — наведите">Звонки</th>
+                <th title="Итоговый KPI — наведите для разбора">KPI</th>
+                <th>Мен.</th>
               </tr>
             </thead>
             <tbody id="tbody-overview"></tbody>
@@ -46,21 +51,22 @@
       </section>
 
       <section id="panel-masters" class="panel" hidden>
-        <p class="lead">Таблицы по мастерам. KPI — среднее по квитанциям с оценкой.</p>
+        <p class="lead">Таблицы по мастерам. Клик по шапке — свернуть/развернуть. KPI — среднее по квитанциям.</p>
         <div id="masters-root"></div>
       </section>
 
       <section id="panel-summary" class="panel" hidden>
-        <p class="lead">Сравнение мастеров.</p>
+        <p class="lead">Сравнение мастеров: полосы KPI и сводная таблица.</p>
         <div class="summary-layout">
           <div class="card">
-            <h3>Средний KPI</h3>
-            <div class="chart-wrap"><canvas id="chart-masters"></canvas></div>
+            <h3>Средний KPI по мастерам</h3>
+            <p class="card-sub">Слабее сверху → сильнее снизу. Цвет полосы: красный / оранжевый / зелёный. Наведите — заказы и сроки.</p>
+            <div class="chart-wrap is-summary"><canvas id="chart-masters"></canvas></div>
           </div>
           <div class="card">
             <h3>Сводная таблица</h3>
             <div class="table-wrap">
-              <table class="qtable">
+              <table class="qtable" style="table-layout: auto">
                 <thead>
                   <tr>
                     <th>Мастер</th><th>Заказов</th><th>KPI</th><th>Всего дн</th>
@@ -80,8 +86,14 @@
         <div id="dynamics-body" hidden>
           <div class="meta-line" id="dynamics-meta"></div>
           <div class="charts">
-            <div class="card"><h3>KPI</h3><div class="chart-wrap"><canvas id="chart-kpi"></canvas></div></div>
-            <div class="card"><h3>Сроки</h3><div class="chart-wrap"><canvas id="chart-days"></canvas></div></div>
+            <div class="card">
+              <h3>KPI (0–100)</h3>
+              <div class="chart-wrap is-dynamics"><canvas id="chart-kpi"></canvas></div>
+            </div>
+            <div class="card">
+              <h3>Сроки, дни</h3>
+              <div class="chart-wrap is-dynamics"><canvas id="chart-days"></canvas></div>
+            </div>
           </div>
         </div>
       </section>

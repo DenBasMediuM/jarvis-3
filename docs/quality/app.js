@@ -1,12 +1,17 @@
 /* GitHub Pages viewer for Jarvis quality snapshot (data.json). */
 const DATA_URL = "./data.json";
+const MASTERS_COLLAPSE_KEY = "jarvis.pages.masters.collapsed";
 
 let DATA = null;
 let chartMasters = null;
 let chartKpi = null;
 let chartDays = null;
+let floatTipEl = null;
+let floatTipAnchor = null;
+let floatTipHideTimer = null;
+let tipsBound = false;
 
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel, root = document) => root.querySelector(sel);
 
 function esc(s) {
   return String(s ?? "")
@@ -36,11 +41,16 @@ function dayClass(v, warn, bad) {
   return "";
 }
 
+function kpiTone(v) {
+  if (v == null || Number.isNaN(Number(v))) return "muted";
+  if (v >= 70) return "good";
+  if (v >= 40) return "mid";
+  return "bad";
+}
+
 function kpiClass(v) {
-  if (v == null) return "muted";
-  if (v >= 70) return "kpi-good";
-  if (v >= 40) return "kpi-mid";
-  return "kpi-bad";
+  const t = kpiTone(v);
+  return t === "muted" ? "muted" : `kpi-${t}`;
 }
 
 function heatStyle(kpi) {
@@ -48,13 +58,256 @@ function heatStyle(kpi) {
   const raw = Math.max(0, Math.min(100, Number(kpi))) / 100;
   const t = Math.pow(raw, 1.65);
   const hue = Math.round(t * 118);
-  return `background: hsla(${hue}, 55%, 92%, 0.95)`;
+  const sat = Math.round(62 - 8 * t);
+  const light = Math.round(44 + 4 * t);
+  const alpha = (0.28 + 0.22 * (1 - t)).toFixed(3);
+  return `background-color: hsla(${hue}, ${sat}%, ${light}%, ${alpha})`;
 }
 
 function avg(nums) {
   const vals = nums.filter((n) => n != null && !Number.isNaN(Number(n))).map(Number);
   if (!vals.length) return null;
   return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+}
+
+function tipLi(text, tone) {
+  return `<li class="${tone ? `is-${tone}` : ""}">${esc(text)}</li>`;
+}
+
+function buildCallsTip(r) {
+  const inOk = r.calls_inbound_ok ?? r.calls_inbound ?? 0;
+  const inFail = r.calls_inbound_fail ?? 0;
+  const outOk = r.calls_outbound_ok ?? 0;
+  const outFail = r.calls_outbound_fail ?? 0;
+  const missed = r.calls_missed ?? r.calls_missed_total ?? 0;
+  const missUnrec = r.calls_missed_unrecovered ?? 0;
+  const missRec = r.calls_missed_recovered ?? 0;
+  const preOk = r.calls_pre_inbound_ok ?? 0;
+  const preSame = r.calls_pre_miss_same_day ?? 0;
+  const preBefore = r.calls_pre_miss_before_visit ?? 0;
+  const preUntil = r.calls_pre_miss_until_visit ?? 0;
+  const kpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
+  const tone = kpiTone(kpi);
+
+  const preItems = [];
+  if (preOk) preItems.push(tipLi(`Приняли входящий: ${preOk} — норма, без штрафа`, "good"));
+  if (preSame) {
+    preItems.push(
+      tipLi(`Не взяли, но в тот же день связались: ${preSame}`, "mid"),
+    );
+  }
+  if (preBefore) preItems.push(tipLi(`Связались позже, но до сдачи: ${preBefore}`, "mid"));
+  if (preUntil) {
+    preItems.push(tipLi(`До сдачи так и не связались: ${preUntil}`, "bad"));
+  }
+
+  const postItems = [];
+  if (missUnrec) postItems.push(tipLi(`Пропущенный без перезвона в тот же день: ${missUnrec}`, "bad"));
+  if (missRec) postItems.push(tipLi(`Пропущенный, перезвонили в тот же день: ${missRec}`, "good"));
+  if (r.callback_same_day) {
+    postItems.push(tipLi(`Дней с перезвоном в тот же день: ${r.callback_same_day}`));
+  }
+
+  const score =
+    kpi == null
+      ? `<div class="float-tip-score is-muted">Нет данных</div>
+         <p class="float-tip-note">В ленте нет звонков для оценки коммуникации.</p>`
+      : `<div class="float-tip-score is-${tone}"><span>${kpi}</span><small>/ 100</small></div>`;
+
+  return `
+    <div class="float-tip-head">Коммуникация</div>
+    ${score}
+    <div class="float-tip-block">
+      <div class="float-tip-label">Звонки по заказу</div>
+      <ul>
+        <li>Исходящие: <strong>${outOk}</strong> успешных · <strong>${outFail}</strong> неуспешных</li>
+        <li>Входящие: <strong>${inOk}</strong> успешных · <strong>${inFail}</strong> неуспешных${
+          missed ? ` · пропущено <strong>${missed}</strong>` : ""
+        }</li>
+      </ul>
+    </div>
+    ${
+      preItems.length
+        ? `<div class="float-tip-block"><div class="float-tip-label">До создания заказа</div><ul>${preItems.join("")}</ul></div>`
+        : ""
+    }
+    ${
+      postItems.length
+        ? `<div class="float-tip-block"><div class="float-tip-label">После создания заказа</div><ul>${postItems.join("")}</ul></div>`
+        : ""
+    }
+    ${
+      kpi != null && !preItems.length && !postItems.length
+        ? `<p class="float-tip-note">Особых проблем с дозвоном не зафиксировано — оценка по успешности звонков.</p>`
+        : ""
+    }
+  `;
+}
+
+function buildReworkTip(r) {
+  const rwN = Number(r.rework_count || 0);
+  const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
+  if (rwN <= 0 || rwKpi == null) {
+    return `
+      <div class="float-tip-head">Доработки</div>
+      <div class="float-tip-score is-good"><span>—</span></div>
+      <p class="float-tip-note">Приёмов на доработку не было.</p>
+    `;
+  }
+  const tone = kpiTone(rwKpi);
+  const diag = r.rework_diag_days;
+  const repair = r.rework_repair_days;
+  const total = r.rework_total_days;
+  const since = fmtDate(r.last_rework_at || r.rework_last_accepted_at);
+  const why = [];
+  if (rwN === 1) why.push(tipLi("Первая доработка: −20 к оценке", "mid"));
+  else why.push(tipLi(`${rwN} приёма на доработку: −20 за первую и −25 за каждую следующую`, "bad"));
+  if (repair == null) {
+    why.push(tipLi("Ремонт после доработки ещё не начат — долгая диагностика штрафуется сильнее", "bad"));
+  } else if (Number(diag) >= 7 || Number(repair) >= 7 || Number(total) >= 10) {
+    why.push(tipLi("Долгий цикл после последней доработки снижает оценку", "mid"));
+  }
+  return `
+    <div class="float-tip-head">Доработки</div>
+    <div class="float-tip-score is-${tone}"><span>${rwKpi}</span><small>/ 100</small></div>
+    <div class="float-tip-block">
+      <div class="float-tip-label">Сводка</div>
+      <ul>
+        <li>Приёмов на доработку: <strong>${rwN}</strong></li>
+        <li>Последний приём: <strong>${esc(since)}</strong></li>
+      </ul>
+    </div>
+    <div class="float-tip-block">
+      <div class="float-tip-label">С последней доработки</div>
+      <ul>
+        <li>Диагностика: <strong>${diag == null ? "—" : `${fmtDays(diag)} дн`}</strong></li>
+        <li>Ремонт: <strong>${repair == null ? "ещё не начат" : `${fmtDays(repair)} дн`}</strong></li>
+        <li>Всего: <strong>${total == null ? "—" : `${fmtDays(total)} дн`}</strong></li>
+      </ul>
+    </div>
+    ${
+      why.length
+        ? `<div class="float-tip-block"><div class="float-tip-label">Что влияет на оценку</div><ul>${why.join("")}</ul></div>`
+        : ""
+    }
+  `;
+}
+
+function buildOrderKpiTip(r) {
+  const kpi = r.order_kpi != null ? Number(r.order_kpi) : null;
+  const tone = kpiTone(kpi);
+  const parts = Array.isArray(r.order_kpi_parts) ? r.order_kpi_parts : [];
+  const score =
+    kpi == null
+      ? `<div class="float-tip-score is-muted">Нет данных</div>`
+      : `<div class="float-tip-score is-${tone}"><span>${kpi}</span><small>/ 100</small></div>`;
+  const rows = parts
+    .map((p) => {
+      const pt = kpiTone(p.score);
+      const detail = String(p.detail || "").trim();
+      return `<li class="is-${pt}"><strong>${esc(p.label)}</strong> → <strong>${
+        p.score
+      }/100</strong>${
+        detail ? ` <span class="float-tip-muted">(${esc(detail)})</span>` : ""
+      } · вес ${p.weight_pct ?? "—"}%</li>`;
+    })
+    .join("");
+  return `
+    <div class="float-tip-head">Итоговый KPI</div>
+    ${score}
+    <div class="float-tip-block">
+      <div class="float-tip-label">Оценка компонентов (не «количество»)</div>
+      <ul>${rows || "<li>Недостаточно данных для оценки</li>"}</ul>
+    </div>
+    <p class="float-tip-note">В «Дораб.» и «Звонки» число — балл 0–100, не счётчик. «Мен.» не входит. Нет звонков — веса перенормируются.</p>
+  `;
+}
+
+function tipCell(innerHtml, tipHtml, extraClass = "") {
+  return `<span class="tip-anchor ${extraClass}" tabindex="0">${innerHtml}<span class="tip-content" hidden>${tipHtml}</span></span>`;
+}
+
+function ensureFloatTip() {
+  if (floatTipEl) return floatTipEl;
+  floatTipEl = document.createElement("div");
+  floatTipEl.className = "float-tip";
+  floatTipEl.hidden = true;
+  floatTipEl.setAttribute("role", "tooltip");
+  document.body.appendChild(floatTipEl);
+  floatTipEl.addEventListener("mouseenter", () => {
+    if (floatTipHideTimer) {
+      clearTimeout(floatTipHideTimer);
+      floatTipHideTimer = null;
+    }
+  });
+  floatTipEl.addEventListener("mouseleave", () => hideFloatTipSoon());
+  return floatTipEl;
+}
+
+function positionFloatTip(anchor) {
+  const tip = ensureFloatTip();
+  const rect = anchor.getBoundingClientRect();
+  const pad = 10;
+  const tipW = tip.offsetWidth || 320;
+  const tipH = tip.offsetHeight || 180;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  left = Math.max(pad, Math.min(left, window.innerWidth - tipW - pad));
+  let top = rect.bottom + 8;
+  if (top + tipH > window.innerHeight - pad && rect.top > tipH + 16) {
+    top = rect.top - tipH - 8;
+  }
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
+}
+
+function showFloatTip(anchor) {
+  const content = anchor.querySelector(".tip-content");
+  if (!content) return;
+  if (floatTipHideTimer) {
+    clearTimeout(floatTipHideTimer);
+    floatTipHideTimer = null;
+  }
+  const tip = ensureFloatTip();
+  tip.innerHTML = content.innerHTML;
+  tip.hidden = false;
+  floatTipAnchor = anchor;
+  positionFloatTip(anchor);
+}
+
+function hideFloatTipSoon() {
+  if (floatTipHideTimer) clearTimeout(floatTipHideTimer);
+  floatTipHideTimer = setTimeout(() => {
+    if (!floatTipEl) return;
+    floatTipEl.hidden = true;
+    floatTipEl.innerHTML = "";
+    floatTipAnchor = null;
+    floatTipHideTimer = null;
+  }, 120);
+}
+
+function bindTips() {
+  if (tipsBound) return;
+  tipsBound = true;
+  document.addEventListener("mouseover", (e) => {
+    const a = e.target.closest?.(".tip-anchor");
+    if (!a) return;
+    if (floatTipAnchor === a && floatTipEl && !floatTipEl.hidden) return;
+    showFloatTip(a);
+  });
+  document.addEventListener("mouseout", (e) => {
+    const a = e.target.closest?.(".tip-anchor");
+    if (!a) return;
+    const related = e.relatedTarget;
+    if (related && (a.contains(related) || floatTipEl?.contains(related))) return;
+    hideFloatTipSoon();
+  });
+  document.addEventListener("focusin", (e) => {
+    const a = e.target.closest?.(".tip-anchor");
+    if (a) showFloatTip(a);
+  });
+  document.addEventListener("scroll", () => {
+    if (floatTipAnchor && floatTipEl && !floatTipEl.hidden) positionFloatTip(floatTipAnchor);
+  }, true);
 }
 
 function groupByMaster(orders) {
@@ -89,41 +342,68 @@ function orderRowHtml(r, { engineer = true } = {}) {
     ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${oid}</a>`
     : oid;
   const kpi = r.order_kpi != null ? Number(r.order_kpi) : null;
-  const eng = engineer
-    ? `<td>${esc(r.engineer || r.master_name || "—")}</td>`
-    : "";
-  const rw =
-    Number(r.rework_count) > 0 && r.rework_kpi != null
-      ? `<span class="${kpiClass(r.rework_kpi)}">${r.rework_kpi}</span>`
+  const eng = engineer ? `<td>${esc(r.engineer || r.master_name || "—")}</td>` : "";
+
+  const rwN = Number(r.rework_count || 0);
+  const rwKpi = r.rework_kpi != null ? Number(r.rework_kpi) : null;
+  const rwInner =
+    rwN > 0 && rwKpi != null
+      ? `<span class="${kpiClass(rwKpi)}">${rwKpi}</span>`
       : `<span class="muted">—</span>`;
-  const calls =
-    r.calls_kpi != null
-      ? `<span class="${kpiClass(r.calls_kpi)}">${r.calls_kpi}</span>`
-      : `<span class="muted">—</span>`;
-  const orderKpi =
+  const rework = tipCell(rwInner, buildReworkTip(r));
+
+  const callsKpi = r.calls_kpi != null ? Number(r.calls_kpi) : null;
+  const callsInner =
+    callsKpi == null
+      ? `<span class="muted">—</span>`
+      : `<span class="${kpiClass(callsKpi)}">${callsKpi}</span>`;
+  const calls = tipCell(callsInner, buildCallsTip(r));
+
+  const orderInner =
     kpi == null
       ? `<span class="muted">—</span>`
       : `<span class="${kpiClass(kpi)}">${kpi}</span>`;
+  const orderKpi = tipCell(orderInner, buildOrderKpiTip(r));
+
   const mgr = r.manager_no_answer_missed
-    ? `<span class="flag">статус?</span>`
+    ? `<span class="flag" title="После согласования неуспешный исходящий">статус?</span>`
     : `<span class="muted">—</span>`;
+
   return `<tr>
     <td>${link}</td>
-    <td>${esc(r.status || "—")}</td>
+    <td title="${esc(r.status || "")}">${esc(r.status || "—")}</td>
     ${eng}
-    <td title="${esc(r.device || "")}" style="${heatStyle(kpi)}">${esc((r.device || "—").slice(0, 28))}</td>
+    <td title="${esc(r.device || "")}" style="${heatStyle(kpi)}">${esc((r.device || "—").slice(0, 32))}</td>
     <td class="${dayClass(r.total_days, 7, 14)}" title="Принят: ${esc(fmtDate(r.accepted_at))}">${fmtDays(r.total_days)}</td>
     <td class="${dayClass(r.wait_master_days, 2, 5)}">${fmtDays(r.wait_master_days)}</td>
-    <td class="${dayClass(r.diag_days, 3, 7)}">${fmtDays(r.diag_days)}</td>
-    <td>${rw}</td>
+    <td class="${dayClass(r.diag_days, 3, 7)}" title="${esc(r.agreement_source || "")}">${fmtDays(r.diag_days)}</td>
+    <td>${rework}</td>
     <td>${calls}</td>
     <td>${orderKpi}</td>
     <td>${mgr}</td>
   </tr>`;
 }
 
+const OVERVIEW_COLS = `
+  <colgroup>
+    <col class="c-oid" /><col class="c-status" /><col class="c-eng" /><col class="c-device" />
+    <col class="c-num" /><col class="c-num" /><col class="c-num" />
+    <col class="c-kpi" /><col class="c-kpi" /><col class="c-kpi" /><col class="c-mgr" />
+  </colgroup>`;
+
+const MASTER_COLS = `
+  <colgroup>
+    <col class="c-oid" /><col class="c-status" /><col class="c-device" />
+    <col class="c-num" /><col class="c-num" /><col class="c-num" />
+    <col class="c-kpi" /><col class="c-kpi" /><col class="c-kpi" /><col class="c-mgr" />
+  </colgroup>`;
+
 function renderOverview() {
   const tbody = $("#tbody-overview");
+  const table = tbody?.closest("table");
+  if (table && !table.querySelector("colgroup")) {
+    table.insertAdjacentHTML("afterbegin", OVERVIEW_COLS);
+  }
   const orders = DATA?.orders || [];
   if (!orders.length) {
     tbody.innerHTML = `<tr><td colspan="11" class="muted">Нет данных. Обновите из CRM локально и сделайте git push.</td></tr>`;
@@ -133,6 +413,22 @@ function renderOverview() {
   tbody.innerHTML = sorted.map((r) => orderRowHtml(r)).join("");
 }
 
+function loadCollapsedMasters() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(MASTERS_COLLAPSE_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCollapsedMasters(set) {
+  try {
+    localStorage.setItem(MASTERS_COLLAPSE_KEY, JSON.stringify([...set]));
+  } catch {
+    /* ignore */
+  }
+}
+
 function renderMasters() {
   const root = $("#masters-root");
   const groups = groupByMaster(DATA?.orders || []);
@@ -140,28 +436,80 @@ function renderMasters() {
     root.innerHTML = `<div class="empty">Нет данных по мастерам.</div>`;
     return;
   }
-  root.innerHTML = groups
-    .map((g) => {
-      const rows = [...g.rows]
-        .sort((a, b) => (a.order_kpi ?? 999) - (b.order_kpi ?? 999))
-        .map((r) => orderRowHtml(r, { engineer: false }))
-        .join("");
-      return `<article class="master-card">
-        <h3>${esc(g.name)}
-          <span class="meta-bits">KPI ${g.avgKpi ?? "—"} · ${g.count} зак.</span>
-        </h3>
-        <div class="table-wrap">
-          <table class="qtable">
-            <thead><tr>
-              <th>№</th><th>Статус</th><th>Устройство</th><th>Всего дн</th>
-              <th>До мастера</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th><th>KPI</th><th>Мен.</th>
-            </tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </article>`;
-    })
-    .join("");
+  const collapsed = loadCollapsedMasters();
+  root.innerHTML = `
+    <div class="masters-toolbar">
+      <button type="button" data-masters-action="expand">Развернуть все</button>
+      <button type="button" data-masters-action="collapse">Свернуть все</button>
+    </div>
+    ${groups
+      .map((g) => {
+        const key = g.name;
+        const isCol = collapsed.has(key);
+        const rows = [...g.rows]
+          .sort((a, b) => (a.order_kpi ?? 999) - (b.order_kpi ?? 999))
+          .map((r) => orderRowHtml(r, { engineer: false }))
+          .join("");
+        return `<article class="master-card${isCol ? " is-collapsed" : ""}" data-master="${esc(key)}">
+          <button type="button" class="master-card-head" aria-expanded="${!isCol}">
+            <span class="master-chevron" aria-hidden="true">▾</span>
+            <h3>${esc(g.name)}
+              <span class="meta-bits">KPI ${g.avgKpi ?? "—"} · ${g.count} зак.</span>
+            </h3>
+          </button>
+          <div class="master-card-body">
+            <div class="table-wrap">
+              <table class="qtable master-table">
+                ${MASTER_COLS}
+                <thead><tr>
+                  <th>№</th><th>Статус</th><th>Устройство</th><th>Всего дн</th>
+                  <th>До мастера</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th><th>KPI</th><th>Мен.</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        </article>`;
+      })
+      .join("")}
+  `;
+
+  root.querySelectorAll(".master-card-head").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".master-card");
+      const name = card?.getAttribute("data-master");
+      if (!card || !name) return;
+      const next = !card.classList.contains("is-collapsed");
+      card.classList.toggle("is-collapsed", next);
+      btn.setAttribute("aria-expanded", String(!next));
+      const set = loadCollapsedMasters();
+      if (next) set.add(name);
+      else set.delete(name);
+      saveCollapsedMasters(set);
+    });
+  });
+  root.querySelectorAll("[data-masters-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.getAttribute("data-masters-action");
+      const cards = [...root.querySelectorAll(".master-card")];
+      const set = new Set();
+      cards.forEach((card) => {
+        const name = card.getAttribute("data-master");
+        const collapse = action === "collapse";
+        card.classList.toggle("is-collapsed", collapse);
+        card.querySelector(".master-card-head")?.setAttribute("aria-expanded", String(!collapse));
+        if (collapse && name) set.add(name);
+      });
+      saveCollapsedMasters(set);
+    });
+  });
+}
+
+function kpiBarColor(kpi) {
+  if (kpi == null) return "rgba(93,107,124,0.35)";
+  if (kpi >= 70) return "rgba(15,110,86,0.78)";
+  if (kpi >= 40) return "rgba(196,92,38,0.72)";
+  return "rgba(161,40,40,0.72)";
 }
 
 function renderSummary() {
@@ -187,27 +535,91 @@ function renderSummary() {
   }
   if (typeof Chart === "undefined") return;
   const canvas = $("#chart-masters");
+  const wrap = canvas?.closest(".chart-wrap");
   if (!canvas) return;
   if (chartMasters) chartMasters.destroy();
-  const top = groups.slice(0, 20);
+
+  // Горизонтальные полосы: имена слева (вертикальный список), KPI вправо.
+  const rows = [...groups].sort((a, b) => (a.avgKpi ?? -1) - (b.avgKpi ?? -1));
+  if (wrap) wrap.style.setProperty("--summary-n", String(Math.max(rows.length, 8)));
+
   chartMasters = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: top.map((g) => g.name),
+      labels: rows.map((g) => g.name),
       datasets: [
         {
-          label: "KPI",
-          data: top.map((g) => g.avgKpi),
-          backgroundColor: "rgba(15,110,86,0.65)",
+          label: "Средний KPI",
+          data: rows.map((g) => g.avgKpi),
+          backgroundColor: rows.map((g) => kpiBarColor(g.avgKpi)),
+          borderRadius: 6,
+          borderSkipped: false,
+          barThickness: 18,
         },
       ],
     },
     options: {
+      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { min: 0, max: 100 } },
-      plugins: { legend: { display: false } },
+      layout: { padding: { right: 36 } },
+      scales: {
+        x: {
+          min: 0,
+          max: 100,
+          grid: { color: "rgba(28,36,48,0.06)" },
+          ticks: { stepSize: 20 },
+          title: { display: true, text: "Средний KPI (0–100)" },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 12, weight: "600" } },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title(items) {
+              const i = items[0]?.dataIndex;
+              return i == null ? "" : rows[i]?.name || "";
+            },
+            label(ctx) {
+              const g = rows[ctx.dataIndex];
+              if (!g) return "";
+              return [
+                `KPI: ${g.avgKpi ?? "—"}`,
+                `Заказов: ${g.count}`,
+                `Всего дн (ср.): ${fmtDays(g.avgTotal)}`,
+                `Звонки (ср.): ${g.avgCalls == null ? "—" : fmtDays(g.avgCalls)}`,
+                `Дораб. (ср.): ${g.avgRework == null ? "—" : fmtDays(g.avgRework)}`,
+              ];
+            },
+          },
+        },
+        datalabels: undefined,
+      },
     },
+    plugins: [
+      {
+        id: "kpiValueLabels",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          const meta = chart.getDatasetMeta(0);
+          ctx.save();
+          ctx.font = "600 12px IBM Plex Sans, system-ui, sans-serif";
+          ctx.fillStyle = "#1c2430";
+          meta.data.forEach((bar, i) => {
+            const g = rows[i];
+            if (!g || g.avgKpi == null) return;
+            const { x, y } = bar.tooltipPosition();
+            ctx.textBaseline = "middle";
+            ctx.fillText(String(g.avgKpi), x + 8, y);
+          });
+          ctx.restore();
+        },
+      },
+    ],
   });
 }
 
@@ -237,28 +649,78 @@ function renderDynamics() {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: "index", intersect: false },
-    plugins: { legend: { position: "bottom" } },
+    plugins: {
+      legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+    },
+    scales: {
+      x: { grid: { color: "rgba(28,36,48,0.05)" } },
+      y: { grid: { color: "rgba(28,36,48,0.06)" } },
+    },
   };
   chartKpi = new Chart($("#chart-kpi"), {
     type: "line",
     data: {
       labels,
       datasets: [
-        { label: "KPI", data: series("avg_order_kpi"), borderColor: "#0f6e56", tension: 0.25, spanGaps: true },
-        { label: "Звонки", data: series("avg_calls_kpi"), borderColor: "#1a5f8a", tension: 0.25, spanGaps: true },
-        { label: "Дораб.", data: series("avg_rework_kpi"), borderColor: "#c45c26", tension: 0.25, spanGaps: true },
+        {
+          label: "KPI",
+          data: series("avg_order_kpi"),
+          borderColor: "#0f6e56",
+          backgroundColor: "rgba(15,110,86,0.12)",
+          fill: true,
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
+        {
+          label: "Звонки",
+          data: series("avg_calls_kpi"),
+          borderColor: "#1a5f8a",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
+        {
+          label: "Дораб.",
+          data: series("avg_rework_kpi"),
+          borderColor: "#c45c26",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
       ],
     },
-    options: { ...opts, scales: { y: { min: 0, max: 100 } } },
+    options: { ...opts, scales: { ...opts.scales, y: { ...opts.scales.y, min: 0, max: 100 } } },
   });
   chartDays = new Chart($("#chart-days"), {
     type: "line",
     data: {
       labels,
       datasets: [
-        { label: "Всего дн", data: series("avg_total_days"), borderColor: "#a12828", tension: 0.25, spanGaps: true },
-        { label: "До мастера", data: series("avg_wait_master_days"), borderColor: "#a15c12", tension: 0.25, spanGaps: true },
-        { label: "До диагн.", data: series("avg_diag_days"), borderColor: "#5d6b7c", tension: 0.25, spanGaps: true },
+        {
+          label: "Всего дн",
+          data: series("avg_total_days"),
+          borderColor: "#a12828",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
+        {
+          label: "До мастера",
+          data: series("avg_wait_master_days"),
+          borderColor: "#a15c12",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
+        {
+          label: "До диагн.",
+          data: series("avg_diag_days"),
+          borderColor: "#5d6b7c",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+        },
       ],
     },
     options: opts,
@@ -356,8 +818,7 @@ function renderAnalysis() {
 
 function setTab(id) {
   document.querySelectorAll(".tab").forEach((btn) => {
-    const on = btn.dataset.tab === id;
-    btn.classList.toggle("is-active", on);
+    btn.classList.toggle("is-active", btn.dataset.tab === id);
   });
   document.querySelectorAll(".panel").forEach((panel) => {
     const on = panel.id === `panel-${id}`;
@@ -371,6 +832,7 @@ function setTab(id) {
 }
 
 async function boot() {
+  bindTips();
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.dataset.tab));
   });
