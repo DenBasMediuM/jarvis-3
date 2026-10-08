@@ -3386,6 +3386,27 @@ $("#quality-force-btn")?.addEventListener("click", () => {
   }
 });
 
+async function exportQualityPages() {
+  const statusEl = $("#quality-sync-status");
+  const btn = $("#quality-export-pages-btn");
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.textContent = "Экспорт data.json…";
+  try {
+    const res = await fetch("/api/quality/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Pages: ${data.orders ?? "—"} зак. → docs/quality/data.json (сделайте git push)`;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+$("#quality-export-pages-btn")?.addEventListener("click", () => exportQualityPages());
+
 function renderQualityCalcResult(order) {
   const box = $("#quality-calc-result");
   if (!box) return;

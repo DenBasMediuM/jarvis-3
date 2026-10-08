@@ -560,6 +560,19 @@ async def quality_analysis() -> dict[str, Any]:
     return {"ok": True, "analysis": data}
 
 
+@app.post("/api/quality/export-pages")
+async def quality_export_pages() -> dict[str, Any]:
+    """Записать docs/quality/data.json для GitHub Pages (без push)."""
+    if not quality_service:
+        raise HTTPException(503, "Сервис качества не готов")
+    try:
+        return await quality_service.export_pages_snapshot(
+            order_base_url=_quality_base_url()
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
 @app.post("/api/quality/analysis/telegram")
 async def quality_analysis_telegram() -> dict[str, Any]:
     """Отправить сокращённый текущий анализ в Telegram (блок = отдельное сообщение)."""

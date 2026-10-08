@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Качество · Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div>
+        <h1>Качество</h1>
+        <p class="sub">Публичная витрина · данные из локального Jarvis</p>
+      </div>
+      <div class="meta" id="export-meta">Загрузка data.json…</div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="tab is-active" data-tab="overview">Общее</button>
+      <button type="button" class="tab" data-tab="masters">По мастерам</button>
+      <button type="button" class="tab" data-tab="summary">Сводка</button>
+      <button type="button" class="tab" data-tab="dynamics">Динамика</button>
+      <button type="button" class="tab" data-tab="analysis">Анализ</button>
+    </nav>
+
+    <main>
+      <section id="panel-overview" class="panel is-active">
+        <div class="table-wrap">
+          <table class="qtable">
+            <thead>
+              <tr>
+                <th>№</th><th>Статус</th><th>Мастер</th><th>Устройство</th>
+                <th>Всего дн</th><th>До мастера</th><th>До диагн.</th>
+                <th>Дораб.</th><th>Звонки</th><th>KPI</th><th>Мен.</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-overview"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-masters" class="panel" hidden>
+        <p class="lead">Таблицы по мастерам. KPI — среднее по квитанциям с оценкой.</p>
+        <div id="masters-root"></div>
+      </section>
+
+      <section id="panel-summary" class="panel" hidden>
+        <p class="lead">Сравнение мастеров.</p>
+        <div class="summary-layout">
+          <div class="card">
+            <h3>Средний KPI</h3>
+            <div class="chart-wrap"><canvas id="chart-masters"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>Сводная таблица</h3>
+            <div class="table-wrap">
+              <table class="qtable">
+                <thead>
+                  <tr>
+                    <th>Мастер</th><th>Заказов</th><th>KPI</th><th>Всего дн</th>
+                    <th>До маст.</th><th>До диагн.</th><th>Дораб.</th><th>Звонки</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-dynamics" class="panel" hidden>
+        <p class="lead">Средние на день обновления из CRM. «Дораб.» без доработок = 100.</p>
+        <div id="dynamics-empty" class="empty" hidden>Нет точек динамики.</div>
+        <div id="dynamics-body" hidden>
+          <div class="meta-line" id="dynamics-meta"></div>
+          <div class="charts">
+            <div class="card"><h3>KPI</h3><div class="chart-wrap"><canvas id="chart-kpi"></canvas></div></div>
+            <div class="card"><h3>Сроки</h3><div class="chart-wrap"><canvas id="chart-days"></canvas></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-analysis" class="panel" hidden>
+        <p class="lead">Операционный разбор на момент экспорта.</p>
+        <div id="analysis-empty" class="empty" hidden>Анализа нет в снимке.</div>
+        <div id="analysis-root" hidden></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

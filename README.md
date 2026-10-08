@@ -67,6 +67,26 @@ jarvis-3/
 - зарплата сотруднику = сумма статьи «Зарплаты» по контрагенту за период
 - хозтовары / аренда = сумма по соответствующей статье
 
+## GitHub Pages · витрина «Качество»
+
+Локальный Jarvis считает KPI как обычно и пишет снимок в `docs/quality/data.json`.
+Статика в `docs/quality/` читает этот JSON на GitHub Pages.
+
+1. В репозитории: **Settings → Pages → Build and deployment**
+   - Source: **Deploy from a branch**
+   - Branch: `main` / folder: **/docs** → Save
+2. Локально: **Обновить из CRM** (или кнопка **Экспорт в Pages**) — обновится `docs/quality/data.json`
+3. Закоммитьте и запушьте:
+   ```bash
+   git add docs/quality/data.json
+   git commit -m "quality: обновление снимка для Pages"
+   git push
+   ```
+4. Через 1–2 минуты откройте:
+   `https://<user>.github.io/jarvis-3/quality/`
+
+Важно: если репозиторий **публичный**, снимок качества тоже будет публичным (без лент и ФИО клиентов, но с номерами/статусами/KPI).
+
 ## Переменные окружения (опционально)
 
 Создайте файл `.env` в корне проекта (можно скопировать `.env.example`):

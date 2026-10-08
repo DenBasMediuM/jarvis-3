@@ -6,6 +6,7 @@ import asyncio
 import json
 import re
 from datetime import date, datetime, timezone
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs
 
@@ -1782,6 +1783,11 @@ class QualityService:
                 day_msg += f", анализ (срочно {urg})"
             except Exception:  # noqa: BLE001
                 pass
+            try:
+                exp = await self.export_pages_snapshot()
+                day_msg += f", pages {exp.get('orders', 0)} зак."
+            except Exception:  # noqa: BLE001
+                pass
             await self.db.quality_set_sync_state(
                 status="idle",
                 message=(
@@ -1829,6 +1835,56 @@ class QualityService:
 
     async def get_analysis(self) -> dict[str, Any] | None:
         return await self.db.quality_get_analysis()
+
+    async def export_pages_snapshot(
+        self,
+        *,
+        path: Path | None = None,
+        order_base_url: str | None = None,
+    ) -> dict[str, Any]:
+        """Собрать JSON для GitHub Pages (docs/quality/data.json)."""
+        from modules.gincore.quality_export import (
+            build_quality_pages_payload,
+            write_quality_pages_json,
+        )
+
+        data = await self.list_rows()
+        orders = data.get("orders") or []
+        if not order_base_url:
+            try:
+                from core.config import settings as _settings
+
+                order_base_url = _settings.default_gincore_base_url
+            except Exception:  # noqa: BLE001
+                order_base_url = None
+        base = (order_base_url or "").rstrip("/")
+        if base:
+            for o in orders:
+                oid = o.get("order_id")
+                if oid and not o.get("url"):
+                    o["url"] = f"{base}/orders/{oid}"
+            analysis_pre = await self.db.quality_get_analysis()
+            if analysis_pre:
+                for item in analysis_pre.get("urgent") or []:
+                    oid = item.get("order_id")
+                    if oid and not item.get("url"):
+                        item["url"] = f"{base}/orders/{oid}"
+        else:
+            analysis_pre = await self.db.quality_get_analysis()
+        daily = await self.db.quality_list_daily_stats(limit=730)
+        payload = build_quality_pages_payload(
+            orders=orders,
+            daily_stats=daily,
+            analysis=analysis_pre,
+            sync=data.get("sync"),
+        )
+        out = write_quality_pages_json(payload, path)
+        return {
+            "ok": True,
+            "path": str(out),
+            "orders": len(orders),
+            "exported_at": payload.get("exported_at"),
+        }
 
     async def _sync_one_feed(self, client: GincoreClient, order_id: str) -> dict[str, Any]:
         html = await client.fetch_order_html(order_id)
