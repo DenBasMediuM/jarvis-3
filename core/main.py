@@ -20,6 +20,7 @@ from modules.gincore.module import GincoreModule
 from core.telegram import send_telegram_messages, telegram_configured
 from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
+from modules.vyrobotka.service import VyrobotkaService
 
 
 db = Database(settings.resolved_db_path())
@@ -27,6 +28,7 @@ secrets = SecretBox(settings.resolved_secret_key_path())
 modules: list[BaseModule] = []
 gincore_module: GincoreModule | None = None
 quality_service: QualityService | None = None
+vyrobotka_service: VyrobotkaService | None = None
 
 
 class ChatRequest(BaseModel):
@@ -88,6 +90,12 @@ async def get_module_settings(module_id: str) -> dict[str, Any]:
                 pass
         if field.key == "base_url" and not out.get(field.key):
             out[field.key] = settings.default_gincore_base_url
+        if (
+            module_id == "vyrobotka"
+            and field.key == "spreadsheet_id"
+            and not out.get(field.key)
+        ):
+            out[field.key] = "1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c"
         if field.key == "enabled" and field.key not in out:
             out[field.key] = True
     return out
@@ -124,7 +132,7 @@ async def build_llm() -> LLMService:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global modules, gincore_module, quality_service
+    global modules, gincore_module, quality_service, vyrobotka_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -139,6 +147,7 @@ async def lifespan(_: FastAPI):
         return client
 
     quality_service = QualityService(db, _quality_client)
+    vyrobotka_service = VyrobotkaService(db, lambda: get_module_settings("vyrobotka"))
     yield
     await db.close()
 
@@ -231,6 +240,53 @@ async def test_gincore() -> dict[str, Any]:
         return {"ok": True, "result": result}
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": str(exc)}
+
+
+@app.post("/api/modules/vyrobotka/test")
+async def test_vyrobotka() -> dict[str, Any]:
+    """Проверить доступ service account к Google Таблице модуля «Выработка»."""
+    from modules.vyrobotka.module import VyrobotkaModule
+    from modules.vyrobotka.sheets import SheetsError
+
+    module = next((m for m in modules if isinstance(m, VyrobotkaModule)), None)
+    if not module:
+        raise HTTPException(404, "Модуль «Выработка» не найден")
+    cfg = await get_module_settings("vyrobotka")
+    try:
+        result = await module.test_connection(cfg)
+        return result
+    except SheetsError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": str(exc)}
+
+
+@app.get("/api/vyrobotka/stats")
+async def vyrobotka_stats() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return await vyrobotka_service.get_stats()
+
+
+@app.get("/api/vyrobotka/sync")
+async def vyrobotka_sync_status() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return {"ok": True, "sync": await db.vyrobotka_get_sync_state()}
+
+
+@app.post("/api/vyrobotka/sync")
+async def vyrobotka_sync_start() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.start_sync()
+    except Exception as exc:  # noqa: BLE001
+        from modules.vyrobotka.sheets import SheetsError
+
+        if isinstance(exc, SheetsError):
+            raise HTTPException(400, str(exc)) from exc
+        raise HTTPException(500, str(exc)) from exc
 
 
 async def _gincore_client():

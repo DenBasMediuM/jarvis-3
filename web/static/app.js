@@ -14,6 +14,7 @@ function showView(view) {
   const el = $(`#view-${view}`);
   if (el) el.classList.add("active");
   document.querySelector(".app")?.classList.toggle("app--quality", view === "quality");
+  document.querySelector(".app")?.classList.toggle("app--vyrobotka", view === "vyrobotka");
   if (view === "quality") {
     // Сначала показать вкладку, потом мерить столбцы (display:none даёт width=0).
     requestAnimationFrame(() => {
@@ -27,6 +28,23 @@ function showView(view) {
   } else {
     stopQualityPoll();
   }
+  if (view === "vyrobotka") {
+    requestAnimationFrame(() => {
+      // Если раньше открывали Качество — setQualityTab мог спрятать эту панель.
+      const upsell = $("#vyrobotka-tab-upsell");
+      if (upsell) {
+        upsell.hidden = false;
+        upsell.classList.add("is-active");
+      }
+      initVyrobotkaUpsellSplit();
+      loadVyrobotkaStats().then((sync) => {
+        if (sync?.status === "running") startVyrobotkaPoll();
+        resizeVyrobotkaCharts();
+      });
+    });
+  } else {
+    stopVyrobotkaPoll();
+  }
 }
 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -34,6 +52,7 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
 });
 
 $("#quality-back-btn")?.addEventListener("click", () => showView("chat"));
+$("#vyrobotka-back-btn")?.addEventListener("click", () => showView("chat"));
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -1471,9 +1490,20 @@ function fieldInput(field, value) {
       <span>${field.label}</span>
     </div>`;
   }
+  if (field.type === "textarea") {
+    return `<label>
+      ${field.label}
+      <textarea name="${field.key}" rows="6" placeholder="${escapeHtml(field.placeholder || "")}">${escapeHtml(
+        value ?? "",
+      )}</textarea>
+      ${field.help ? `<span class="field-help">${field.help}</span>` : ""}
+    </label>`;
+  }
   return `<label>
     ${field.label}
-    <input name="${field.key}" type="${field.type}" value="${value ?? ""}" placeholder="${field.placeholder || ""}" />
+    <input name="${field.key}" type="${field.type}" value="${escapeHtml(value ?? "")}" placeholder="${escapeHtml(
+      field.placeholder || "",
+    )}" />
     ${field.help ? `<span class="field-help">${field.help}</span>` : ""}
   </label>`;
 }
@@ -1498,6 +1528,11 @@ async function loadModules() {
           ${
             mod.id === "gincore"
               ? `<button type="button" class="secondary" data-test="gincore">Проверить вход</button>`
+              : ""
+          }
+          ${
+            mod.id === "vyrobotka"
+              ? `<button type="button" class="secondary" data-test="vyrobotka">Проверить подключение</button>`
               : ""
           }
         </div>
@@ -1547,6 +1582,36 @@ async function loadModules() {
       } else {
         status.className = "status err";
         status.textContent = data.error || "Ошибка входа";
+      }
+    });
+  });
+
+  root.querySelectorAll('[data-test="vyrobotka"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const status = btn.closest("form").querySelector("[data-status]");
+      status.className = "status";
+      status.textContent = "Проверяю доступ к Google Таблице…";
+      try {
+        const res = await fetch("/api/modules/vyrobotka/test", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || data.detail || res.statusText || "Нет доступа");
+        }
+        const names = (data.sheets || []).map((s) => s.title).filter(Boolean);
+        status.className = "status ok";
+        status.textContent = [
+          "Подключение есть.",
+          `Таблица: «${data.title || "—"}».`,
+          `ID: ${data.spreadsheet_id || "—"}.`,
+          `Листов: ${data.sheets_count ?? names.length}.`,
+          names.length ? `Вкладки: ${names.slice(0, 10).join(", ")}${names.length > 10 ? "…" : ""}.` : "",
+          data.client_email ? `Аккаунт: ${data.client_email}.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+      } catch (err) {
+        status.className = "status err";
+        status.textContent = `Нет подключения: ${err.message || err}`;
       }
     });
   });
@@ -3160,15 +3225,18 @@ async function loadQualityDailyStats() {
 }
 
 function setQualityTab(tab) {
+  const root = $("#view-quality");
+  if (!root) return;
   const id = ["overview", "masters", "summary", "dynamics", "analysis"].includes(tab)
     ? tab
     : "overview";
-  document.querySelectorAll(".quality-tab").forEach((btn) => {
+  // Только вкладки Качества — не трогаем панели Выработки (общий класс .quality-tab*).
+  root.querySelectorAll(".quality-tab").forEach((btn) => {
     const on = btn.getAttribute("data-quality-tab") === id;
     btn.classList.toggle("is-active", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
-  document.querySelectorAll(".quality-tab-panel").forEach((panel) => {
+  root.querySelectorAll(".quality-tab-panel").forEach((panel) => {
     const on = panel.id === `quality-tab-${id}`;
     panel.classList.toggle("is-active", on);
     panel.hidden = !on;
@@ -3189,7 +3257,9 @@ function setQualityTab(tab) {
 }
 
 function initQualityTabs() {
-  const tabs = document.querySelectorAll(".quality-tab");
+  const root = $("#view-quality");
+  if (!root) return;
+  const tabs = root.querySelectorAll(".quality-tab");
   if (!tabs.length || tabs[0].dataset.ready) return;
   tabs.forEach((btn) => {
     btn.dataset.ready = "1";
@@ -3642,8 +3712,498 @@ function initQualityPanelToggle() {
   });
 }
 
+/* —— Выработка —— */
+let vyrobotkaSheetsCache = [];
+let vyrobotkaMoneyChart = null;
+let vyrobotkaVolumeChart = null;
+let vyrobotkaPollTimer = null;
+
+function formatVyrobotkaSync(sync) {
+  if (!sync) return "—";
+  const st = sync.status || "idle";
+  if (st === "running") {
+    const done = sync.done ?? 0;
+    const total = sync.total ?? 0;
+    const msg = sync.message ? ` · ${sync.message}` : "";
+    return `Обновление… ${done}/${total}${msg}`;
+  }
+  if (st === "error") return `Ошибка: ${sync.message || "неизвестно"}`;
+  if (sync.message) return sync.message;
+  return "Готово";
+}
+
+function fmtMoneyUa(n) {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  return new Intl.NumberFormat("uk-UA", {
+    maximumFractionDigits: 0,
+  }).format(Number(n));
+}
+
+function fmtPct(ratio) {
+  if (ratio == null || Number.isNaN(Number(ratio))) return "—";
+  return `${(Number(ratio) * 100).toFixed(1)}%`;
+}
+
+function stopVyrobotkaPoll() {
+  if (vyrobotkaPollTimer) {
+    clearInterval(vyrobotkaPollTimer);
+    vyrobotkaPollTimer = null;
+  }
+}
+
+function startVyrobotkaPoll() {
+  stopVyrobotkaPoll();
+  vyrobotkaPollTimer = setInterval(async () => {
+    try {
+      const res = await fetch("/api/vyrobotka/sync");
+      const data = await res.json().catch(() => ({}));
+      const sync = data.sync;
+      const statusEl = $("#vyrobotka-sync-status");
+      if (statusEl) statusEl.textContent = formatVyrobotkaSync(sync);
+      if (sync?.status !== "running") {
+        stopVyrobotkaPoll();
+        await loadVyrobotkaStats();
+      }
+    } catch {
+      /* ignore */
+    }
+  }, 900);
+}
+
+function destroyVyrobotkaCharts() {
+  if (vyrobotkaMoneyChart) {
+    vyrobotkaMoneyChart.destroy();
+    vyrobotkaMoneyChart = null;
+  }
+  if (vyrobotkaVolumeChart) {
+    vyrobotkaVolumeChart.destroy();
+    vyrobotkaVolumeChart = null;
+  }
+}
+
+const VYROBOTKA_SPLIT_KEY = "jarvis.vyrobotka.upsellSplit";
+const VYROBOTKA_SPLIT_DEFAULT = 66.666;
+const VYROBOTKA_SPLIT_MIN = 35;
+const VYROBOTKA_SPLIT_MAX = 80;
+
+function resizeVyrobotkaCharts() {
+  requestAnimationFrame(() => {
+    try {
+      vyrobotkaMoneyChart?.resize();
+      vyrobotkaVolumeChart?.resize();
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+function setVyrobotkaUpsellSplit(pct) {
+  const split = $("#vyrobotka-upsell-split");
+  if (!split) return;
+  const clamped = Math.min(
+    VYROBOTKA_SPLIT_MAX,
+    Math.max(VYROBOTKA_SPLIT_MIN, Number(pct) || VYROBOTKA_SPLIT_DEFAULT)
+  );
+  split.style.setProperty("--vyrobotka-split", `${clamped}%`);
+  try {
+    localStorage.setItem(VYROBOTKA_SPLIT_KEY, String(clamped));
+  } catch {
+    /* ignore */
+  }
+  resizeVyrobotkaCharts();
+}
+
+function initVyrobotkaUpsellSplit() {
+  const split = $("#vyrobotka-upsell-split");
+  const handle = $("#vyrobotka-upsell-resizer");
+  if (!split || !handle) return;
+
+  let saved = VYROBOTKA_SPLIT_DEFAULT;
+  try {
+    const raw = localStorage.getItem(VYROBOTKA_SPLIT_KEY);
+    if (raw != null && raw !== "") saved = Number(raw);
+  } catch {
+    saved = VYROBOTKA_SPLIT_DEFAULT;
+  }
+  setVyrobotkaUpsellSplit(saved);
+
+  if (handle.dataset.ready) return;
+  handle.dataset.ready = "1";
+
+  const onPointerMove = (e) => {
+    const rect = split.getBoundingClientRect();
+    if (rect.width < 40) return;
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    setVyrobotkaUpsellSplit(pct);
+  };
+  const onPointerUp = (e) => {
+    handle.releasePointerCapture?.(e.pointerId);
+    document.body.classList.remove("vyrobotka-resizing");
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    resizeVyrobotkaCharts();
+  };
+
+  handle.addEventListener("pointerdown", (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    handle.setPointerCapture?.(e.pointerId);
+    document.body.classList.add("vyrobotka-resizing");
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  });
+
+  handle.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 5 : 2;
+    let cur = VYROBOTKA_SPLIT_DEFAULT;
+    try {
+      cur = parseFloat(getComputedStyle(split).getPropertyValue("--vyrobotka-split")) || cur;
+    } catch {
+      /* ignore */
+    }
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setVyrobotkaUpsellSplit(cur - step);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setVyrobotkaUpsellSplit(cur + step);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setVyrobotkaUpsellSplit(VYROBOTKA_SPLIT_DEFAULT);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if ($("#view-vyrobotka")?.classList.contains("active")) resizeVyrobotkaCharts();
+  });
+}
+
+function shortVyrobotkaLabel(title) {
+  const t = String(title || "").replace(/^!/, "");
+  const m = t.match(/^(\d{6,8})\((\d{2}-\d{2})\)$/);
+  if (!m) return t;
+  const head = m[1];
+  const range = m[2];
+  if (head.length >= 8) {
+    return `${head.slice(4, 6)}.${head.slice(6, 8)}`;
+  }
+  // 202609(16-23) → 09/26 · 16-23
+  return `${head.slice(4, 6)}/${head.slice(2, 4)} · ${range}`;
+}
+
+function vyrobotkaLineDefaults() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    layout: { padding: { top: 4, right: 4, bottom: 0, left: 0 } },
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { boxWidth: 10, boxHeight: 10, font: { size: 11 }, padding: 14 },
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: "rgba(28,36,48,0.06)" },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 12,
+          font: { size: 10 },
+          color: "#5d6b7c",
+        },
+      },
+    },
+  };
+}
+
+function renderVyrobotkaUpsell() {
+  const empty = $("#vyrobotka-upsell-empty");
+  const body = $("#vyrobotka-upsell-body");
+  const meta = $("#vyrobotka-upsell-meta");
+  const kpis = $("#vyrobotka-upsell-kpis");
+  const tbody = $("#vyrobotka-upsell-tbody");
+  const moneyCanvas = $("#vyrobotka-chart-money");
+  const volumeCanvas = $("#vyrobotka-chart-volume");
+  const sheets = vyrobotkaSheetsCache || [];
+
+  if (!sheets.length) {
+    destroyVyrobotkaCharts();
+    if (empty) empty.hidden = false;
+    if (body) body.hidden = true;
+    return;
+  }
+  if (empty) empty.hidden = true;
+  if (body) body.hidden = false;
+  initVyrobotkaUpsellSplit();
+
+  const last = sheets[sheets.length - 1];
+  const totalTickets = sheets.reduce((a, s) => a + (Number(s.tickets_count) || 0), 0);
+  const totalUpsell = sheets.reduce((a, s) => a + (Number(s.upsell_sum) || 0), 0);
+  const totalUpsellN = sheets.reduce((a, s) => a + (Number(s.upsell_count) || 0), 0);
+  const totalReport = sheets.reduce((a, s) => a + (Number(s.report_sum) || 0), 0);
+
+  if (kpis) {
+    kpis.innerHTML = [
+      ["Листов", String(sheets.length), `посл. ${last?.sheet_title || "—"}`],
+      ["Квитанций", fmtMoneyUa(totalTickets), "все недели"],
+      ["Σ досогл.", fmtMoneyUa(totalUpsell), `${totalUpsellN} шт.`],
+      ["Σ в отчёте", fmtMoneyUa(totalReport), "мастера"],
+      ["Посл. ср. досогл.", fmtMoneyUa(last?.avg_upsell), last?.sheet_title || ""],
+      ["Посл. доля", fmtPct(last?.upsell_ratio), `${last?.upsell_count ?? 0} / ${last?.tickets_count ?? 0}`],
+    ]
+      .map(
+        ([label, value, hint]) => `<div class="vyrobotka-kpi">
+          <span class="vyrobotka-kpi-label">${escapeHtml(label)}</span>
+          <span class="vyrobotka-kpi-value">${escapeHtml(value)}</span>
+          <span class="vyrobotka-kpi-hint">${escapeHtml(hint)}</span>
+        </div>`
+      )
+      .join("");
+  }
+
+  if (meta) {
+    meta.textContent = `${sheets.length} недельных листов · от ${sheets[0]?.sheet_title || "—"} до ${last?.sheet_title || "—"}`;
+  }
+
+  if (tbody) {
+    tbody.innerHTML = sheets
+      .map(
+        (s) => `<tr>
+          <td>${escapeHtml(s.sheet_title)}</td>
+          <td>${fmtMoneyUa(s.avg_upsell)}</td>
+          <td>${fmtMoneyUa(s.upsell_sum)}</td>
+          <td>${s.upsell_count ?? 0}</td>
+          <td>${fmtPct(s.upsell_ratio)}</td>
+          <td>${s.tickets_count ?? 0}</td>
+          <td>${fmtMoneyUa(s.report_sum)}</td>
+        </tr>`
+      )
+      .join("");
+  }
+
+  if (typeof Chart === "undefined") return;
+  destroyVyrobotkaCharts();
+  const labels = sheets.map((s) => shortVyrobotkaLabel(s.sheet_title));
+  const base = vyrobotkaLineDefaults();
+  const line = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+
+  if (moneyCanvas) {
+    vyrobotkaMoneyChart = new Chart(moneyCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            ...line,
+            label: "Ср. досогласование",
+            data: sheets.map((s) => s.avg_upsell),
+            borderColor: "#0f6e56",
+          },
+          {
+            ...line,
+            label: "Σ досогласований",
+            data: sheets.map((s) => s.upsell_sum),
+            borderColor: "#c45c26",
+          },
+          {
+            ...line,
+            label: "Σ в отчёте",
+            data: sheets.map((s) => s.report_sum),
+            borderColor: "#1a5f8a",
+          },
+        ],
+      },
+      options: {
+        ...base,
+        plugins: {
+          ...base.plugins,
+          tooltip: {
+            callbacks: {
+              title: (items) => sheets[items[0]?.dataIndex]?.sheet_title || "",
+              label(ctx) {
+                const v = ctx.parsed.y;
+                return v == null ? `${ctx.dataset.label}: —` : `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
+              },
+            },
+          },
+        },
+        scales: {
+          ...base.scales,
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(28,36,48,0.07)" },
+            ticks: {
+              color: "#5d6b7c",
+              callback: (v) => fmtMoneyUa(v),
+              font: { size: 10 },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  if (volumeCanvas) {
+    vyrobotkaVolumeChart = new Chart(volumeCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            ...line,
+            label: "Кол-во досогл.",
+            data: sheets.map((s) => s.upsell_count),
+            borderColor: "#6b4f9a",
+            yAxisID: "y",
+          },
+          {
+            ...line,
+            label: "Квитанций",
+            data: sheets.map((s) => s.tickets_count),
+            borderColor: "#5d6b7c",
+            yAxisID: "y",
+          },
+          {
+            ...line,
+            label: "Доля, %",
+            data: sheets.map((s) =>
+              s.upsell_ratio == null ? null : Number(s.upsell_ratio) * 100
+            ),
+            borderColor: "#a12828",
+            borderDash: [5, 4],
+            yAxisID: "y1",
+          },
+        ],
+      },
+      options: {
+        ...base,
+        plugins: {
+          ...base.plugins,
+          tooltip: {
+            callbacks: {
+              title: (items) => sheets[items[0]?.dataIndex]?.sheet_title || "",
+              label(ctx) {
+                const v = ctx.parsed.y;
+                if (v == null) return `${ctx.dataset.label}: —`;
+                if (ctx.dataset.yAxisID === "y1") return `${ctx.dataset.label}: ${v.toFixed(1)}%`;
+                return `${ctx.dataset.label}: ${v}`;
+              },
+            },
+          },
+        },
+        scales: {
+          ...base.scales,
+          y: {
+            beginAtZero: true,
+            position: "left",
+            title: { display: true, text: "шт", color: "#5d6b7c", font: { size: 11 } },
+            grid: { color: "rgba(28,36,48,0.07)" },
+            ticks: { color: "#5d6b7c", font: { size: 10 } },
+          },
+          y1: {
+            beginAtZero: true,
+            max: 100,
+            position: "right",
+            title: { display: true, text: "%", color: "#5d6b7c", font: { size: 11 } },
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: "#5d6b7c",
+              font: { size: 10 },
+              callback: (v) => `${v}%`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  resizeVyrobotkaCharts();
+}
+
+async function loadVyrobotkaStats() {
+  const statusEl = $("#vyrobotka-sync-status");
+  try {
+    const res = await fetch("/api/vyrobotka/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    vyrobotkaSheetsCache = data.sheets || [];
+    if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
+    renderVyrobotkaUpsell();
+    return data.sync || null;
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+    vyrobotkaSheetsCache = [];
+    renderVyrobotkaUpsell();
+    return null;
+  }
+}
+
+async function startVyrobotkaSync() {
+  const statusEl = $("#vyrobotka-sync-status");
+  const btn = $("#vyrobotka-sync-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/vyrobotka/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
+    startVyrobotkaPoll();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+const VYROBOTKA_PANEL_KEY = "jarvis.vyrobotka.panelCollapsed";
+
+function applyVyrobotkaPanelCollapsed(collapsed) {
+  const view = $("#view-vyrobotka");
+  const btn = $("#vyrobotka-panel-toggle");
+  if (!view || !btn) return;
+  view.classList.toggle("is-panel-collapsed", !!collapsed);
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  btn.textContent = collapsed ? "Развернуть" : "Свернуть";
+  try {
+    localStorage.setItem(VYROBOTKA_PANEL_KEY, collapsed ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+  resizeVyrobotkaCharts();
+}
+
+function initVyrobotkaPanelToggle() {
+  const btn = $("#vyrobotka-panel-toggle");
+  if (!btn || btn.dataset.ready) return;
+  btn.dataset.ready = "1";
+  let collapsed = false;
+  try {
+    collapsed = localStorage.getItem(VYROBOTKA_PANEL_KEY) === "1";
+  } catch {
+    collapsed = false;
+  }
+  applyVyrobotkaPanelCollapsed(collapsed);
+  btn.addEventListener("click", () => {
+    const view = $("#view-vyrobotka");
+    applyVyrobotkaPanelCollapsed(!view?.classList.contains("is-panel-collapsed"));
+  });
+}
+
+$("#vyrobotka-sync-btn")?.addEventListener("click", () => startVyrobotkaSync());
+
 initQualityPanelToggle();
 initQualityTabs();
+initVyrobotkaPanelToggle();
 
 addBubble(
   "assistant",

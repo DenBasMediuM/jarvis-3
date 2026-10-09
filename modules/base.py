@@ -19,7 +19,7 @@ class ToolSpec:
 class SettingField:
     key: str
     label: str
-    type: str = "text"  # text | password | url | number | checkbox
+    type: str = "text"  # text | password | url | number | checkbox | textarea
     placeholder: str = ""
     help: str = ""
     secret: bool = False

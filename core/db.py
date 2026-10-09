@@ -78,6 +78,57 @@ CREATE TABLE IF NOT EXISTS quality_analysis (
   analysis_json TEXT NOT NULL,
   generated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS vyrobotka_rows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  spreadsheet_id TEXT NOT NULL,
+  sheet_title TEXT NOT NULL,
+  row_index INTEGER NOT NULL,
+  master TEXT,
+  ticket TEXT NOT NULL,
+  report_amount REAL,
+  salary REAL,
+  parts REAL,
+  total_repair REAL,
+  paid REAL,
+  upsell REAL,
+  remainder REAL,
+  arith_check TEXT,
+  status TEXT,
+  control TEXT,
+  upsell_floor REAL,
+  upsell_floor_label TEXT,
+  comments TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(spreadsheet_id, sheet_title, row_index)
+);
+
+CREATE TABLE IF NOT EXISTS vyrobotka_sheet_stats (
+  spreadsheet_id TEXT NOT NULL,
+  sheet_title TEXT NOT NULL,
+  sort_ym INTEGER NOT NULL DEFAULT 0,
+  sort_a INTEGER NOT NULL DEFAULT 0,
+  sort_b INTEGER NOT NULL DEFAULT 0,
+  tickets_count INTEGER NOT NULL DEFAULT 0,
+  report_sum REAL NOT NULL DEFAULT 0,
+  upsell_sum REAL NOT NULL DEFAULT 0,
+  upsell_count INTEGER NOT NULL DEFAULT 0,
+  avg_upsell REAL,
+  upsell_ratio REAL,
+  spreadsheet_title TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (spreadsheet_id, sheet_title)
+);
+
+CREATE TABLE IF NOT EXISTS vyrobotka_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  started_at TEXT,
+  finished_at TEXT
+);
 """
 
 
@@ -382,3 +433,125 @@ class Database:
             data.setdefault("generated_at", row["generated_at"])
             return data
         return None
+
+    async def vyrobotka_get_sync_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM vyrobotka_sync_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO vyrobotka_sync_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "message": None,
+                "started_at": None,
+                "finished_at": None,
+            }
+        return dict(row)
+
+    async def vyrobotka_set_sync_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.vyrobotka_get_sync_state()
+        current.update(fields)
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_sync_state(
+              id, status, total, done, message, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              message = excluded.message,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                current.get("status") or "idle",
+                int(current.get("total") or 0),
+                int(current.get("done") or 0),
+                current.get("message"),
+                current.get("started_at"),
+                current.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.vyrobotka_get_sync_state()
+
+    async def vyrobotka_replace_all(
+        self,
+        rows: list[dict[str, Any]],
+        sheet_stats: list[dict[str, Any]],
+    ) -> None:
+        await self.conn.execute("DELETE FROM vyrobotka_rows")
+        await self.conn.execute("DELETE FROM vyrobotka_sheet_stats")
+        for r in rows:
+            await self.conn.execute(
+                """
+                INSERT INTO vyrobotka_rows(
+                  spreadsheet_id, sheet_title, row_index, master, ticket,
+                  report_amount, salary, parts, total_repair, paid, upsell,
+                  remainder, arith_check, status, control, upsell_floor,
+                  upsell_floor_label, comments, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    r.get("spreadsheet_id"),
+                    r.get("sheet_title"),
+                    int(r.get("row_index") or 0),
+                    r.get("master"),
+                    r.get("ticket"),
+                    r.get("report_amount"),
+                    r.get("salary"),
+                    r.get("parts"),
+                    r.get("total_repair"),
+                    r.get("paid"),
+                    r.get("upsell"),
+                    r.get("remainder"),
+                    r.get("arith_check"),
+                    r.get("status"),
+                    r.get("control"),
+                    r.get("upsell_floor"),
+                    r.get("upsell_floor_label"),
+                    r.get("comments"),
+                ),
+            )
+        for s in sheet_stats:
+            await self.conn.execute(
+                """
+                INSERT INTO vyrobotka_sheet_stats(
+                  spreadsheet_id, sheet_title, sort_ym, sort_a, sort_b,
+                  tickets_count, report_sum, upsell_sum, upsell_count,
+                  avg_upsell, upsell_ratio, spreadsheet_title, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    s.get("spreadsheet_id"),
+                    s.get("sheet_title"),
+                    int(s.get("sort_ym") or 0),
+                    int(s.get("sort_a") or 0),
+                    int(s.get("sort_b") or 0),
+                    int(s.get("tickets_count") or 0),
+                    float(s.get("report_sum") or 0),
+                    float(s.get("upsell_sum") or 0),
+                    int(s.get("upsell_count") or 0),
+                    s.get("avg_upsell"),
+                    s.get("upsell_ratio"),
+                    s.get("spreadsheet_title"),
+                ),
+            )
+        await self.conn.commit()
+
+    async def vyrobotka_list_sheet_stats(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM vyrobotka_sheet_stats
+            ORDER BY sort_ym ASC, sort_a ASC, sort_b ASC, sheet_title ASC
+            """
+        )
+        rows = await cur.fetchall()
+        return [dict(r) for r in rows]

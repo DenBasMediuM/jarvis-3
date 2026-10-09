@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261008-pages" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261009-vyrobotka5" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -23,6 +23,7 @@
       <nav class="nav">
         <button class="nav-btn active" data-view="chat">Чат</button>
         <button class="nav-btn" data-view="quality">Качество</button>
+        <button class="nav-btn" data-view="vyrobotka">Выработка</button>
         <button class="nav-btn" data-view="modules">Модули</button>
         <button class="nav-btn" data-view="settings">ИИ</button>
       </nav>
@@ -212,6 +213,105 @@
         </div>
       </section>
 
+      <section id="view-vyrobotka" class="view">
+        <div class="quality-topbar">
+          <div class="quality-topbar-head">
+            <button type="button" id="vyrobotka-back-btn" class="quality-back-btn" title="К меню">← Меню</button>
+            <h1 class="quality-topbar-title">Выработка</h1>
+            <button
+              type="button"
+              id="vyrobotka-panel-toggle"
+              class="quality-panel-toggle"
+              aria-expanded="true"
+              aria-controls="vyrobotka-panel-body"
+              title="Свернуть / развернуть панель"
+            >Свернуть</button>
+          </div>
+          <div id="vyrobotka-panel-body" class="quality-panel-body">
+            <header class="view-header quality-header">
+              <p>
+                Недельные листы из Google Таблицы. Сейчас — динамика досогласований
+                (dosoglasi, «Затраты», «Прибль…» и «Сводка» не участвуют).
+              </p>
+            </header>
+            <div class="quality-toolbar">
+              <button type="button" id="vyrobotka-sync-btn" class="cj-import-open">Обновить из таблицы</button>
+              <span id="vyrobotka-sync-status" class="quality-sync-status">—</span>
+            </div>
+          </div>
+        </div>
+        <nav class="quality-tabs" role="tablist" aria-label="Разделы выработки">
+          <button type="button" class="quality-tab is-active" data-vyrobotka-tab="upsell" role="tab" aria-selected="true">Досогласования</button>
+        </nav>
+        <div class="quality-tab-panels">
+          <div id="vyrobotka-tab-upsell" class="quality-tab-panel is-active" role="tabpanel">
+            <div id="vyrobotka-upsell-empty" class="vyrobotka-empty" hidden>
+              Нет данных. Нажмите «Обновить из таблицы».
+            </div>
+            <article id="vyrobotka-upsell-body" class="vyrobotka-section" hidden>
+              <header class="vyrobotka-section-head">
+                <h2>Досогласования</h2>
+                <p id="vyrobotka-upsell-meta">Динамика по недельным листам: суммы, объёмы и доля.</p>
+              </header>
+              <div
+                id="vyrobotka-upsell-split"
+                class="vyrobotka-split"
+                style="--vyrobotka-split: 66.666%"
+              >
+                <div class="vyrobotka-split-main">
+                  <div class="vyrobotka-kpis" id="vyrobotka-upsell-kpis" aria-label="Сводка"></div>
+                  <div class="vyrobotka-charts">
+                    <section class="vyrobotka-chart-panel">
+                      <h3>Суммы</h3>
+                      <div class="vyrobotka-chart-box">
+                        <canvas id="vyrobotka-chart-money"></canvas>
+                      </div>
+                    </section>
+                    <section class="vyrobotka-chart-panel">
+                      <h3>Объёмы и доля</h3>
+                      <div class="vyrobotka-chart-box">
+                        <canvas id="vyrobotka-chart-volume"></canvas>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+                <div
+                  id="vyrobotka-upsell-resizer"
+                  class="vyrobotka-split-resizer"
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Изменить ширину таблицы"
+                  tabindex="0"
+                ></div>
+                <aside class="vyrobotka-split-side">
+                  <div class="vyrobotka-side-head">
+                    <h3>По неделям</h3>
+                  </div>
+                  <div class="vyrobotka-table-wrap">
+                    <table class="quality-table vyrobotka-table" id="vyrobotka-upsell-table">
+                      <thead>
+                        <tr>
+                          <th>Лист</th>
+                          <th title="Среднее среди квитанций с досогласованием &gt; 0">Ср.</th>
+                          <th>Σ досогл.</th>
+                          <th>шт</th>
+                          <th>Доля</th>
+                          <th>Кв.</th>
+                          <th>Σ отчёт</th>
+                        </tr>
+                      </thead>
+                      <tbody id="vyrobotka-upsell-tbody">
+                        <tr><td colspan="7" class="quality-empty">—</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </aside>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section id="view-modules" class="view">
         <header class="view-header">
           <h1>Модули</h1>
@@ -244,6 +344,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261008-pages"></script>
+  <script src="/static/app.js?v=20261009-vyrobotka5"></script>
 </body>
 </html>
