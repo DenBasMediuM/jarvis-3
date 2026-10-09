@@ -4,7 +4,7 @@ import json
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -147,7 +147,17 @@ async def lifespan(_: FastAPI):
         return client
 
     quality_service = QualityService(db, _quality_client)
-    vyrobotka_service = VyrobotkaService(db, lambda: get_module_settings("vyrobotka"))
+
+    async def _vyrobotka_gincore():
+        client = await _gincore_client()
+        await client.ensure_login()
+        return client
+
+    vyrobotka_service = VyrobotkaService(
+        db,
+        lambda: get_module_settings("vyrobotka"),
+        gincore_client_factory=_vyrobotka_gincore,
+    )
     yield
     await db.close()
 
@@ -287,6 +297,41 @@ async def vyrobotka_sync_start() -> dict[str, Any]:
         if isinstance(exc, SheetsError):
             raise HTTPException(400, str(exc)) from exc
         raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/vyrobotka/debt-verify")
+async def vyrobotka_debt_verify_status() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return {"ok": True, "verify": await vyrobotka_service.get_debt_verify()}
+
+
+class DebtVerifyStartBody(BaseModel):
+    mode: str = Field(default="all", description="all | new")
+
+
+@app.post("/api/vyrobotka/debt-verify")
+async def vyrobotka_debt_verify_start(
+    body: DebtVerifyStartBody = Body(default_factory=DebtVerifyStartBody),
+) -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    mode = body.mode or "all"
+    try:
+        return await vyrobotka_service.start_debt_verify(mode=mode)
+    except Exception as exc:  # noqa: BLE001
+        from modules.vyrobotka.sheets import SheetsError
+
+        if isinstance(exc, SheetsError):
+            raise HTTPException(400, str(exc)) from exc
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.post("/api/vyrobotka/debt-verify/cancel")
+async def vyrobotka_debt_verify_cancel() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return {"ok": True, "verify": await vyrobotka_service.cancel_debt_verify()}
 
 
 async def _gincore_client():

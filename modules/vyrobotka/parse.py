@@ -190,6 +190,83 @@ def aggregate_sheet_upsell(sheet_title: str, rows: list[dict[str, Any]]) -> dict
     }
 
 
+def underpayment_amount(total_repair: Any, paid: Any) -> float | None:
+    """Недоплата: общая стоимость ремонта − оплачено клиентом. None если нет долга."""
+    if total_repair is None:
+        return None
+    try:
+        total = float(total_repair)
+    except (TypeError, ValueError):
+        return None
+    try:
+        paid_v = float(paid) if paid is not None else 0.0
+    except (TypeError, ValueError):
+        paid_v = 0.0
+    debt = total - paid_v
+    if debt <= 0.005:
+        return None
+    return round(debt, 2)
+
+
+def aggregate_sheet_debt(sheet_title: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Дебиторка по листу: сумма и число недоплаченных квитанций."""
+    title = normalize_sheet_title(sheet_title)
+    debt_sum = 0.0
+    debt_count = 0
+    tickets = len(rows)
+    for r in rows:
+        d = underpayment_amount(r.get("total_repair"), r.get("paid"))
+        if d is None:
+            continue
+        debt_sum += d
+        debt_count += 1
+    stamp, b, _ = sheet_sort_key(title)
+    return {
+        "sheet_title": title,
+        "sort_ym": stamp,
+        "sort_a": stamp % 100,
+        "sort_b": b,
+        "tickets_count": tickets,
+        "debt_sum": round(debt_sum, 2),
+        "debt_count": debt_count,
+        "debt_ratio": (debt_count / tickets) if tickets else None,
+        "avg_debt": (round(debt_sum / debt_count, 2) if debt_count else None),
+    }
+
+
+def collect_underpaid_tickets(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Все недоплаченные квитанции (для таблицы дебиторки)."""
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        d = underpayment_amount(r.get("total_repair"), r.get("paid"))
+        if d is None:
+            continue
+        total = float(r["total_repair"]) if r.get("total_repair") is not None else None
+        paid = float(r["paid"]) if r.get("paid") is not None else 0.0
+        out.append(
+            {
+                "sheet_title": r.get("sheet_title"),
+                "master": r.get("master"),
+                "ticket": r.get("ticket"),
+                "total_repair": total,
+                "paid": paid,
+                "debt": d,
+                "status": r.get("status"),
+                "control": r.get("control"),
+                "arith_check": r.get("arith_check"),
+                "comments": r.get("comments"),
+            }
+        )
+    out.sort(
+        key=lambda x: (
+            -float(x.get("debt") or 0),
+            sheet_sort_key(str(x.get("sheet_title") or "")),
+            str(x.get("ticket") or ""),
+        )
+    )
+    return out
+
+
 def select_week_sheets(sheets: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Оставить только недельные листы, отсортированные по периоду."""
     picked = [s for s in sheets if is_week_sheet(str(s.get("title") or ""))]

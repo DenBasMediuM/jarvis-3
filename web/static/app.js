@@ -30,13 +30,7 @@ function showView(view) {
   }
   if (view === "vyrobotka") {
     requestAnimationFrame(() => {
-      // Если раньше открывали Качество — setQualityTab мог спрятать эту панель.
-      const upsell = $("#vyrobotka-tab-upsell");
-      if (upsell) {
-        upsell.hidden = false;
-        upsell.classList.add("is-active");
-      }
-      initVyrobotkaUpsellSplit();
+      initVyrobotkaSplits();
       loadVyrobotkaStats().then((sync) => {
         if (sync?.status === "running") startVyrobotkaPoll();
         resizeVyrobotkaCharts();
@@ -44,6 +38,7 @@ function showView(view) {
     });
   } else {
     stopVyrobotkaPoll();
+    stopVyrobotkaVerifyPoll();
   }
 }
 
@@ -3714,9 +3709,13 @@ function initQualityPanelToggle() {
 
 /* —— Выработка —— */
 let vyrobotkaSheetsCache = [];
+let vyrobotkaDebtCache = { sheets: [], tickets: [], debt_sum: 0, tickets_count: 0, verify: null };
 let vyrobotkaMoneyChart = null;
 let vyrobotkaVolumeChart = null;
+let vyrobotkaDebtChart = null;
 let vyrobotkaPollTimer = null;
+let vyrobotkaVerifyPollTimer = null;
+let vyrobotkaWindowResizeBound = false;
 
 function formatVyrobotkaSync(sync) {
   if (!sync) return "—";
@@ -3751,6 +3750,117 @@ function stopVyrobotkaPoll() {
   }
 }
 
+function stopVyrobotkaVerifyPoll() {
+  if (vyrobotkaVerifyPollTimer) {
+    clearInterval(vyrobotkaVerifyPollTimer);
+    vyrobotkaVerifyPollTimer = null;
+  }
+}
+
+function formatVyrobotkaVerify(verify) {
+  if (!verify) return "—";
+  const st = verify.status || "idle";
+  if (st === "running") {
+    const done = verify.done ?? 0;
+    const total = verify.total ?? 0;
+    const msg = verify.message ? ` · ${verify.message}` : "";
+    return `Сверка… ${done}/${total}${msg}`;
+  }
+  if (st === "error") return `Ошибка сверки: ${verify.message || "неизвестно"}`;
+  if (verify.message) return verify.message;
+  return "Сверка не запускалась";
+}
+
+function vyrobotkaVerdictMeta(verdict) {
+  if (verdict === "ok") return { cls: "is-verify-ok", chip: "is-ok", label: "ок" };
+  if (verdict === "norm") return { cls: "is-verify-norm", chip: "is-norm", label: "норма" };
+  if (verdict === "mismatch") return { cls: "is-verify-bad", chip: "is-bad", label: "расхождение" };
+  if (verdict === "missing") return { cls: "is-verify-miss", chip: "is-miss", label: "нет в CRM" };
+  if (verdict === "error") return { cls: "is-verify-error", chip: "is-error", label: "ошибка" };
+  return { cls: "", chip: "", label: "—" };
+}
+
+/** CRM «Выдан» + долга нет → норма (таблица устарела). Работает и без перезапуска API. */
+function resolveVyrobotkaDisplayVerdict(verify) {
+  if (!verify) return null;
+  const raw = verify.verdict || null;
+  if (raw === "norm" || raw === "ok" || raw === "missing" || raw === "error") return raw;
+  if (raw !== "mismatch") return raw;
+  const crmStatus = String(
+    verify.crm_status || verify.field_diffs?.status?.crm || ""
+  )
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  if (crmStatus !== "выдан") return raw;
+  const debt = verify.crm_debt;
+  if (debt == null || debt === "" || Number(debt) <= 1) return "norm";
+  return raw;
+}
+
+let vyrobotkaDebtSort = { key: "verdict", dir: 1 };
+let vyrobotkaUpsellSort = { key: "sheet", dir: 1 };
+
+function vyrobotkaSheetOrder(title) {
+  const i = (vyrobotkaSheetsCache || []).findIndex((s) => s.sheet_title === title);
+  return i < 0 ? 99999 : i;
+}
+
+function vyrobotkaVerdictRank(verdict) {
+  if (verdict === "mismatch") return 0;
+  if (verdict === "missing") return 1;
+  if (verdict === "error") return 2;
+  if (!verdict) return 3;
+  if (verdict === "norm") return 4;
+  if (verdict === "ok") return 5;
+  return 6;
+}
+
+function updateVyrobotkaSortHeaders(tableId, sortState, attr) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  table.querySelectorAll(`th[${attr}]`).forEach((th) => {
+    const key = th.getAttribute(attr);
+    const on = key === sortState.key;
+    th.classList.toggle("is-sorted", on);
+    const ind = th.querySelector(".vyrobotka-sort-ind");
+    if (ind) ind.textContent = on ? (sortState.dir > 0 ? "▲" : "▼") : "";
+  });
+}
+
+function initVyrobotkaTableSort() {
+  const debtTable = $("#vyrobotka-debt-table");
+  if (debtTable && !debtTable.dataset.sortReady) {
+    debtTable.dataset.sortReady = "1";
+    debtTable.querySelectorAll("th[data-debt-sort]").forEach((th) => {
+      th.querySelector(".vyrobotka-th-btn")?.addEventListener("click", () => {
+        const key = th.getAttribute("data-debt-sort");
+        if (vyrobotkaDebtSort.key === key) vyrobotkaDebtSort.dir *= -1;
+        else {
+          vyrobotkaDebtSort.key = key;
+          vyrobotkaDebtSort.dir = 1;
+        }
+        renderVyrobotkaDebt();
+      });
+    });
+  }
+  const upsellTable = $("#vyrobotka-upsell-table");
+  if (upsellTable && !upsellTable.dataset.sortReady) {
+    upsellTable.dataset.sortReady = "1";
+    upsellTable.querySelectorAll("th[data-upsell-sort]").forEach((th) => {
+      th.querySelector(".vyrobotka-th-btn")?.addEventListener("click", () => {
+        const key = th.getAttribute("data-upsell-sort");
+        if (vyrobotkaUpsellSort.key === key) vyrobotkaUpsellSort.dir *= -1;
+        else {
+          vyrobotkaUpsellSort.key = key;
+          vyrobotkaUpsellSort.dir = 1;
+        }
+        renderVyrobotkaUpsell();
+      });
+    });
+  }
+}
+
 function startVyrobotkaPoll() {
   stopVyrobotkaPoll();
   vyrobotkaPollTimer = setInterval(async () => {
@@ -3779,9 +3889,12 @@ function destroyVyrobotkaCharts() {
     vyrobotkaVolumeChart.destroy();
     vyrobotkaVolumeChart = null;
   }
+  if (vyrobotkaDebtChart) {
+    vyrobotkaDebtChart.destroy();
+    vyrobotkaDebtChart = null;
+  }
 }
 
-const VYROBOTKA_SPLIT_KEY = "jarvis.vyrobotka.upsellSplit";
 const VYROBOTKA_SPLIT_DEFAULT = 66.666;
 const VYROBOTKA_SPLIT_MIN = 35;
 const VYROBOTKA_SPLIT_MAX = 80;
@@ -3791,50 +3904,51 @@ function resizeVyrobotkaCharts() {
     try {
       vyrobotkaMoneyChart?.resize();
       vyrobotkaVolumeChart?.resize();
+      vyrobotkaDebtChart?.resize();
     } catch {
       /* ignore */
     }
   });
 }
 
-function setVyrobotkaUpsellSplit(pct) {
-  const split = $("#vyrobotka-upsell-split");
-  if (!split) return;
+function setVyrobotkaSplit(splitEl, storageKey, pct) {
+  if (!splitEl) return;
   const clamped = Math.min(
     VYROBOTKA_SPLIT_MAX,
     Math.max(VYROBOTKA_SPLIT_MIN, Number(pct) || VYROBOTKA_SPLIT_DEFAULT)
   );
-  split.style.setProperty("--vyrobotka-split", `${clamped}%`);
+  splitEl.style.setProperty("--vyrobotka-split", `${clamped}%`);
   try {
-    localStorage.setItem(VYROBOTKA_SPLIT_KEY, String(clamped));
+    localStorage.setItem(storageKey, String(clamped));
   } catch {
     /* ignore */
   }
   resizeVyrobotkaCharts();
 }
 
-function initVyrobotkaUpsellSplit() {
-  const split = $("#vyrobotka-upsell-split");
-  const handle = $("#vyrobotka-upsell-resizer");
+function bindVyrobotkaSplit(splitId, handleId, storageKey) {
+  const split = document.getElementById(splitId);
+  const handle = document.getElementById(handleId);
   if (!split || !handle) return;
 
   let saved = VYROBOTKA_SPLIT_DEFAULT;
   try {
-    const raw = localStorage.getItem(VYROBOTKA_SPLIT_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (raw != null && raw !== "") saved = Number(raw);
   } catch {
     saved = VYROBOTKA_SPLIT_DEFAULT;
   }
-  setVyrobotkaUpsellSplit(saved);
+  setVyrobotkaSplit(split, storageKey, saved);
 
   if (handle.dataset.ready) return;
   handle.dataset.ready = "1";
 
+  const apply = (pct) => setVyrobotkaSplit(split, storageKey, pct);
+
   const onPointerMove = (e) => {
     const rect = split.getBoundingClientRect();
     if (rect.width < 40) return;
-    const pct = ((e.clientX - rect.left) / rect.width) * 100;
-    setVyrobotkaUpsellSplit(pct);
+    apply(((e.clientX - rect.left) / rect.width) * 100);
   };
   const onPointerUp = (e) => {
     handle.releasePointerCapture?.(e.pointerId);
@@ -3863,19 +3977,29 @@ function initVyrobotkaUpsellSplit() {
     }
     if (e.key === "ArrowLeft") {
       e.preventDefault();
-      setVyrobotkaUpsellSplit(cur - step);
+      apply(cur - step);
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      setVyrobotkaUpsellSplit(cur + step);
+      apply(cur + step);
     } else if (e.key === "Home") {
       e.preventDefault();
-      setVyrobotkaUpsellSplit(VYROBOTKA_SPLIT_DEFAULT);
+      apply(VYROBOTKA_SPLIT_DEFAULT);
     }
   });
+}
 
-  window.addEventListener("resize", () => {
-    if ($("#view-vyrobotka")?.classList.contains("active")) resizeVyrobotkaCharts();
-  });
+function initVyrobotkaSplits() {
+  bindVyrobotkaSplit(
+    "vyrobotka-upsell-split",
+    "vyrobotka-upsell-resizer",
+    "jarvis.vyrobotka.upsellSplit"
+  );
+  if (!vyrobotkaWindowResizeBound) {
+    vyrobotkaWindowResizeBound = true;
+    window.addEventListener("resize", () => {
+      if ($("#view-vyrobotka")?.classList.contains("active")) resizeVyrobotkaCharts();
+    });
+  }
 }
 
 function shortVyrobotkaLabel(title) {
@@ -3920,7 +4044,6 @@ function vyrobotkaLineDefaults() {
 }
 
 function renderVyrobotkaUpsell() {
-  const empty = $("#vyrobotka-upsell-empty");
   const body = $("#vyrobotka-upsell-body");
   const meta = $("#vyrobotka-upsell-meta");
   const kpis = $("#vyrobotka-upsell-kpis");
@@ -3930,14 +4053,20 @@ function renderVyrobotkaUpsell() {
   const sheets = vyrobotkaSheetsCache || [];
 
   if (!sheets.length) {
-    destroyVyrobotkaCharts();
-    if (empty) empty.hidden = false;
+    if (vyrobotkaMoneyChart) {
+      vyrobotkaMoneyChart.destroy();
+      vyrobotkaMoneyChart = null;
+    }
+    if (vyrobotkaVolumeChart) {
+      vyrobotkaVolumeChart.destroy();
+      vyrobotkaVolumeChart = null;
+    }
     if (body) body.hidden = true;
     return;
   }
-  if (empty) empty.hidden = true;
   if (body) body.hidden = false;
-  initVyrobotkaUpsellSplit();
+  initVyrobotkaSplits();
+  initVyrobotkaTableSort();
 
   const last = sheets[sheets.length - 1];
   const totalTickets = sheets.reduce((a, s) => a + (Number(s.tickets_count) || 0), 0);
@@ -3969,7 +4098,14 @@ function renderVyrobotkaUpsell() {
   }
 
   if (tbody) {
-    tbody.innerHTML = sheets
+    const tableSheets = [...sheets].sort((a, b) => {
+      if (vyrobotkaUpsellSort.key === "sheet") {
+        return vyrobotkaUpsellSort.dir * (vyrobotkaSheetOrder(a.sheet_title) - vyrobotkaSheetOrder(b.sheet_title));
+      }
+      return 0;
+    });
+    updateVyrobotkaSortHeaders("vyrobotka-upsell-table", vyrobotkaUpsellSort, "data-upsell-sort");
+    tbody.innerHTML = tableSheets
       .map(
         (s) => `<tr>
           <td>${escapeHtml(s.sheet_title)}</td>
@@ -4130,6 +4266,313 @@ function renderVyrobotkaUpsell() {
   resizeVyrobotkaCharts();
 }
 
+function fmtVyrobotkaCellTip(diff) {
+  if (!diff) return "";
+  const label = diff.label || "поле";
+  const sheetV =
+    typeof diff.sheet === "number" ? fmtMoneyUa(diff.sheet) : String(diff.sheet ?? "—");
+  const crmV =
+    typeof diff.crm === "number"
+      ? fmtMoneyUa(diff.crm)
+      : diff.crm == null || diff.crm === ""
+        ? "—"
+        : String(diff.crm);
+  return `${label}: в таблице ${sheetV} · в Gincore ${crmV}`;
+}
+
+function vyrobotkaDebtTd(displayHtml, field, verify, { strong = false } = {}) {
+  const diffs = verify?.field_diffs || {};
+  const diff = diffs[field];
+  const inner = strong ? `<strong>${displayHtml}</strong>` : displayHtml;
+  if (!diff) return `<td>${inner}</td>`;
+  const tip = fmtVyrobotkaCellTip(diff);
+  return `<td class="is-cell-mismatch" title="${escapeHtml(tip)}">${inner}</td>`;
+}
+
+function applyVyrobotkaVerifyUi(verify) {
+  const statusEl = $("#vyrobotka-debt-verify-status");
+  const btn = $("#vyrobotka-debt-verify-btn");
+  const btnNew = $("#vyrobotka-debt-verify-new-btn");
+  const cancel = $("#vyrobotka-debt-verify-cancel");
+  const reportEl = $("#vyrobotka-debt-report");
+  if (statusEl) statusEl.textContent = formatVyrobotkaVerify(verify);
+  const running = verify?.status === "running";
+  if (btn) btn.disabled = !!running;
+  if (btnNew) btnNew.disabled = !!running;
+  if (cancel) cancel.hidden = !running;
+
+  const report = verify?.report;
+  if (!reportEl) return;
+  if (!report || !report.total) {
+    reportEl.hidden = true;
+    reportEl.innerHTML = "";
+    return;
+  }
+  reportEl.hidden = false;
+  const top = report.top_issues || [];
+  reportEl.innerHTML = `
+    <h3>Отчёт сверки с Gincore</h3>
+    <div class="vyrobotka-verify-report-kpis">
+      <span class="vyrobotka-verify-chip">всего ${report.total}</span>
+      <span class="vyrobotka-verify-chip is-ok">ок ${report.ok ?? 0}</span>
+      <span class="vyrobotka-verify-chip is-norm">норма ${report.norm ?? 0}</span>
+      <span class="vyrobotka-verify-chip is-bad">расхождения ${report.mismatch ?? 0}</span>
+      <span class="vyrobotka-verify-chip is-miss">нет в CRM ${report.missing ?? 0}</span>
+      <span class="vyrobotka-verify-chip">ошибки ${report.error ?? 0}</span>
+    </div>
+    ${
+      top.length
+        ? `<ol class="vyrobotka-verify-issues">${top
+            .map(
+              (i) => `<li><strong>№${escapeHtml(i.ticket)}</strong> · ${escapeHtml(
+                i.sheet_title || ""
+              )} — ${escapeHtml(i.summary || i.verdict || "")}</li>`
+            )
+            .join("")}</ol>`
+        : `<p class="vyrobotka-verify-status">Расхождений нет — таблица совпадает с CRM.</p>`
+    }
+  `;
+}
+
+function renderVyrobotkaDebt() {
+  const body = $("#vyrobotka-debt-body");
+  const meta = $("#vyrobotka-debt-meta");
+  const kpis = $("#vyrobotka-debt-kpis");
+  const tbody = $("#vyrobotka-debt-tbody");
+  const canvas = $("#vyrobotka-chart-debt");
+  const sheets = vyrobotkaDebtCache.sheets || [];
+  const tickets = vyrobotkaDebtCache.tickets || [];
+  const verify = vyrobotkaDebtCache.verify || null;
+  const hasData = (vyrobotkaSheetsCache || []).length > 0;
+
+  if (!hasData) {
+    if (vyrobotkaDebtChart) {
+      vyrobotkaDebtChart.destroy();
+      vyrobotkaDebtChart = null;
+    }
+    if (body) body.hidden = true;
+    return;
+  }
+  if (body) body.hidden = false;
+  initVyrobotkaSplits();
+  initVyrobotkaTableSort();
+  applyVyrobotkaVerifyUi(verify);
+
+  const last = sheets[sheets.length - 1];
+  const debtSum = Number(vyrobotkaDebtCache.debt_sum) || 0;
+  const debtN = Number(vyrobotkaDebtCache.tickets_count) || tickets.length;
+  const badN = Number(verify?.report?.bad_count);
+  const normN = Number(verify?.report?.norm);
+  const checkedN = Number(verify?.report?.total);
+
+  if (kpis) {
+    const kpiRows = [
+      ["Σ недоплат", fmtMoneyUa(debtSum), `${debtN} квитанций`],
+      ["Квитанций с долгом", fmtMoneyUa(debtN), "все недели"],
+      ["Посл. Σ недоплат", fmtMoneyUa(last?.debt_sum), last?.sheet_title || "—"],
+      ["Посл. шт. долгов", fmtMoneyUa(last?.debt_count), fmtPct(last?.debt_ratio)],
+      ["Ср. долг (посл.)", fmtMoneyUa(last?.avg_debt), "на квитанцию"],
+    ];
+    if (checkedN) {
+      kpiRows.push([
+        "Расхождения CRM",
+        fmtMoneyUa(Number.isFinite(badN) ? badN : 0),
+        `из ${checkedN} проверенных`,
+      ]);
+      if (Number.isFinite(normN) && normN > 0) {
+        kpiRows.push(["Норма (выдан)", fmtMoneyUa(normN), "долга в CRM нет"]);
+      }
+    }
+    kpis.innerHTML = kpiRows
+      .map(
+        ([label, value, hint]) => `<div class="vyrobotka-kpi">
+          <span class="vyrobotka-kpi-label">${escapeHtml(label)}</span>
+          <span class="vyrobotka-kpi-value">${escapeHtml(value)}</span>
+          <span class="vyrobotka-kpi-hint">${escapeHtml(hint)}</span>
+        </div>`
+      )
+      .join("");
+  }
+
+  if (meta) {
+    meta.textContent = `Недоплата = стоимость ремонта − оплачено клиентом · ${debtN} квитанций · Σ ${fmtMoneyUa(debtSum)}`;
+  }
+
+  if (tbody) {
+    if (!tickets.length) {
+      tbody.innerHTML = `<tr><td colspan="10" class="quality-empty">Недоплаченных квитанций нет</td></tr>`;
+    } else {
+      const ordered = [...tickets].sort((a, b) => {
+        const dir = vyrobotkaDebtSort.dir;
+        if (vyrobotkaDebtSort.key === "sheet") {
+          const ds = vyrobotkaSheetOrder(a.sheet_title) - vyrobotkaSheetOrder(b.sheet_title);
+          if (ds) return dir * ds;
+          return dir * String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
+        }
+        // сверка
+        const dr =
+          vyrobotkaVerdictRank(resolveVyrobotkaDisplayVerdict(a.verify)) -
+          vyrobotkaVerdictRank(resolveVyrobotkaDisplayVerdict(b.verify));
+        if (dr) return dir * dr;
+        return (Number(b.debt) || 0) - (Number(a.debt) || 0);
+      });
+      updateVyrobotkaSortHeaders("vyrobotka-debt-table", vyrobotkaDebtSort, "data-debt-sort");
+      const unchecked = ordered.filter((t) => !resolveVyrobotkaDisplayVerdict(t.verify)).length;
+      const btnNew = $("#vyrobotka-debt-verify-new-btn");
+      if (btnNew && verify?.status !== "running") {
+        btnNew.textContent = unchecked
+          ? `Сверить новые (${unchecked})`
+          : "Сверить новые";
+      }
+
+      tbody.innerHTML = ordered
+        .map((t) => {
+          const v = resolveVyrobotkaDisplayVerdict(t.verify);
+          const metaV = vyrobotkaVerdictMeta(v);
+          const tipSummary =
+            v === "norm" && t.verify?.summary && !String(t.verify.summary).toLowerCase().startsWith("норма")
+              ? `Норма: в CRM «Выдан», долга нет · ${t.verify.summary}`
+              : t.verify?.summary || "";
+          const ticketCell = t.verify?.crm_url
+            ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(
+                t.verify.crm_url
+              )}" target="_blank" rel="noopener">${escapeHtml(t.ticket)}</a>`
+            : escapeHtml(t.ticket);
+          const mark =
+            v === "mismatch" || v === "missing" || v === "error"
+              ? "●"
+              : v === "norm"
+                ? "◆"
+                : v === "ok"
+                  ? "○"
+                  : "";
+          const crmDebtCell = t.verify
+            ? t.verify.field_diffs?.debt
+              ? `<td class="is-cell-mismatch" title="${escapeHtml(
+                  fmtVyrobotkaCellTip(t.verify.field_diffs.debt)
+                )}">${fmtMoneyUa(t.verify.crm_debt)}</td>`
+              : `<td>${fmtMoneyUa(t.verify.crm_debt)}</td>`
+            : "<td>—</td>";
+          return `<tr class="${metaV.cls}">
+            <td title="${escapeHtml(tipSummary)}">${mark}</td>
+            <td>${escapeHtml(t.sheet_title)}</td>
+            <td>${escapeHtml(t.master || "—")}</td>
+            <td>${ticketCell}</td>
+            ${vyrobotkaDebtTd(fmtMoneyUa(t.total_repair), "total", t.verify)}
+            ${vyrobotkaDebtTd(fmtMoneyUa(t.paid), "paid", t.verify)}
+            ${vyrobotkaDebtTd(fmtMoneyUa(t.debt), "debt", t.verify, { strong: true })}
+            ${crmDebtCell}
+            ${vyrobotkaDebtTd(escapeHtml(t.status || "—"), "status", t.verify)}
+            <td title="${escapeHtml(tipSummary)}">${
+              v
+                ? `<span class="vyrobotka-verdict ${metaV.chip}">${escapeHtml(
+                    metaV.label
+                  )}</span>`
+                : "—"
+            }</td>
+          </tr>`;
+        })
+        .join("");
+    }
+  }
+
+  if (!canvas || typeof Chart === "undefined") return;
+  if (vyrobotkaDebtChart) {
+    vyrobotkaDebtChart.destroy();
+    vyrobotkaDebtChart = null;
+  }
+  const labels = sheets.map((s) => shortVyrobotkaLabel(s.sheet_title));
+  const base = vyrobotkaLineDefaults();
+  const line = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+
+  vyrobotkaDebtChart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          ...line,
+          label: "Σ недоплат",
+          data: sheets.map((s) => s.debt_sum),
+          borderColor: "#a12828",
+          yAxisID: "y",
+        },
+        {
+          ...line,
+          label: "Квитанций с долгом",
+          data: sheets.map((s) => s.debt_count),
+          borderColor: "#c45c26",
+          borderDash: [5, 4],
+          yAxisID: "y1",
+        },
+      ],
+    },
+    options: {
+      ...base,
+      plugins: {
+        ...base.plugins,
+        tooltip: {
+          callbacks: {
+            title: (items) => sheets[items[0]?.dataIndex]?.sheet_title || "",
+            label(ctx) {
+              const v = ctx.parsed.y;
+              if (v == null) return `${ctx.dataset.label}: —`;
+              if (ctx.dataset.yAxisID === "y1") return `${ctx.dataset.label}: ${v}`;
+              return `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        ...base.scales,
+        y: {
+          beginAtZero: true,
+          position: "left",
+          title: { display: true, text: "₴", color: "#5d6b7c", font: { size: 11 } },
+          grid: { color: "rgba(28,36,48,0.07)" },
+          ticks: {
+            color: "#5d6b7c",
+            font: { size: 10 },
+            callback: (v) => fmtMoneyUa(v),
+          },
+        },
+        y1: {
+          beginAtZero: true,
+          position: "right",
+          title: { display: true, text: "шт", color: "#5d6b7c", font: { size: 11 } },
+          grid: { drawOnChartArea: false },
+          ticks: { color: "#5d6b7c", font: { size: 10 } },
+        },
+      },
+    },
+  });
+
+  resizeVyrobotkaCharts();
+}
+
+function renderVyrobotkaAll() {
+  const empty = $("#vyrobotka-empty");
+  const hasData = (vyrobotkaSheetsCache || []).length > 0;
+  if (empty) empty.hidden = hasData;
+  if (!hasData) {
+    destroyVyrobotkaCharts();
+    const upsell = $("#vyrobotka-upsell-body");
+    const debt = $("#vyrobotka-debt-body");
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    return;
+  }
+  renderVyrobotkaUpsell();
+  renderVyrobotkaDebt();
+}
+
 async function loadVyrobotkaStats() {
   const statusEl = $("#vyrobotka-sync-status");
   try {
@@ -4137,14 +4580,101 @@ async function loadVyrobotkaStats() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     vyrobotkaSheetsCache = data.sheets || [];
+    vyrobotkaDebtCache = data.debt || {
+      sheets: [],
+      tickets: [],
+      debt_sum: 0,
+      tickets_count: 0,
+      verify: null,
+    };
     if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
-    renderVyrobotkaUpsell();
+    renderVyrobotkaAll();
+    if (vyrobotkaDebtCache.verify?.status === "running") startVyrobotkaVerifyPoll();
     return data.sync || null;
   } catch (err) {
     if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
     vyrobotkaSheetsCache = [];
-    renderVyrobotkaUpsell();
+    vyrobotkaDebtCache = { sheets: [], tickets: [], debt_sum: 0, tickets_count: 0, verify: null };
+    renderVyrobotkaAll();
     return null;
+  }
+}
+
+function startVyrobotkaVerifyPoll() {
+  stopVyrobotkaVerifyPoll();
+  vyrobotkaVerifyPollTimer = setInterval(async () => {
+    try {
+      const res = await fetch("/api/vyrobotka/debt-verify");
+      const data = await res.json().catch(() => ({}));
+      const verify = data.verify;
+      if (vyrobotkaDebtCache) vyrobotkaDebtCache.verify = verify;
+      applyVyrobotkaVerifyUi(verify);
+      if (verify?.status !== "running") {
+        stopVyrobotkaVerifyPoll();
+        await loadVyrobotkaStats();
+      } else {
+        // частичное обновление строк во время прогона
+        const map = new Map(
+          (verify.rows || []).map((r) => [`${r.sheet_title}::${r.ticket}`, r])
+        );
+        for (const t of vyrobotkaDebtCache.tickets || []) {
+          const vr = map.get(`${t.sheet_title}::${t.ticket}`);
+          if (vr) {
+            t.verify = {
+              verdict: vr.verdict,
+              summary: vr.summary,
+              issues: vr.issues || [],
+              field_diffs: vr.field_diffs || {},
+              crm_total: vr.crm_total,
+              crm_paid: vr.crm_paid,
+              crm_debt: vr.crm_debt,
+              crm_status: vr.crm_status,
+              crm_url: vr.crm_url,
+            };
+          }
+        }
+        renderVyrobotkaDebt();
+      }
+    } catch {
+      /* ignore */
+    }
+  }, 1200);
+}
+
+async function startVyrobotkaDebtVerify(mode = "all") {
+  const btn = $("#vyrobotka-debt-verify-btn");
+  const btnNew = $("#vyrobotka-debt-verify-new-btn");
+  if (btn) btn.disabled = true;
+  if (btnNew) btnNew.disabled = true;
+  try {
+    const res = await fetch("/api/vyrobotka/debt-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (vyrobotkaDebtCache) vyrobotkaDebtCache.verify = data.verify;
+    applyVyrobotkaVerifyUi(data.verify);
+    startVyrobotkaVerifyPoll();
+  } catch (err) {
+    applyVyrobotkaVerifyUi({
+      status: "error",
+      message: err.message || String(err),
+    });
+    if (btn) btn.disabled = false;
+    if (btnNew) btnNew.disabled = false;
+  }
+}
+
+async function cancelVyrobotkaDebtVerify() {
+  try {
+    const res = await fetch("/api/vyrobotka/debt-verify/cancel", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (vyrobotkaDebtCache) vyrobotkaDebtCache.verify = data.verify;
+    applyVyrobotkaVerifyUi(data.verify);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -4200,6 +4730,11 @@ function initVyrobotkaPanelToggle() {
 }
 
 $("#vyrobotka-sync-btn")?.addEventListener("click", () => startVyrobotkaSync());
+$("#vyrobotka-debt-verify-btn")?.addEventListener("click", () => startVyrobotkaDebtVerify("all"));
+$("#vyrobotka-debt-verify-new-btn")?.addEventListener("click", () =>
+  startVyrobotkaDebtVerify("new")
+);
+$("#vyrobotka-debt-verify-cancel")?.addEventListener("click", () => cancelVyrobotkaDebtVerify());
 
 initQualityPanelToggle();
 initQualityTabs();

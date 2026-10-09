@@ -129,6 +129,38 @@ CREATE TABLE IF NOT EXISTS vyrobotka_sync_state (
   started_at TEXT,
   finished_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS vyrobotka_debt_verify_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  report_json TEXT,
+  cancel_requested INTEGER NOT NULL DEFAULT 0,
+  started_at TEXT,
+  finished_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS vyrobotka_debt_verify_rows (
+  sheet_title TEXT NOT NULL,
+  ticket TEXT NOT NULL,
+  verdict TEXT NOT NULL,
+  summary TEXT,
+  issues_json TEXT,
+  sheet_total REAL,
+  sheet_paid REAL,
+  sheet_debt REAL,
+  sheet_status TEXT,
+  crm_total REAL,
+  crm_paid REAL,
+  crm_debt REAL,
+  crm_status TEXT,
+  crm_url TEXT,
+  master TEXT,
+  checked_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (sheet_title, ticket)
+);
 """
 
 
@@ -555,3 +587,181 @@ class Database:
         )
         rows = await cur.fetchall()
         return [dict(r) for r in rows]
+
+    async def vyrobotka_list_rows(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT r.*
+            FROM vyrobotka_rows r
+            LEFT JOIN vyrobotka_sheet_stats s
+              ON s.spreadsheet_id = r.spreadsheet_id
+             AND s.sheet_title = r.sheet_title
+            ORDER BY
+              COALESCE(s.sort_ym, 0) ASC,
+              COALESCE(s.sort_a, 0) ASC,
+              COALESCE(s.sort_b, 0) ASC,
+              r.sheet_title ASC,
+              r.row_index ASC
+            """
+        )
+        rows = await cur.fetchall()
+        return [dict(r) for r in rows]
+
+    async def vyrobotka_get_debt_verify_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM vyrobotka_debt_verify_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO vyrobotka_debt_verify_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "id": 1,
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "message": None,
+                "report_json": None,
+                "cancel_requested": 0,
+                "started_at": None,
+                "finished_at": None,
+                "report": None,
+            }
+        data = dict(row)
+        report = None
+        raw = data.get("report_json")
+        if raw:
+            try:
+                report = json.loads(raw)
+            except json.JSONDecodeError:
+                report = None
+        data["report"] = report
+        return data
+
+    async def vyrobotka_set_debt_verify_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.vyrobotka_get_debt_verify_state()
+        merged = {**current, **fields}
+        report_json = merged.get("report_json")
+        if "report" in fields:
+            if fields["report"] is None:
+                report_json = None
+            else:
+                report_json = json.dumps(fields["report"], ensure_ascii=False)
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_debt_verify_state(
+              id, status, total, done, message, report_json,
+              cancel_requested, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              message = excluded.message,
+              report_json = excluded.report_json,
+              cancel_requested = excluded.cancel_requested,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                merged.get("status") or "idle",
+                int(merged.get("total") or 0),
+                int(merged.get("done") or 0),
+                merged.get("message"),
+                report_json,
+                int(merged.get("cancel_requested") or 0),
+                merged.get("started_at"),
+                merged.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.vyrobotka_get_debt_verify_state()
+
+    async def vyrobotka_clear_debt_verify_rows(self) -> None:
+        await self.conn.execute("DELETE FROM vyrobotka_debt_verify_rows")
+        await self.conn.commit()
+
+    async def vyrobotka_upsert_debt_verify_row(self, row: dict[str, Any]) -> None:
+        from modules.vyrobotka.verify import pack_issues_payload
+
+        if isinstance(row.get("issues"), str):
+            issues = row["issues"]
+        else:
+            issues = json.dumps(pack_issues_payload(row), ensure_ascii=False)
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_debt_verify_rows(
+              sheet_title, ticket, verdict, summary, issues_json,
+              sheet_total, sheet_paid, sheet_debt, sheet_status,
+              crm_total, crm_paid, crm_debt, crm_status, crm_url,
+              master, checked_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(sheet_title, ticket) DO UPDATE SET
+              verdict = excluded.verdict,
+              summary = excluded.summary,
+              issues_json = excluded.issues_json,
+              sheet_total = excluded.sheet_total,
+              sheet_paid = excluded.sheet_paid,
+              sheet_debt = excluded.sheet_debt,
+              sheet_status = excluded.sheet_status,
+              crm_total = excluded.crm_total,
+              crm_paid = excluded.crm_paid,
+              crm_debt = excluded.crm_debt,
+              crm_status = excluded.crm_status,
+              crm_url = excluded.crm_url,
+              master = excluded.master,
+              checked_at = excluded.checked_at
+            """,
+            (
+                row.get("sheet_title"),
+                str(row.get("ticket") or ""),
+                row.get("verdict") or "error",
+                row.get("summary"),
+                issues,
+                row.get("sheet_total"),
+                row.get("sheet_paid"),
+                row.get("sheet_debt"),
+                row.get("sheet_status"),
+                row.get("crm_total"),
+                row.get("crm_paid"),
+                row.get("crm_debt"),
+                row.get("crm_status"),
+                row.get("crm_url"),
+                row.get("master"),
+            ),
+        )
+        await self.conn.commit()
+
+    async def vyrobotka_list_debt_verify_rows(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM vyrobotka_debt_verify_rows
+            ORDER BY
+              CASE verdict
+                WHEN 'mismatch' THEN 0
+                WHEN 'missing' THEN 1
+                WHEN 'error' THEN 2
+                ELSE 3
+              END,
+              COALESCE(sheet_debt, 0) DESC,
+              ticket ASC
+            """
+        )
+        rows = await cur.fetchall()
+        from modules.vyrobotka.verify import hydrate_field_diffs, unpack_issues_payload
+
+        out: list[dict[str, Any]] = []
+        for r in rows:
+            item = dict(r)
+            try:
+                raw = json.loads(item.get("issues_json") or "[]")
+            except json.JSONDecodeError:
+                raw = []
+            messages, fields = unpack_issues_payload(raw)
+            item["issues"] = messages
+            item["field_diffs"] = fields
+            item["field_diffs"] = hydrate_field_diffs(item)
+            out.append(item)
+        return out
