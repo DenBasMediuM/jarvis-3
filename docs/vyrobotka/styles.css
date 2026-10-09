@@ -1,0 +1,38 @@
+/* Выработка · поверх shared/styles.css */
+.panel[hidden] { display: none !important; }
+.panel.is-active { display: block; }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+.mod-tab.is-active { color: var(--accent-2); }
+
+.vtable th:nth-child(n+4),
+.vtable td:nth-child(n+4) {
+  text-align: right;
+}
+
+#table-debt th:nth-child(1),
+#table-debt td:nth-child(1),
+#table-debt th:nth-child(2),
+#table-debt td:nth-child(2),
+#table-debt th:nth-child(3),
+#table-debt td:nth-child(3),
+#table-debt th:nth-child(8),
+#table-debt td:nth-child(8),
+#table-debt th:nth-child(9),
+#table-debt td:nth-child(9) {
+  text-align: left;
+}
+
+#table-upsell th:nth-child(1),
+#table-upsell td:nth-child(1) {
+  text-align: left;
+}

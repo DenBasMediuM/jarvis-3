@@ -1,29 +1,11 @@
-:root {
-  --ink: #1c2430;
-  --muted: #5d6b7c;
-  --line: rgba(28, 36, 48, 0.12);
-  --accent: #0f6e56;
-  --bg: #f3efe6;
-  --card: rgba(255, 255, 255, 0.78);
-}
-* { box-sizing: border-box; }
-html, body {
-  margin: 0;
-  min-height: 100%;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
-  color: var(--ink);
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(15, 110, 86, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(196, 92, 38, 0.08), transparent 50%),
-    var(--bg);
-}
+/* Токены/фон — в ../shared/styles.css; здесь только UI модуля «Качество» */
 .app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 20px 16px 48px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 0;
+  max-width: none;
+  margin: 0;
 }
 .top {
   display: flex;
@@ -34,7 +16,9 @@ html, body {
 }
 .top h1 {
   margin: 0;
-  font-size: 1.7rem;
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3vw, 2.15rem);
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 .sub, .meta, .lead, .meta-line {
@@ -52,7 +36,7 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(243, 239, 230, 0.92);
+  background: rgba(243, 239, 230, 0.9);
   backdrop-filter: blur(8px);
   margin: 0 -4px;
   padding-left: 4px;

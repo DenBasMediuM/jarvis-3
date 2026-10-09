@@ -334,6 +334,17 @@ async def vyrobotka_debt_verify_cancel() -> dict[str, Any]:
     return {"ok": True, "verify": await vyrobotka_service.cancel_debt_verify()}
 
 
+@app.post("/api/vyrobotka/export-pages")
+async def vyrobotka_export_pages() -> dict[str, Any]:
+    """Записать docs/vyrobotka/data.json для GitHub Pages (без push)."""
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
 async def _gincore_client():
     if not gincore_module:
         raise HTTPException(404, "Модуль Gincore не найден")

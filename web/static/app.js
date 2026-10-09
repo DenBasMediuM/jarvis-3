@@ -4729,7 +4729,28 @@ function initVyrobotkaPanelToggle() {
   });
 }
 
+async function exportVyrobotkaPages() {
+  const btn = $("#vyrobotka-export-pages-btn");
+  const statusEl = $("#vyrobotka-sync-status");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/vyrobotka/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Pages: ${data.upsell_sheets ?? "—"} листов, ${
+        data.debt_tickets ?? "—"
+      } долгов → docs/vyrobotka/data.json (сделайте git push)`;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Pages: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 $("#vyrobotka-sync-btn")?.addEventListener("click", () => startVyrobotkaSync());
+$("#vyrobotka-export-pages-btn")?.addEventListener("click", () => exportVyrobotkaPages());
 $("#vyrobotka-debt-verify-btn")?.addEventListener("click", () => startVyrobotkaDebtVerify("all"));
 $("#vyrobotka-debt-verify-new-btn")?.addEventListener("click", () =>
   startVyrobotkaDebtVerify("new")

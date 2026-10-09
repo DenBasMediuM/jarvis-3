@@ -192,16 +192,56 @@ class VyrobotkaService:
             )
 
         await self.db.vyrobotka_replace_all(all_rows, sheet_stats)
+        pages_note = ""
+        try:
+            exp = await self.export_pages_snapshot()
+            pages_note = f", pages {exp.get('debt_tickets', 0)} долгов"
+        except Exception:  # noqa: BLE001
+            pages_note = ""
         await self.db.vyrobotka_set_sync_state(
             status="idle",
             total=len(weeks),
             done=len(weeks),
             message=(
                 f"Готово: {len(weeks)} листов, {len(all_rows)} квитанций. "
-                f"Таблица: {probe.get('title') or sid}"
+                f"Таблица: {probe.get('title') or sid}{pages_note}"
             ),
             finished_at=_now(),
         )
+
+    async def export_pages_snapshot(self, path: str | None = None) -> dict[str, Any]:
+        """Собрать JSON для GitHub Pages (docs/vyrobotka/data.json)."""
+        from pathlib import Path
+
+        from modules.vyrobotka.export import (
+            build_vyrobotka_pages_payload,
+            write_vyrobotka_pages_json,
+        )
+
+        stats = await self.get_stats()
+        sync = stats.get("sync") or {}
+        sheets = stats.get("sheets") or []
+        debt = stats.get("debt") or {}
+        title = None
+        if sheets:
+            title = sheets[-1].get("spreadsheet_title")
+        verify_rows = (debt.get("verify") or {}).get("rows") or []
+        payload = build_vyrobotka_pages_payload(
+            upsell_sheets=sheets,
+            debt_sheets=debt.get("sheets") or [],
+            debt_tickets=debt.get("tickets") or [],
+            sync=sync,
+            spreadsheet_title=title,
+            verify_rows=verify_rows,
+        )
+        out = write_vyrobotka_pages_json(payload, Path(path) if path else None)
+        return {
+            "ok": True,
+            "path": str(out),
+            "upsell_sheets": payload["counts"]["upsell_sheets"],
+            "debt_tickets": payload["counts"]["debt_tickets"],
+            "exported_at": payload["exported_at"],
+        }
 
     async def get_debt_verify(self) -> dict[str, Any]:
         state = await self.db.vyrobotka_get_debt_verify_state()

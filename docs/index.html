@@ -2,11 +2,54 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=./quality/" />
-  <title>Jarvis · Quality</title>
-  <link rel="canonical" href="./quality/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jarvis · Витрина</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./shared/styles.css?v=20261009-hub1" />
 </head>
 <body>
-  <p><a href="./quality/">Открыть Качество</a></p>
+  <div class="shell">
+    <nav class="shell-nav" aria-label="Витрина">
+      <a class="shell-brand" href="./">
+        <span class="shell-mark">J</span>
+        <span class="shell-brand-text">
+          <span class="shell-brand-name">Jarvis</span>
+          <span class="shell-brand-sub">публичная витрина</span>
+        </span>
+      </a>
+      <div class="shell-mods">
+        <a class="shell-mod" href="./quality/">Качество</a>
+        <a class="shell-mod" href="./vyrobotka/">Выработка</a>
+      </div>
+    </nav>
+
+    <header class="hub-hero">
+      <h1>Операционные модули</h1>
+      <p>Снимки с локального Jarvis: KPI, динамика и сверки — без паролей и без личных данных клиентов.</p>
+    </header>
+
+    <div class="hub-grid">
+      <a class="hub-card" data-mod="quality" href="./quality/">
+        <span class="hub-card-kicker">Сервис</span>
+        <h2>Качество</h2>
+        <p>KPI по квитанциям, мастера, динамика сроков и операционный анализ.</p>
+        <span class="hub-card-cta">Открыть →</span>
+      </a>
+      <a class="hub-card" data-mod="vyrobotka" href="./vyrobotka/">
+        <span class="hub-card-kicker">Финансы</span>
+        <h2>Выработка</h2>
+        <p>Досогласования по неделям и дебиторка: недоплаты и сверка с CRM.</p>
+        <span class="hub-card-cta">Открыть →</span>
+      </a>
+      <div class="hub-card is-soon" aria-disabled="true">
+        <span class="hub-card-kicker">Скоро</span>
+        <h2>Новый модуль</h2>
+        <p>Сюда добавятся следующие витрины — тот же каркас и навигация.</p>
+        <span class="hub-card-cta">—</span>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

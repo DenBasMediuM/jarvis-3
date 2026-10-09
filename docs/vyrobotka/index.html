@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Выработка · Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261009-hub1" />
+  <link rel="stylesheet" href="./styles.css?v=20261009-v1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  <script src="./app.js?v=20261009-v1" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <nav class="shell-nav" aria-label="Витрина">
+      <a class="shell-brand" href="../">
+        <span class="shell-mark">J</span>
+        <span class="shell-brand-text">
+          <span class="shell-brand-name">Jarvis</span>
+          <span class="shell-brand-sub">публичная витрина</span>
+        </span>
+      </a>
+      <div class="shell-mods">
+        <a class="shell-mod" href="../quality/">Качество</a>
+        <a class="shell-mod is-active" href="./">Выработка</a>
+      </div>
+    </nav>
+
+    <header class="mod-top">
+      <div>
+        <h1>Выработка</h1>
+        <p class="mod-sub">Досогласования и дебиторка · снимок из локального Jarvis</p>
+      </div>
+      <div class="mod-meta" id="export-meta">Загрузка data.json…</div>
+    </header>
+
+    <nav class="mod-tabs" role="tablist">
+      <button type="button" class="mod-tab is-active" data-tab="upsell">Досогласования</button>
+      <button type="button" class="mod-tab" data-tab="debt">Дебиторка</button>
+    </nav>
+
+    <main>
+      <section id="panel-upsell" class="panel is-active">
+        <div id="upsell-empty" class="empty" hidden>Нет данных досогласований в снимке.</div>
+        <div id="upsell-body" class="stack" hidden>
+          <div class="kpis" id="upsell-kpis"></div>
+          <div class="charts-grid">
+            <article class="card">
+              <h3>Суммы</h3>
+              <p class="card-sub">Среднее досогласование, Σ досогласований и Σ «В отчёте».</p>
+              <div class="chart-box"><canvas id="chart-money"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Объёмы и доля</h3>
+              <p class="card-sub">Число досогласований, квитанций и доля досогласованных.</p>
+              <div class="chart-box"><canvas id="chart-volume"></canvas></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>По неделям</h3>
+            <div class="table-wrap">
+              <table class="vtable" id="table-upsell">
+                <thead>
+                  <tr>
+                    <th>Лист</th>
+                    <th>Ср. досогл.</th>
+                    <th>Σ досогл.</th>
+                    <th>шт</th>
+                    <th>Доля</th>
+                    <th>Кв.</th>
+                    <th>Σ отчёт</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-upsell"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-debt" class="panel" hidden>
+        <div id="debt-empty" class="empty" hidden>Нет данных дебиторки в снимке.</div>
+        <div id="debt-body" class="stack" hidden>
+          <div class="kpis" id="debt-kpis"></div>
+          <div id="debt-report" class="card" hidden></div>
+          <article class="card">
+            <h3>Динамика недоплат</h3>
+            <p class="card-sub">Σ недоплат и число квитанций с долгом по недельным листам.</p>
+            <div class="chart-box"><canvas id="chart-debt"></canvas></div>
+          </article>
+          <article class="card">
+            <h3>Недоплаченные квитанции</h3>
+            <p class="card-sub">Жёлтое «норма» — в CRM уже «Выдан» и долга нет; красное — реальное расхождение.</p>
+            <div class="table-wrap">
+              <table class="vtable" id="table-debt">
+                <thead>
+                  <tr>
+                    <th>Лист</th>
+                    <th>Мастер</th>
+                    <th>Кв.</th>
+                    <th>Стоимость</th>
+                    <th>Оплачено</th>
+                    <th>Долг</th>
+                    <th>CRM долг</th>
+                    <th>Статус</th>
+                    <th>Сверка</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-debt"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
