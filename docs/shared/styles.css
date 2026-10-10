@@ -38,7 +38,7 @@ html, body {
   align-items: center;
   gap: 10px 14px;
   margin-bottom: 18px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.65);
@@ -52,7 +52,7 @@ html, body {
   gap: 10px;
   text-decoration: none;
   color: inherit;
-  margin-right: auto;
+  flex: 0 0 auto;
 }
 
 .shell-mark {
@@ -90,15 +90,17 @@ html, body {
 .shell-mods {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+  margin-left: auto;
 }
 
 .shell-mod {
   text-decoration: none;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 650;
-  padding: 7px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid transparent;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
@@ -117,46 +119,16 @@ html, body {
   box-shadow: 0 1px 4px rgba(28, 36, 48, 0.06);
 }
 
-.shell-mod-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.shell-submods {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding-left: 6px;
-}
-.shell-submod {
-  text-decoration: none;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 4px 9px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-}
-.shell-submod:hover {
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.85);
-  border-color: var(--line);
-}
-.shell-submod.is-active {
-  color: var(--accent);
-  background: #fff;
-  border-color: rgba(15, 110, 86, 0.22);
-}
 .shell-user {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-left: 6px;
-  padding-left: 10px;
+  margin-left: 4px;
+  padding-left: 12px;
   border-left: 1px solid var(--line);
 }
 .shell-user-name {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 650;
   color: var(--ink);
 }
@@ -164,7 +136,7 @@ html, body {
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 8px;
-  padding: 5px 10px;
+  padding: 6px 11px;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
@@ -361,11 +333,14 @@ html, body {
 .mod-meta { text-align: right; max-width: 28rem; }
 
 .mod-tabs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 6px;
-  border-bottom: 1px solid var(--line);
-  padding: 4px 0 8px;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
   position: sticky;
   top: 0;
   z-index: 20;

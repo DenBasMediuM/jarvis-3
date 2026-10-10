@@ -128,51 +128,27 @@
     const mods = document.querySelector(".shell-mods");
     if (!mods || !s) return;
     const access = s.access || [];
-    const items = [
-      { id: "quality", href: "../quality/", label: "Качество" },
-      {
-        id: "processes",
-        href: "../vyrobotka/",
-        label: "Процессы",
-        children: [
-          { id: "processes.upsell", href: "../vyrobotka/?tab=upsell", label: "Досогласования" },
-          { id: "processes.debt", href: "../vyrobotka/?tab=debt", label: "Дебиторка" },
-        ],
-      },
-      { id: "finance", href: "../finance/", label: "Финансы" },
-    ];
-    // resolve relative to current page depth
     const base = document.querySelector(".shell-brand")?.getAttribute("href") || "../";
     const root = base.endsWith("/") ? base : `${base}/`;
+    // Только верхний уровень. Подразделы Процессов — вкладки на странице, не в шапке.
+    const items = [
+      { id: "quality", href: `${root}quality/`, label: "Качество" },
+      { id: "processes", href: `${root}vyrobotka/`, label: "Процессы" },
+      { id: "finance", href: `${root}finance/`, label: "Финансы" },
+    ];
 
     const html = items
       .filter((it) => canSeeNav(access, it.id))
       .map((it) => {
-        const href = it.href.replace("../", root);
         const isActive =
           active === it.id ||
           (it.id === "processes" && String(active || "").startsWith("processes"));
-        if (it.children) {
-          const kids = it.children
-            .filter((c) => canSeeNav(access, c.id))
-            .map((c) => {
-              const ch = c.href.replace("../", root);
-              const on = active === c.id;
-              return `<a class="shell-submod ${on ? "is-active" : ""}" href="${ch}">${c.label}</a>`;
-            })
-            .join("");
-          return `<div class="shell-mod-group">
-            <a class="shell-mod ${isActive ? "is-active" : ""}" href="${href}">${it.label}</a>
-            <div class="shell-submods">${kids}</div>
-          </div>`;
-        }
-        return `<a class="shell-mod ${isActive ? "is-active" : ""}" href="${href}">${it.label}</a>`;
+        return `<a class="shell-mod ${isActive ? "is-active" : ""}" href="${it.href}">${it.label}</a>`;
       })
       .join("");
 
-    mods.innerHTML =
-      html +
-      `<div class="shell-user">
+    mods.innerHTML = `${html}
+      <div class="shell-user">
         <span class="shell-user-name">${escapeHtml(s.login)}</span>
         <button type="button" class="shell-logout" id="jarvis-vitrine-logout">Выйти</button>
       </div>`;

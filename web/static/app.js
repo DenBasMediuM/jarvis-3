@@ -4147,10 +4147,8 @@ function renderVyrobotkaUpsell() {
       vyrobotkaVolumeChart.destroy();
       vyrobotkaVolumeChart = null;
     }
-    if (body) body.hidden = true;
     return;
   }
-  if (body) body.hidden = false;
   initVyrobotkaSplits();
   initVyrobotkaTableSort();
 
@@ -4436,10 +4434,8 @@ function renderVyrobotkaDebt() {
       vyrobotkaDebtChart.destroy();
       vyrobotkaDebtChart = null;
     }
-    if (body) body.hidden = true;
     return;
   }
-  if (body) body.hidden = false;
   initVyrobotkaSplits();
   initVyrobotkaTableSort();
   applyVyrobotkaVerifyUi(verify);

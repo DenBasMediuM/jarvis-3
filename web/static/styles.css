@@ -819,11 +819,18 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   box-shadow: 0 8px 28px rgba(28, 36, 48, 0.04);
   overflow: hidden;
 }
+.vyrobotka-section[hidden] {
+  display: none !important;
+}
 #vyrobotka-debt-body.vyrobotka-section {
   height: auto;
   min-height: 0;
   max-height: none;
   overflow: visible;
+}
+#vyrobotka-upsell-body.vyrobotka-section:not([hidden]),
+#vyrobotka-debt-body.vyrobotka-section:not([hidden]) {
+  flex: 1 1 auto;
 }
 .vyrobotka-section-head {
   flex: 0 0 auto;
