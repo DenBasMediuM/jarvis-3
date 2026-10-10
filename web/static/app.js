@@ -71,7 +71,8 @@ function showView(view, opts = {}) {
 }
 
 function setProcessesTab(tab) {
-  const id = tab === "debt" ? "debt" : "upsell";
+  const id =
+    tab === "debt" || tab === "branch_kpi" || tab === "upsell" ? tab : "upsell";
   processesTab = id;
   try {
     localStorage.setItem(PROCESSES_TAB_KEY, id);
@@ -90,10 +91,26 @@ function setProcessesTab(tab) {
   });
   const upsell = $("#vyrobotka-upsell-body");
   const debt = $("#vyrobotka-debt-body");
+  const branchKpi = $("#branch-kpi-body");
   const empty = $("#vyrobotka-empty");
-  const hasData = !(empty && !empty.hidden);
+  const sheetsToolbar = $("#vyrobotka-toolbar");
+  const kpiToolbar = $("#branch-kpi-toolbar");
+  const isKpi = id === "branch_kpi";
+  if (sheetsToolbar) sheetsToolbar.hidden = isKpi;
+  if (kpiToolbar) kpiToolbar.hidden = !isKpi;
+  if (branchKpi) branchKpi.hidden = !isKpi;
+  if (isKpi) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadBranchKpiStats();
+    requestAnimationFrame(() => resizeBranchKpiCharts());
+    return;
+  }
+  const hasData = (typeof vyrobotkaSheetsCache !== "undefined" ? vyrobotkaSheetsCache : []).length > 0;
   if (upsell) upsell.hidden = !(hasData && id === "upsell");
   if (debt) debt.hidden = !(hasData && id === "debt");
+  if (empty) empty.hidden = hasData;
   if (id === "debt") {
     requestAnimationFrame(() => resizeVyrobotkaCharts());
   }
@@ -114,6 +131,7 @@ function initProcessesTabs() {
   } catch {
     saved = "upsell";
   }
+  if (saved !== "debt" && saved !== "branch_kpi" && saved !== "upsell") saved = "upsell";
   setProcessesTab(saved);
 }
 
@@ -5067,6 +5085,267 @@ $("#vitrine-users-export-btn")?.addEventListener("click", async () => {
   }
 });
 
+/* —— КПД филиалов —— */
+let branchKpiCache = null;
+let branchKpiCharts = {};
+let branchKpiPollTimer = null;
+
+function destroyBranchKpiCharts() {
+  Object.values(branchKpiCharts).forEach((c) => {
+    try {
+      c.destroy();
+    } catch {
+      /* ignore */
+    }
+  });
+  branchKpiCharts = {};
+}
+
+function resizeBranchKpiCharts() {
+  Object.values(branchKpiCharts).forEach((c) => {
+    try {
+      c.resize();
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+function fmtBranchKpiMonth(y, m) {
+  return `${String(m).padStart(2, "0")}.${String(y).slice(2)}`;
+}
+
+function branchKpiLineChart(canvas, title, series, labels, { pct = false } = {}) {
+  if (!canvas || typeof Chart === "undefined") return null;
+  const line = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: (series || []).map((s) => ({
+        ...line,
+        label: s.label,
+        data: s.data,
+        borderColor: s.color || "#0f6e56",
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        title: { display: false, text: title },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              const v = ctx.parsed.y;
+              if (v == null) return `${ctx.dataset.label}: —`;
+              if (pct) return `${ctx.dataset.label}: ${Number(v).toFixed(1)}%`;
+              if (Math.abs(v) >= 1000) return `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
+              return `${ctx.dataset.label}: ${v}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxRotation: 0, font: { size: 10 } } },
+        y: {
+          ticks: {
+            font: { size: 10 },
+            callback: (v) => (pct ? `${v}%` : fmtMoneyUa(v)),
+          },
+        },
+      },
+    },
+  });
+}
+
+function renderBranchKpiStats(data) {
+  branchKpiCache = data;
+  const months = data?.months || [];
+  const branches = data?.branches || [];
+  const charts = data?.charts || {};
+  const titleById = Object.fromEntries(branches.map((b) => [b.id, b.title]));
+  const meta = $("#branch-kpi-meta");
+  const sync = data?.sync || {};
+  if (meta) {
+    const nMonths = new Set(months.map((r) => `${r.year}-${r.month}`)).size;
+    meta.textContent = months.length
+      ? `${nMonths} мес. · ${branches.map((b) => b.title).join(", ")}` +
+        (sync.finished_at ? ` · обновлено ${fmtUpdatesWhen(sync.finished_at)}` : "")
+      : "Каретный, Сегедская, Левитан — приёмки, вал/чист. прибыль, коэффициент возврата. С января текущего года.";
+  }
+  const statusEl = $("#branch-kpi-sync-status");
+  if (statusEl) {
+    if (sync.status === "running") {
+      statusEl.textContent = `Идёт: ${sync.message || "…"} (${sync.done || 0}/${sync.total || "—"})`;
+    } else if (sync.status === "error") {
+      statusEl.textContent = `Ошибка: ${sync.message || "—"}`;
+    } else {
+      statusEl.textContent = sync.message || "—";
+    }
+  }
+
+  const latestYm = months.length
+    ? months.reduce(
+        (best, r) => {
+          const key = Number(r.year) * 100 + Number(r.month);
+          return key > best.key ? { key, y: r.year, m: r.month } : best;
+        },
+        { key: 0, y: null, m: null },
+      )
+    : null;
+  const latestRows = latestYm?.y
+    ? months.filter((r) => r.year === latestYm.y && r.month === latestYm.m)
+    : [];
+  const kpis = $("#branch-kpi-kpis");
+  if (kpis) {
+    if (!latestRows.length) {
+      kpis.innerHTML = `<div class="vyrobotka-kpi"><span class="vyrobotka-kpi-label">Данных нет</span><strong>—</strong></div>`;
+    } else {
+      kpis.innerHTML = latestRows
+        .map((r) => {
+          const title = titleById[r.branch_id] || r.branch_id;
+          return `<div class="vyrobotka-kpi">
+            <span class="vyrobotka-kpi-label">${escapeHtml(title)} · ${fmtBranchKpiMonth(r.year, r.month)}</span>
+            <strong>${r.acceptances ?? "—"} приёмок</strong>
+            <span class="vyrobotka-kpi-sub">вал ${fmtMoneyUa(r.gross_profit)} · чист ${fmtMoneyUa(
+              r.net_profit,
+            )} · возвр. ${r.return_rate == null ? "—" : `${(Number(r.return_rate) * 100).toFixed(1)}%`}</span>
+          </div>`;
+        })
+        .join("");
+    }
+  }
+
+  const tbody = $("#branch-kpi-tbody");
+  if (tbody) {
+    if (!months.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Нет данных. Нажмите «Обновить из CRM».</td></tr>`;
+    } else {
+      const order = { karetn: 0, seged: 1, levitan: 2 };
+      const sorted = [...months].sort((a, b) => {
+        const ka = Number(a.year) * 100 + Number(a.month);
+        const kb = Number(b.year) * 100 + Number(b.month);
+        if (ka !== kb) return kb - ka;
+        return (order[a.branch_id] ?? 9) - (order[b.branch_id] ?? 9);
+      });
+      tbody.innerHTML = sorted
+        .map(
+          (r) => `<tr>
+          <td>${fmtBranchKpiMonth(r.year, r.month)}</td>
+          <td><strong>${escapeHtml(titleById[r.branch_id] || r.branch_id)}</strong></td>
+          <td>${r.acceptances ?? "—"}</td>
+          <td>${fmtMoneyUa(r.gross_profit)}</td>
+          <td>${fmtMoneyUa(r.net_profit)}</td>
+          <td>${r.refusals ?? "—"}</td>
+          <td>${r.return_rate == null ? "—" : `${(Number(r.return_rate) * 100).toFixed(1)}%`}</td>
+        </tr>`,
+        )
+        .join("");
+    }
+  }
+
+  destroyBranchKpiCharts();
+  const labels = charts.labels || [];
+  branchKpiCharts.accept = branchKpiLineChart(
+    $("#branch-kpi-chart-accept"),
+    "Приёмки",
+    charts.acceptances,
+    labels,
+  );
+  branchKpiCharts.gross = branchKpiLineChart(
+    $("#branch-kpi-chart-gross"),
+    "Валовая",
+    charts.gross_profit,
+    labels,
+  );
+  branchKpiCharts.net = branchKpiLineChart(
+    $("#branch-kpi-chart-net"),
+    "Чистая",
+    charts.net_profit,
+    labels,
+  );
+  branchKpiCharts.ret = branchKpiLineChart(
+    $("#branch-kpi-chart-return"),
+    "Возврат %",
+    charts.return_rate_pct,
+    labels,
+    { pct: true },
+  );
+}
+
+async function loadBranchKpiStats({ quiet = false } = {}) {
+  const statusEl = $("#branch-kpi-sync-status");
+  try {
+    const res = await fetch("/api/branch-kpi/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderBranchKpiStats(data);
+    if (data.sync?.status === "running") startBranchKpiPoll();
+    else stopBranchKpiPoll();
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+function stopBranchKpiPoll() {
+  if (branchKpiPollTimer) {
+    clearInterval(branchKpiPollTimer);
+    branchKpiPollTimer = null;
+  }
+}
+
+function startBranchKpiPoll() {
+  stopBranchKpiPoll();
+  branchKpiPollTimer = setInterval(() => {
+    if (processesTab === "branch_kpi") loadBranchKpiStats({ quiet: true });
+  }, 2500);
+}
+
+async function runBranchKpiSync() {
+  const statusEl = $("#branch-kpi-sync-status");
+  const btn = $("#branch-kpi-sync-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/branch-kpi/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
+    startBranchKpiPoll();
+    await loadBranchKpiStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function exportBranchKpiPages() {
+  const statusEl = $("#branch-kpi-sync-status");
+  try {
+    const res = await fetch("/api/branch-kpi/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Экспорт → ${data.path || "docs/branch-kpi/data.json"} (git push)`;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+}
+
+$("#branch-kpi-sync-btn")?.addEventListener("click", () => runBranchKpiSync());
+$("#branch-kpi-export-pages-btn")?.addEventListener("click", () => exportBranchKpiPages());
+
 /* —— Страница «Обновления» —— */
 let updatesPollTimer = null;
 let updatesBusy = false;
@@ -5244,6 +5523,10 @@ async function runUpdatesAction(actionId) {
       });
     } else if (actionId === "users-export") {
       res = await fetch("/api/vitrine/users/export", { method: "POST" });
+    } else if (actionId === "branch-kpi-sync") {
+      res = await fetch("/api/branch-kpi/sync", { method: "POST" });
+    } else if (actionId === "branch-kpi-export") {
+      res = await fetch("/api/branch-kpi/export-pages", { method: "POST" });
     } else {
       throw new Error(`Неизвестное действие: ${actionId}`);
     }
@@ -5266,7 +5549,8 @@ async function runUpdatesAction(actionId) {
       actionId === "quality-force" ||
       actionId === "vyrobotka-sync" ||
       actionId === "debt-verify-new" ||
-      actionId === "debt-verify-all";
+      actionId === "debt-verify-all" ||
+      actionId === "branch-kpi-sync";
     if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {

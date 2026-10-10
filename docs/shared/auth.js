@@ -53,6 +53,7 @@
     if (id === "processes") return hasAccess(accessList, "processes");
     if (id === "processes.upsell") return hasAccess(accessList, "processes.upsell");
     if (id === "processes.debt") return hasAccess(accessList, "processes.debt");
+    if (id === "processes.branch_kpi") return hasAccess(accessList, "processes.branch_kpi");
     if (id === "finance") return hasAccess(accessList, "finance");
     return false;
   }
@@ -168,9 +169,14 @@
   }
 
   function filterProcessesTabs(access) {
+    const needByTab = {
+      upsell: "processes.upsell",
+      debt: "processes.debt",
+      branch_kpi: "processes.branch_kpi",
+    };
     document.querySelectorAll(".mod-tab[data-tab]").forEach((btn) => {
       const tab = btn.getAttribute("data-tab");
-      const need = tab === "debt" ? "processes.debt" : "processes.upsell";
+      const need = needByTab[tab] || "processes.upsell";
       const ok = hasAccess(access, need);
       btn.hidden = !ok;
       if (!ok && btn.classList.contains("is-active")) btn.classList.remove("is-active");

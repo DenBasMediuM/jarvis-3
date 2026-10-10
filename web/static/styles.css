@@ -822,15 +822,27 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 .vyrobotka-section[hidden] {
   display: none !important;
 }
-#vyrobotka-debt-body.vyrobotka-section {
+#vyrobotka-debt-body.vyrobotka-section,
+#branch-kpi-body.vyrobotka-section {
   height: auto;
   min-height: 0;
   max-height: none;
   overflow: visible;
 }
 #vyrobotka-upsell-body.vyrobotka-section:not([hidden]),
-#vyrobotka-debt-body.vyrobotka-section:not([hidden]) {
+#vyrobotka-debt-body.vyrobotka-section:not([hidden]),
+#branch-kpi-body.vyrobotka-section:not([hidden]) {
   flex: 1 1 auto;
+}
+#branch-kpi-body .vyrobotka-stack-top {
+  overflow: visible;
+}
+#branch-kpi-body .branch-kpi-charts {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+#branch-kpi-body .branch-kpi-charts .vyrobotka-chart-box {
+  height: 220px;
 }
 .vyrobotka-section-head {
   flex: 0 0 auto;
@@ -1151,6 +1163,21 @@ body.vyrobotka-resizing canvas {
   gap: 12px;
   flex: 1 1 auto;
   min-height: 0;
+}
+.branch-kpi-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .branch-kpi-charts { grid-template-columns: 1fr; }
+}
+.vyrobotka-kpi-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
 }
 .vyrobotka-chart-panel {
   border: 1px solid var(--line);

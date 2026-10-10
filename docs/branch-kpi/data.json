@@ -1,0 +1,586 @@
+{
+  "exported_at": "2026-10-10T10:51:25.357738+00:00",
+  "title": "КПД филиалов",
+  "branches": [
+    {
+      "id": "karetn",
+      "title": "Каретный",
+      "color": "#0f6e56",
+      "crm_branch_id": 1
+    },
+    {
+      "id": "seged",
+      "title": "Сегедская",
+      "color": "#1a5f8a",
+      "crm_branch_id": 13
+    },
+    {
+      "id": "levitan",
+      "title": "Левитан",
+      "color": "#8a4b1a",
+      "crm_branch_id": 31
+    }
+  ],
+  "months": [
+    {
+      "year": 2026,
+      "month": 1,
+      "branch_id": "karetn",
+      "acceptances": 258,
+      "gross_profit": 346492.0,
+      "net_profit": 28415.0,
+      "expense": -318077.0,
+      "refusals": 108,
+      "return_rate": 0.4186
+    },
+    {
+      "year": 2026,
+      "month": 1,
+      "branch_id": "levitan",
+      "acceptances": 53,
+      "gross_profit": 44850.0,
+      "net_profit": -10930.0,
+      "expense": -55780.0,
+      "refusals": 25,
+      "return_rate": 0.4717
+    },
+    {
+      "year": 2026,
+      "month": 1,
+      "branch_id": "seged",
+      "acceptances": 197,
+      "gross_profit": 197770.0,
+      "net_profit": 21577.0,
+      "expense": -176193.0,
+      "refusals": 74,
+      "return_rate": 0.3756
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "branch_id": "karetn",
+      "acceptances": 217,
+      "gross_profit": 333025.0,
+      "net_profit": 73202.0,
+      "expense": -259823.0,
+      "refusals": 92,
+      "return_rate": 0.424
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "branch_id": "levitan",
+      "acceptances": 41,
+      "gross_profit": 41560.0,
+      "net_profit": 1330.0,
+      "expense": -40230.0,
+      "refusals": 25,
+      "return_rate": 0.6098
+    },
+    {
+      "year": 2026,
+      "month": 2,
+      "branch_id": "seged",
+      "acceptances": 193,
+      "gross_profit": 228607.0,
+      "net_profit": 41640.0,
+      "expense": -186967.0,
+      "refusals": 77,
+      "return_rate": 0.399
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "branch_id": "karetn",
+      "acceptances": 212,
+      "gross_profit": 416113.0,
+      "net_profit": 68986.0,
+      "expense": -347127.0,
+      "refusals": 71,
+      "return_rate": 0.3349
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "branch_id": "levitan",
+      "acceptances": 52,
+      "gross_profit": 47850.0,
+      "net_profit": -2216.0,
+      "expense": -50066.0,
+      "refusals": 28,
+      "return_rate": 0.5385
+    },
+    {
+      "year": 2026,
+      "month": 3,
+      "branch_id": "seged",
+      "acceptances": 188,
+      "gross_profit": 262655.0,
+      "net_profit": 53050.0,
+      "expense": -209605.0,
+      "refusals": 64,
+      "return_rate": 0.3404
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "branch_id": "karetn",
+      "acceptances": 176,
+      "gross_profit": 345222.0,
+      "net_profit": 60631.99,
+      "expense": -284590.01,
+      "refusals": 69,
+      "return_rate": 0.392
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "branch_id": "levitan",
+      "acceptances": 60,
+      "gross_profit": 47687.0,
+      "net_profit": -2340.0,
+      "expense": -50027.0,
+      "refusals": 25,
+      "return_rate": 0.4167
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "branch_id": "seged",
+      "acceptances": 216,
+      "gross_profit": 189087.0,
+      "net_profit": 667.0,
+      "expense": -188420.0,
+      "refusals": 65,
+      "return_rate": 0.3009
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "branch_id": "karetn",
+      "acceptances": 237,
+      "gross_profit": 327899.0,
+      "net_profit": 55907.0,
+      "expense": -271992.0,
+      "refusals": 88,
+      "return_rate": 0.3713
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "branch_id": "levitan",
+      "acceptances": 53,
+      "gross_profit": 58700.0,
+      "net_profit": -6061.0,
+      "expense": -64761.0,
+      "refusals": 24,
+      "return_rate": 0.4528
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "branch_id": "seged",
+      "acceptances": 194,
+      "gross_profit": 265740.0,
+      "net_profit": 71197.0,
+      "expense": -194543.0,
+      "refusals": 51,
+      "return_rate": 0.2629
+    },
+    {
+      "year": 2026,
+      "month": 6,
+      "branch_id": "karetn",
+      "acceptances": 223,
+      "gross_profit": 308406.0,
+      "net_profit": 63107.0,
+      "expense": -245299.0,
+      "refusals": 80,
+      "return_rate": 0.3587
+    },
+    {
+      "year": 2026,
+      "month": 6,
+      "branch_id": "levitan",
+      "acceptances": 68,
+      "gross_profit": 29475.0,
+      "net_profit": 3835.0,
+      "expense": -25640.0,
+      "refusals": 43,
+      "return_rate": 0.6324
+    },
+    {
+      "year": 2026,
+      "month": 6,
+      "branch_id": "seged",
+      "acceptances": 226,
+      "gross_profit": 290367.0,
+      "net_profit": 122013.0,
+      "expense": -168354.0,
+      "refusals": 82,
+      "return_rate": 0.3628
+    },
+    {
+      "year": 2026,
+      "month": 7,
+      "branch_id": "karetn",
+      "acceptances": 261,
+      "gross_profit": 410071.0,
+      "net_profit": 109517.0,
+      "expense": -300554.0,
+      "refusals": 96,
+      "return_rate": 0.3678
+    },
+    {
+      "year": 2026,
+      "month": 7,
+      "branch_id": "levitan",
+      "acceptances": 64,
+      "gross_profit": 44537.0,
+      "net_profit": 910.0,
+      "expense": -43627.0,
+      "refusals": 24,
+      "return_rate": 0.375
+    },
+    {
+      "year": 2026,
+      "month": 7,
+      "branch_id": "seged",
+      "acceptances": 229,
+      "gross_profit": 286044.0,
+      "net_profit": 68827.0,
+      "expense": -217217.0,
+      "refusals": 69,
+      "return_rate": 0.3013
+    },
+    {
+      "year": 2026,
+      "month": 8,
+      "branch_id": "karetn",
+      "acceptances": 263,
+      "gross_profit": 400183.0,
+      "net_profit": 109722.0,
+      "expense": -290461.0,
+      "refusals": 103,
+      "return_rate": 0.3916
+    },
+    {
+      "year": 2026,
+      "month": 8,
+      "branch_id": "levitan",
+      "acceptances": 55,
+      "gross_profit": 50000.0,
+      "net_profit": 6500.0,
+      "expense": -43500.0,
+      "refusals": 25,
+      "return_rate": 0.4545
+    },
+    {
+      "year": 2026,
+      "month": 8,
+      "branch_id": "seged",
+      "acceptances": 255,
+      "gross_profit": 335555.0,
+      "net_profit": 92494.0,
+      "expense": -243061.0,
+      "refusals": 85,
+      "return_rate": 0.3333
+    },
+    {
+      "year": 2026,
+      "month": 9,
+      "branch_id": "karetn",
+      "acceptances": 270,
+      "gross_profit": 373185.0,
+      "net_profit": 94137.0,
+      "expense": -279048.0,
+      "refusals": 91,
+      "return_rate": 0.337
+    },
+    {
+      "year": 2026,
+      "month": 9,
+      "branch_id": "levitan",
+      "acceptances": 29,
+      "gross_profit": 32150.0,
+      "net_profit": 250.0,
+      "expense": -31900.0,
+      "refusals": 10,
+      "return_rate": 0.3448
+    },
+    {
+      "year": 2026,
+      "month": 9,
+      "branch_id": "seged",
+      "acceptances": 277,
+      "gross_profit": 305105.0,
+      "net_profit": 117223.0,
+      "expense": -187882.0,
+      "refusals": 88,
+      "return_rate": 0.3177
+    },
+    {
+      "year": 2026,
+      "month": 10,
+      "branch_id": "karetn",
+      "acceptances": 64,
+      "gross_profit": 103900.0,
+      "net_profit": 31506.0,
+      "expense": -72394.0,
+      "refusals": 5,
+      "return_rate": 0.0781
+    },
+    {
+      "year": 2026,
+      "month": 10,
+      "branch_id": "levitan",
+      "acceptances": 17,
+      "gross_profit": 5800.0,
+      "net_profit": 1750.0,
+      "expense": -4050.0,
+      "refusals": 3,
+      "return_rate": 0.1765
+    },
+    {
+      "year": 2026,
+      "month": 10,
+      "branch_id": "seged",
+      "acceptances": 87,
+      "gross_profit": 110520.0,
+      "net_profit": 42147.0,
+      "expense": -68373.0,
+      "refusals": 10,
+      "return_rate": 0.1149
+    }
+  ],
+  "charts": {
+    "labels": [
+      "01.26",
+      "02.26",
+      "03.26",
+      "04.26",
+      "05.26",
+      "06.26",
+      "07.26",
+      "08.26",
+      "09.26",
+      "10.26"
+    ],
+    "acceptances": [
+      {
+        "label": "Каретный",
+        "branch_id": "karetn",
+        "color": "#0f6e56",
+        "data": [
+          258,
+          217,
+          212,
+          176,
+          237,
+          223,
+          261,
+          263,
+          270,
+          64
+        ]
+      },
+      {
+        "label": "Сегедская",
+        "branch_id": "seged",
+        "color": "#1a5f8a",
+        "data": [
+          197,
+          193,
+          188,
+          216,
+          194,
+          226,
+          229,
+          255,
+          277,
+          87
+        ]
+      },
+      {
+        "label": "Левитан",
+        "branch_id": "levitan",
+        "color": "#8a4b1a",
+        "data": [
+          53,
+          41,
+          52,
+          60,
+          53,
+          68,
+          64,
+          55,
+          29,
+          17
+        ]
+      }
+    ],
+    "gross_profit": [
+      {
+        "label": "Каретный",
+        "branch_id": "karetn",
+        "color": "#0f6e56",
+        "data": [
+          346492.0,
+          333025.0,
+          416113.0,
+          345222.0,
+          327899.0,
+          308406.0,
+          410071.0,
+          400183.0,
+          373185.0,
+          103900.0
+        ]
+      },
+      {
+        "label": "Сегедская",
+        "branch_id": "seged",
+        "color": "#1a5f8a",
+        "data": [
+          197770.0,
+          228607.0,
+          262655.0,
+          189087.0,
+          265740.0,
+          290367.0,
+          286044.0,
+          335555.0,
+          305105.0,
+          110520.0
+        ]
+      },
+      {
+        "label": "Левитан",
+        "branch_id": "levitan",
+        "color": "#8a4b1a",
+        "data": [
+          44850.0,
+          41560.0,
+          47850.0,
+          47687.0,
+          58700.0,
+          29475.0,
+          44537.0,
+          50000.0,
+          32150.0,
+          5800.0
+        ]
+      }
+    ],
+    "net_profit": [
+      {
+        "label": "Каретный",
+        "branch_id": "karetn",
+        "color": "#0f6e56",
+        "data": [
+          28415.0,
+          73202.0,
+          68986.0,
+          60631.99,
+          55907.0,
+          63107.0,
+          109517.0,
+          109722.0,
+          94137.0,
+          31506.0
+        ]
+      },
+      {
+        "label": "Сегедская",
+        "branch_id": "seged",
+        "color": "#1a5f8a",
+        "data": [
+          21577.0,
+          41640.0,
+          53050.0,
+          667.0,
+          71197.0,
+          122013.0,
+          68827.0,
+          92494.0,
+          117223.0,
+          42147.0
+        ]
+      },
+      {
+        "label": "Левитан",
+        "branch_id": "levitan",
+        "color": "#8a4b1a",
+        "data": [
+          -10930.0,
+          1330.0,
+          -2216.0,
+          -2340.0,
+          -6061.0,
+          3835.0,
+          910.0,
+          6500.0,
+          250.0,
+          1750.0
+        ]
+      }
+    ],
+    "return_rate_pct": [
+      {
+        "label": "Каретный",
+        "branch_id": "karetn",
+        "color": "#0f6e56",
+        "data": [
+          41.86,
+          42.4,
+          33.49,
+          39.2,
+          37.13,
+          35.87,
+          36.78,
+          39.16,
+          33.7,
+          7.81
+        ]
+      },
+      {
+        "label": "Сегедская",
+        "branch_id": "seged",
+        "color": "#1a5f8a",
+        "data": [
+          37.56,
+          39.9,
+          34.04,
+          30.09,
+          26.29,
+          36.28,
+          30.13,
+          33.33,
+          31.77,
+          11.49
+        ]
+      },
+      {
+        "label": "Левитан",
+        "branch_id": "levitan",
+        "color": "#8a4b1a",
+        "data": [
+          47.17,
+          60.98,
+          53.85,
+          41.67,
+          45.28,
+          63.24,
+          37.5,
+          45.45,
+          34.48,
+          17.65
+        ]
+      }
+    ]
+  },
+  "counts": {
+    "months": 10,
+    "rows": 30
+  }
+}

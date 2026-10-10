@@ -28,6 +28,7 @@ from modules.gincore.module import GincoreModule
 from core.telegram import send_telegram_messages, telegram_configured
 from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
+from modules.gincore.branch_kpi import BranchKpiService
 from modules.vyrobotka.service import VyrobotkaService
 
 
@@ -37,6 +38,7 @@ modules: list[BaseModule] = []
 gincore_module: GincoreModule | None = None
 quality_service: QualityService | None = None
 vyrobotka_service: VyrobotkaService | None = None
+branch_kpi_service: BranchKpiService | None = None
 
 
 class ChatRequest(BaseModel):
@@ -140,7 +142,7 @@ async def build_llm() -> LLMService:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global modules, gincore_module, quality_service, vyrobotka_service
+    global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -166,6 +168,13 @@ async def lifespan(_: FastAPI):
         lambda: get_module_settings("vyrobotka"),
         gincore_client_factory=_vyrobotka_gincore,
     )
+
+    async def _branch_kpi_gincore():
+        client = await _gincore_client()
+        await client.ensure_login()
+        return client
+
+    branch_kpi_service = BranchKpiService(db, gincore_client_factory=_branch_kpi_gincore)
     yield
     await db.close()
 
@@ -349,6 +358,40 @@ async def vyrobotka_export_pages() -> dict[str, Any]:
         raise HTTPException(503, "Сервис Выработка не готов")
     try:
         return await vyrobotka_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/branch-kpi/stats")
+async def branch_kpi_stats() -> dict[str, Any]:
+    if not branch_kpi_service:
+        raise HTTPException(503, "Сервис КПД филиалов не готов")
+    return await branch_kpi_service.get_stats()
+
+
+@app.get("/api/branch-kpi/sync")
+async def branch_kpi_sync_status() -> dict[str, Any]:
+    if not branch_kpi_service:
+        raise HTTPException(503, "Сервис КПД филиалов не готов")
+    return {"ok": True, "sync": await branch_kpi_service.get_sync_state()}
+
+
+@app.post("/api/branch-kpi/sync")
+async def branch_kpi_sync_start() -> dict[str, Any]:
+    if not branch_kpi_service:
+        raise HTTPException(503, "Сервис КПД филиалов не готов")
+    try:
+        return await branch_kpi_service.start_sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/branch-kpi/export-pages")
+async def branch_kpi_export_pages() -> dict[str, Any]:
+    if not branch_kpi_service:
+        raise HTTPException(503, "Сервис КПД филиалов не готов")
+    try:
+        return await branch_kpi_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 
@@ -860,6 +903,7 @@ async def updates_status() -> dict[str, Any]:
     debt_verify = await db.vyrobotka_get_debt_verify_state()
     debt_daily = await db.vyrobotka_list_debt_daily(limit=1)
     last_daily = debt_daily[-1] if debt_daily else None
+    branch_kpi_sync = await db.branch_kpi_get_sync_state()
     modules = [
         {
             "id": "quality",
@@ -920,6 +964,25 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "vyrobotka-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/vyrobotka/data.json"),
+        },
+        {
+            "id": "processes-branch-kpi",
+            "block": "Процессы",
+            "title": "КПД филиалов",
+            "description": "Приёмки, вал/чист. прибыль и коэффициент возврата по Каретному, Сегедской и Левитану.",
+            "status": branch_kpi_sync.get("status") or "idle",
+            "message": branch_kpi_sync.get("message"),
+            "started_at": branch_kpi_sync.get("started_at"),
+            "finished_at": branch_kpi_sync.get("finished_at"),
+            "progress": {
+                "done": int(branch_kpi_sync.get("done") or 0),
+                "total": int(branch_kpi_sync.get("total") or 0),
+            },
+            "actions": [
+                {"id": "branch-kpi-sync", "label": "Обновить из CRM", "kind": "primary"},
+                {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
         },
         {
             "id": "vitrine-users",

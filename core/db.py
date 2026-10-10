@@ -182,6 +182,30 @@ CREATE TABLE IF NOT EXISTS vitrine_users (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS branch_kpi_months (
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL,
+  branch_id TEXT NOT NULL,
+  acceptances INTEGER,
+  gross_profit REAL,
+  net_profit REAL,
+  expense REAL,
+  refusals INTEGER,
+  return_rate REAL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (year, month, branch_id)
+);
+
+CREATE TABLE IF NOT EXISTS branch_kpi_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  started_at TEXT,
+  finished_at TEXT
+);
 """
 
 
@@ -903,3 +927,84 @@ class Database:
         )
         await self.conn.commit()
         return cur.rowcount > 0
+
+    async def branch_kpi_get_sync_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM branch_kpi_sync_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO branch_kpi_sync_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "message": None,
+                "started_at": None,
+                "finished_at": None,
+            }
+        return dict(row)
+
+    async def branch_kpi_set_sync_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.branch_kpi_get_sync_state()
+        current.update(fields)
+        await self.conn.execute(
+            """
+            INSERT INTO branch_kpi_sync_state(
+              id, status, total, done, message, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              message = excluded.message,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                current.get("status") or "idle",
+                int(current.get("total") or 0),
+                int(current.get("done") or 0),
+                current.get("message"),
+                current.get("started_at"),
+                current.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.branch_kpi_get_sync_state()
+
+    async def branch_kpi_replace_months(self, rows: list[dict[str, Any]]) -> None:
+        await self.conn.execute("DELETE FROM branch_kpi_months")
+        for r in rows:
+            await self.conn.execute(
+                """
+                INSERT INTO branch_kpi_months(
+                  year, month, branch_id, acceptances, gross_profit, net_profit,
+                  expense, refusals, return_rate, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    int(r["year"]),
+                    int(r["month"]),
+                    str(r["branch_id"]),
+                    r.get("acceptances"),
+                    r.get("gross_profit"),
+                    r.get("net_profit"),
+                    r.get("expense"),
+                    r.get("refusals"),
+                    r.get("return_rate"),
+                ),
+            )
+        await self.conn.commit()
+
+    async def branch_kpi_list_months(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM branch_kpi_months
+            ORDER BY year ASC, month ASC, branch_id ASC
+            """
+        )
+        return [dict(r) for r in await cur.fetchall()]

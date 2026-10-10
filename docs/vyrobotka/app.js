@@ -2,9 +2,11 @@
 
 const $ = (sel) => document.querySelector(sel);
 let DATA = null;
+let BRANCH_KPI = null;
 let moneyChart = null;
 let volumeChart = null;
 let debtChart = null;
+let bkCharts = {};
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -131,6 +133,13 @@ function setTab(tab) {
     moneyChart?.resize();
     volumeChart?.resize();
     debtChart?.resize();
+    Object.values(bkCharts).forEach((c) => {
+      try {
+        c.resize();
+      } catch {
+        /* ignore */
+      }
+    });
   });
 }
 
@@ -437,23 +446,146 @@ function renderDebt(sheets, tickets, report) {
   }
 }
 
+function destroyBkCharts() {
+  Object.values(bkCharts).forEach((c) => {
+    try {
+      c.destroy();
+    } catch {
+      /* ignore */
+    }
+  });
+  bkCharts = {};
+}
+
+function bkLine(canvas, series, labels, { pct = false } = {}) {
+  if (!canvas || typeof Chart === "undefined") return null;
+  const base = lineDefaults();
+  const line = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: (series || []).map((s) => ({
+        ...line,
+        label: s.label,
+        data: s.data,
+        borderColor: s.color || "#0f6e56",
+      })),
+    },
+    options: {
+      ...base,
+      scales: {
+        ...base.scales,
+        y: {
+          ticks: {
+            callback: (v) => (pct ? `${v}%` : fmtMoney(v)),
+            color: "#5d6b7c",
+            font: { size: 10 },
+          },
+          grid: { color: "rgba(28,36,48,0.07)" },
+        },
+      },
+    },
+  });
+}
+
+function renderBranchKpi(data) {
+  const empty = $("#branch-kpi-empty");
+  const body = $("#branch-kpi-body");
+  const months = data?.months || [];
+  const branches = data?.branches || [];
+  const charts = data?.charts || {};
+  const titleById = Object.fromEntries(branches.map((b) => [b.id, b.title]));
+  destroyBkCharts();
+  if (!months.length) {
+    if (empty) empty.hidden = false;
+    if (body) body.hidden = true;
+    return;
+  }
+  if (empty) empty.hidden = true;
+  if (body) body.hidden = false;
+
+  const latestKey = months.reduce((best, r) => {
+    const k = Number(r.year) * 100 + Number(r.month);
+    return k > best ? k : best;
+  }, 0);
+  const latest = months.filter((r) => Number(r.year) * 100 + Number(r.month) === latestKey);
+  const kpis = $("#branch-kpi-kpis");
+  if (kpis) {
+    kpis.innerHTML = latest
+      .map((r) => {
+        const title = titleById[r.branch_id] || r.branch_id;
+        const mm = `${String(r.month).padStart(2, "0")}.${String(r.year).slice(2)}`;
+        return `<div class="kpi"><span class="kpi-label">${escapeHtml(title)} · ${mm}</span>
+          <strong>${r.acceptances ?? "—"} приёмок</strong>
+          <span class="kpi-sub">вал ${fmtMoney(r.gross_profit)} · чист ${fmtMoney(r.net_profit)} · возвр. ${
+            r.return_rate == null ? "—" : fmtPct(r.return_rate)
+          }</span></div>`;
+      })
+      .join("");
+  }
+
+  const tbody = $("#tbody-branch-kpi");
+  if (tbody) {
+    const order = { karetn: 0, seged: 1, levitan: 2 };
+    const sorted = [...months].sort((a, b) => {
+      const ka = Number(a.year) * 100 + Number(a.month);
+      const kb = Number(b.year) * 100 + Number(b.month);
+      if (ka !== kb) return kb - ka;
+      return (order[a.branch_id] ?? 9) - (order[b.branch_id] ?? 9);
+    });
+    tbody.innerHTML = sorted
+      .map((r) => {
+        const mm = `${String(r.month).padStart(2, "0")}.${String(r.year).slice(2)}`;
+        return `<tr>
+          <td>${mm}</td>
+          <td><strong>${escapeHtml(titleById[r.branch_id] || r.branch_id)}</strong></td>
+          <td>${r.acceptances ?? "—"}</td>
+          <td>${fmtMoney(r.gross_profit)}</td>
+          <td>${fmtMoney(r.net_profit)}</td>
+          <td>${r.refusals ?? "—"}</td>
+          <td>${r.return_rate == null ? "—" : fmtPct(r.return_rate)}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  const labels = charts.labels || [];
+  bkCharts.accept = bkLine($("#chart-bk-accept"), charts.acceptances, labels);
+  bkCharts.gross = bkLine($("#chart-bk-gross"), charts.gross_profit, labels);
+  bkCharts.net = bkLine($("#chart-bk-net"), charts.net_profit, labels);
+  bkCharts.ret = bkLine($("#chart-bk-return"), charts.return_rate_pct, labels, { pct: true });
+}
+
 function renderAll() {
   destroyCharts();
-  if (!DATA) return;
-  const meta = $("#export-meta");
-  if (meta) {
-    const when = DATA.exported_at ? new Date(DATA.exported_at).toLocaleString("ru-RU") : "—";
-    const title = DATA.spreadsheet_title ? ` · ${DATA.spreadsheet_title}` : "";
-    let line = `Снимок: ${when}${title}`;
-    if (DATA.debt_daily?.length) {
-      const last = DATA.debt_daily[DATA.debt_daily.length - 1];
-      const dayLabel = String(last.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
-      line += ` · дебиторка CRM ${fmtMoney(last.crm_debt_sum)} (${dayLabel})`;
+  if (DATA) {
+    const meta = $("#export-meta");
+    if (meta) {
+      const when = DATA.exported_at ? new Date(DATA.exported_at).toLocaleString("ru-RU") : "—";
+      const title = DATA.spreadsheet_title ? ` · ${DATA.spreadsheet_title}` : "";
+      let line = `Снимок: ${when}${title}`;
+      if (DATA.debt_daily?.length) {
+        const last = DATA.debt_daily[DATA.debt_daily.length - 1];
+        const dayLabel = String(last.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
+        line += ` · дебиторка CRM ${fmtMoney(last.crm_debt_sum)} (${dayLabel})`;
+      }
+      if (BRANCH_KPI?.exported_at) {
+        line += ` · КПД ${new Date(BRANCH_KPI.exported_at).toLocaleString("ru-RU")}`;
+      }
+      meta.textContent = line;
     }
-    meta.textContent = line;
+    renderUpsell(DATA.upsell_sheets || []);
+    renderDebt(DATA.debt_sheets || [], DATA.debt_tickets || [], DATA.verify_report || null);
   }
-  renderUpsell(DATA.upsell_sheets || []);
-  renderDebt(DATA.debt_sheets || [], DATA.debt_tickets || [], DATA.verify_report || null);
+  renderBranchKpi(BRANCH_KPI);
 }
 
 async function boot() {
@@ -466,19 +598,30 @@ async function boot() {
   } catch {
     tab = "upsell";
   }
-  setTab(tab === "debt" ? "debt" : "upsell");
+  const allowed = new Set(["upsell", "debt", "branch_kpi"]);
+  setTab(allowed.has(tab) ? tab : "upsell");
 
   const meta = $("#export-meta");
   try {
     const res = await fetch(`./data.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(`data.json: ${res.status}`);
     DATA = await res.json();
-    renderAll();
   } catch (err) {
     if (meta) meta.textContent = `Нет снимка: ${err.message || err}. Экспортируйте из Jarvis.`;
     $("#upsell-empty").hidden = false;
     $("#debt-empty").hidden = false;
   }
+  try {
+    const res = await fetch(`../branch-kpi/data.json?t=${Date.now()}`);
+    if (res.ok) BRANCH_KPI = await res.json();
+  } catch {
+    BRANCH_KPI = null;
+  }
+  if (!BRANCH_KPI?.months?.length) {
+    const empty = $("#branch-kpi-empty");
+    if (empty) empty.hidden = false;
+  }
+  renderAll();
 }
 
 boot();

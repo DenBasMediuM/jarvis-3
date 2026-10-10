@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261010-nav-auth3" />
-  <link rel="stylesheet" href="./styles.css?v=20261010-nav-auth3" />
-  <script src="../shared/auth.js?v=20261010-nav-auth3"></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261010-branch-kpi1" />
+  <link rel="stylesheet" href="./styles.css?v=20261010-branch-kpi1" />
+  <script src="../shared/auth.js?v=20261010-branch-kpi1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261010-nav-auth3" defer></script>
+  <script src="./app.js?v=20261010-branch-kpi1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -21,11 +21,13 @@
       const want = params.get("tab");
       let active = "processes";
       if (want === "debt" && auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
+      else if (want === "branch_kpi" && auth.hasAccess(s.access, "processes.branch_kpi")) active = "processes.branch_kpi";
       else if (auth.hasAccess(s.access, "processes.upsell")) active = "processes.upsell";
       else if (auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
+      else if (auth.hasAccess(s.access, "processes.branch_kpi")) active = "processes.branch_kpi";
       auth.applyShellNav(active);
       auth.filterProcessesTabs(s.access);
-      if (want === "debt" || want === "upsell") {
+      if (want === "debt" || want === "upsell" || want === "branch_kpi") {
         const btn = document.querySelector(`.mod-tab[data-tab="${want}"]`);
         if (btn && !btn.hidden) btn.click();
       }
@@ -48,7 +50,7 @@
     <header class="mod-top">
       <div>
         <h1>Процессы</h1>
-        <p class="mod-sub">Досогласования и дебиторка · снимок из локального Jarvis</p>
+        <p class="mod-sub">Досогласования, дебиторка и КПД филиалов · снимок из локального Jarvis</p>
       </div>
       <div class="mod-meta" id="export-meta">Загрузка data.json…</div>
     </header>
@@ -56,6 +58,7 @@
     <nav class="mod-tabs" role="tablist">
       <button type="button" class="mod-tab is-active" data-tab="upsell">Досогласования</button>
       <button type="button" class="mod-tab" data-tab="debt">Дебиторка</button>
+      <button type="button" class="mod-tab" data-tab="branch_kpi">КПД филиалов</button>
     </nav>
 
     <main>
@@ -129,6 +132,54 @@
                   </tr>
                 </thead>
                 <tbody id="tbody-debt"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-branch_kpi" class="panel" hidden>
+        <div id="branch-kpi-empty" class="empty" hidden>Нет данных КПД филиалов в снимке.</div>
+        <div id="branch-kpi-body" class="stack" hidden>
+          <div class="kpis" id="branch-kpi-kpis"></div>
+          <div class="charts-grid">
+            <article class="card">
+              <h3>Приёмки</h3>
+              <p class="card-sub">Сравнительный график заказов по филиалам с дашборда CRM.</p>
+              <div class="chart-box"><canvas id="chart-bk-accept"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Валовая прибыль</h3>
+              <p class="card-sub">Доход по кассам филиала за месяц.</p>
+              <div class="chart-box"><canvas id="chart-bk-gross"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Чистая прибыль</h3>
+              <p class="card-sub">Итог по кассам филиала за месяц.</p>
+              <div class="chart-box"><canvas id="chart-bk-net"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Коэффициент возврата, %</h3>
+              <p class="card-sub">Отказы от ремонта / приёмки.</p>
+              <div class="chart-box"><canvas id="chart-bk-return"></canvas></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>По месяцам</h3>
+            <div class="table-wrap">
+              <table class="vtable" id="table-branch-kpi">
+                <thead>
+                  <tr>
+                    <th>Месяц</th>
+                    <th>Филиал</th>
+                    <th>Приёмки</th>
+                    <th>Вал. прибыль</th>
+                    <th>Чист. прибыль</th>
+                    <th>Отказы</th>
+                    <th>Возврат</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-branch-kpi"></tbody>
               </table>
             </div>
           </article>
