@@ -12,8 +12,6 @@
   .charts-grid { grid-template-columns: 1fr; }
 }
 
-.mod-tab.is-active { color: var(--accent-2); }
-
 .vtable th:nth-child(n+4),
 .vtable td:nth-child(n+4) {
   text-align: right;
