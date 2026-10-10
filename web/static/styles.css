@@ -1123,6 +1123,17 @@ body.vyrobotka-resizing canvas {
   font-weight: 650;
   flex: 0 0 auto;
 }
+.vyrobotka-chart-sub {
+  margin: -4px 0 10px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--muted, #5d6b7c);
+}
+.vyrobotka-dynamics-meta {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--muted, #5d6b7c);
+}
 .vyrobotka-chart-box {
   position: relative;
   width: 100%;

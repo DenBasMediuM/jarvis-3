@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-09T10:32:15.107115+00:00",
+  "exported_at": "2026-10-10T08:41:54.817803+00:00",
   "source": "jarvis-vyrobotka",
-  "spreadsheet_title": "Рассчет прибыльности июнь",
+  "spreadsheet_title": null,
   "sync": {
     "finished_at": "2026-10-09T07:02:17.659167+00:00",
     "message": "Готово: 55 листов, 3084 квитанций. Таблица: Рассчет прибыльности июнь",
@@ -13572,6 +13572,17 @@
       }
     }
   ],
+  "debt_daily": [
+    {
+      "day": "2026-10-10",
+      "crm_debt_sum": 194750.0,
+      "sheets_debt_sum": 609452.0,
+      "crm_orders": 113,
+      "sheets_tickets": 381,
+      "source": "pin",
+      "updated_at": "2026-10-10T08:41:54.792039+00:00"
+    }
+  ],
   "verify_report": {
     "total": 380,
     "ok": 84,
@@ -14312,6 +14323,7 @@
     "upsell_sheets": 55,
     "debt_sheets": 55,
     "debt_tickets": 381,
-    "verify_rows": 380
+    "verify_rows": 380,
+    "debt_daily": 1
   }
 }

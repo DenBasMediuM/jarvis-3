@@ -2165,6 +2165,82 @@ class GincoreClient:
         return meta
 
     @staticmethod
+    def parse_repair_orders_payment_totals(html: str) -> dict[str, Any]:
+        """Суммы «Стоимость»/«Оплачено» со страницы списка ремонтов.
+
+        «Ожидаемая сумма оплаты» в шапке колонки «Оплачено» =
+        Σ max(0, стоимость − оплачено) по всем строкам фильтра.
+        """
+        soup = BeautifulSoup(html, "lxml")
+        cost_sum = 0.0
+        paid_sum = 0.0
+        debt_sum = 0.0
+        orders = 0
+
+        def _money(td: Any) -> float | None:
+            raw = td.get_text(" ", strip=True).replace("\xa0", " ").replace(" ", "")
+            raw = raw.replace(",", ".")
+            m = re.search(r"-?\d+(?:\.\d+)?", raw)
+            if not m:
+                return None
+            try:
+                return float(m.group())
+            except ValueError:
+                return None
+
+        for tr in soup.select("table.table-of-repair-orders tbody tr"):
+            tds = tr.find_all("td", recursive=False)
+            if len(tds) < 13:
+                continue
+            cost = _money(tds[11])
+            if cost is None:
+                continue
+            paid = _money(tds[12])
+            if paid is None:
+                paid = 0.0
+            cost_sum += cost
+            paid_sum += paid
+            debt_sum += max(0.0, cost - paid)
+            orders += 1
+        return {
+            "orders": orders,
+            "cost_sum": round(cost_sum, 2),
+            "paid_sum": round(paid_sum, 2),
+            "expected_payment_sum": round(debt_sum, 2),
+        }
+
+    async def fetch_orders_expected_payment_sum(
+        self,
+        *,
+        crm_params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Итог «Ожидаемая сумма оплаты» по фильтру списка ремонтов (все страницы)."""
+        params = dict(crm_params or {})
+        meta = await self._repair_orders_page(crm_params=params, page=1)
+        footer_total = int(meta.get("count") or 0)
+        totals = self.parse_repair_orders_payment_totals(meta.get("html") or "")
+        page = 1
+        seen = totals["orders"]
+        while seen < footer_total and page < MAX_PAGES:
+            page += 1
+            more = await self._repair_orders_page(crm_params=params, page=page)
+            chunk = self.parse_repair_orders_payment_totals(more.get("html") or "")
+            if not chunk["orders"]:
+                break
+            totals["orders"] += chunk["orders"]
+            totals["cost_sum"] = round(totals["cost_sum"] + chunk["cost_sum"], 2)
+            totals["paid_sum"] = round(totals["paid_sum"] + chunk["paid_sum"], 2)
+            totals["expected_payment_sum"] = round(
+                totals["expected_payment_sum"] + chunk["expected_payment_sum"], 2
+            )
+            seen = totals["orders"]
+        return {
+            **totals,
+            "listed_total": footer_total,
+            "crm_params": params,
+        }
+
+    @staticmethod
     def _parse_repair_order_rows(html: str) -> list[dict[str, Any]]:
         soup = BeautifulSoup(html, "lxml")
         orders: list[dict[str, Any]] = []

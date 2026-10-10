@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261009-vyrobotka13" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261010-debt-daily1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -335,10 +335,15 @@
                 <div class="vyrobotka-kpis" id="vyrobotka-debt-kpis" aria-label="Сводка дебиторки"></div>
                 <div id="vyrobotka-debt-report" class="vyrobotka-verify-report" hidden></div>
                 <section class="vyrobotka-chart-panel">
-                  <h3>Динамика недоплат</h3>
+                  <h3>Динамика общей дебиторки</h3>
+                  <p class="vyrobotka-chart-sub">
+                    CRM — «Ожидаемая сумма оплаты» по фильтру недоплат; отчёты — Σ недоплат из листов мастеров.
+                    Точка при «Сверить новые» / «Перепроверить все» (не чаще 1× в день).
+                  </p>
                   <div class="vyrobotka-chart-box">
                     <canvas id="vyrobotka-chart-debt"></canvas>
                   </div>
+                  <div class="vyrobotka-dynamics-meta" id="vyrobotka-debt-daily-meta"></div>
                 </section>
               </div>
               <div class="vyrobotka-stack-table">
@@ -408,6 +413,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261009-vyrobotka13"></script>
+  <script src="/static/app.js?v=20261010-debt-daily2"></script>
 </body>
 </html>

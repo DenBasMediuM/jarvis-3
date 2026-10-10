@@ -254,6 +254,23 @@ main { flex: 1; min-height: 0; }
 .chart-wrap.is-summary { height: min(72vh, calc(42px * var(--summary-n, 12) + 80px)); min-height: 320px; }
 .chart-wrap.is-dynamics { height: min(420px, 48vh); min-height: 300px; }
 
+.dynamics-table-card { margin-top: 16px; }
+.dynamics-table-card tr.is-latest td {
+  background: rgba(15, 110, 86, 0.08);
+  font-weight: 600;
+}
+.dynamics-table-card .pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0f6e56;
+  background: rgba(15, 110, 86, 0.12);
+  vertical-align: middle;
+}
+
 .tip-anchor {
   display: inline-block;
   position: relative;

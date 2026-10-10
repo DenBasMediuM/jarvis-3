@@ -73,6 +73,17 @@ def sanitize_ticket_for_pages(row: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+_DEBT_DAILY_KEYS = (
+    "day",
+    "crm_debt_sum",
+    "sheets_debt_sum",
+    "crm_orders",
+    "sheets_tickets",
+    "source",
+    "updated_at",
+)
+
+
 def build_vyrobotka_pages_payload(
     *,
     upsell_sheets: list[dict[str, Any]],
@@ -81,9 +92,11 @@ def build_vyrobotka_pages_payload(
     sync: dict[str, Any] | None = None,
     spreadsheet_title: str | None = None,
     verify_rows: list[dict[str, Any]] | None = None,
+    debt_daily: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     display_rows = apply_display_verdicts(verify_rows or [])
     report = build_verify_report(display_rows) if display_rows else None
+    daily = [_pick(d, _DEBT_DAILY_KEYS) for d in (debt_daily or [])]
     return {
         "schema_version": 1,
         "exported_at": datetime.now(timezone.utc).isoformat(),
@@ -97,12 +110,14 @@ def build_vyrobotka_pages_payload(
         "upsell_sheets": [_pick(s, _SHEET_KEYS) for s in upsell_sheets],
         "debt_sheets": [_pick(s, _DEBT_SHEET_KEYS) for s in debt_sheets],
         "debt_tickets": [sanitize_ticket_for_pages(t) for t in debt_tickets],
+        "debt_daily": daily,
         "verify_report": report,
         "counts": {
             "upsell_sheets": len(upsell_sheets),
             "debt_sheets": len(debt_sheets),
             "debt_tickets": len(debt_tickets),
             "verify_rows": len(display_rows),
+            "debt_daily": len(daily),
         },
     }
 

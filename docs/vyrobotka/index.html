@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261009-hub1" />
-  <link rel="stylesheet" href="./styles.css?v=20261009-v1" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261010-debt-daily1" />
+  <link rel="stylesheet" href="./styles.css?v=20261010-debt-daily1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261009-v1" defer></script>
+  <script src="./app.js?v=20261010-debt-daily1" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -86,9 +86,12 @@
           <div class="kpis" id="debt-kpis"></div>
           <div id="debt-report" class="card" hidden></div>
           <article class="card">
-            <h3>Динамика недоплат</h3>
-            <p class="card-sub">Σ недоплат и число квитанций с долгом по недельным листам.</p>
+            <h3>Динамика общей дебиторки</h3>
+            <p class="card-sub">
+              CRM «Ожидаемая сумма оплаты» и Σ недоплат по отчётам мастеров · точка при сверке, ≤1× в день.
+            </p>
             <div class="chart-box"><canvas id="chart-debt"></canvas></div>
+            <p class="card-sub" id="debt-daily-meta"></p>
           </article>
           <article class="card">
             <h3>Недоплаченные квитанции</h3>

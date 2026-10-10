@@ -161,6 +161,16 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_verify_rows (
   checked_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (sheet_title, ticket)
 );
+
+CREATE TABLE IF NOT EXISTS vyrobotka_debt_daily (
+  day TEXT PRIMARY KEY,
+  crm_debt_sum REAL,
+  sheets_debt_sum REAL,
+  crm_orders INTEGER,
+  sheets_tickets INTEGER,
+  source TEXT,
+  updated_at TEXT NOT NULL
+);
 """
 
 
@@ -765,3 +775,45 @@ class Database:
             item["field_diffs"] = hydrate_field_diffs(item)
             out.append(item)
         return out
+
+    async def vyrobotka_upsert_debt_daily(self, row: dict[str, Any]) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_debt_daily(
+              day, crm_debt_sum, sheets_debt_sum, crm_orders, sheets_tickets,
+              source, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(day) DO UPDATE SET
+              crm_debt_sum = excluded.crm_debt_sum,
+              sheets_debt_sum = excluded.sheets_debt_sum,
+              crm_orders = excluded.crm_orders,
+              sheets_tickets = excluded.sheets_tickets,
+              source = excluded.source,
+              updated_at = excluded.updated_at
+            """,
+            (
+                row["day"],
+                row.get("crm_debt_sum"),
+                row.get("sheets_debt_sum"),
+                int(row.get("crm_orders") or 0),
+                int(row.get("sheets_tickets") or 0),
+                row.get("source"),
+                row.get("updated_at"),
+            ),
+        )
+        await self.conn.commit()
+
+    async def vyrobotka_list_debt_daily(self, *, limit: int = 730) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM (
+              SELECT * FROM vyrobotka_debt_daily
+              ORDER BY day DESC
+              LIMIT ?
+            ) AS recent
+            ORDER BY day ASC
+            """,
+            (max(1, int(limit)),),
+        )
+        rows = await cur.fetchall()
+        return [dict(r) for r in rows]

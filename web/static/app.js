@@ -3417,6 +3417,11 @@ function startQualityPoll() {
     // После sync обновить динамику и анализ (пересобраны на сервере).
     loadQualityDailyStats();
     loadQualityAnalysis();
+    const statusEl = $("#quality-sync-status");
+    const msg = String(sync?.message || "");
+    if (statusEl && /pages\s+\d+/i.test(msg)) {
+      statusEl.textContent = `${msg} · витрина: git add/commit/push docs/quality/data.json`;
+    }
   };
   qualityPollTimer = setTimeout(tick, 500);
 }
@@ -3709,7 +3714,14 @@ function initQualityPanelToggle() {
 
 /* —— Выработка —— */
 let vyrobotkaSheetsCache = [];
-let vyrobotkaDebtCache = { sheets: [], tickets: [], debt_sum: 0, tickets_count: 0, verify: null };
+let vyrobotkaDebtCache = {
+  sheets: [],
+  tickets: [],
+  debt_sum: 0,
+  tickets_count: 0,
+  verify: null,
+  daily: [],
+};
 let vyrobotkaMoneyChart = null;
 let vyrobotkaVolumeChart = null;
 let vyrobotkaDebtChart = null;
@@ -4361,6 +4373,8 @@ function renderVyrobotkaDebt() {
   const last = sheets[sheets.length - 1];
   const debtSum = Number(vyrobotkaDebtCache.debt_sum) || 0;
   const debtN = Number(vyrobotkaDebtCache.tickets_count) || tickets.length;
+  const daily = vyrobotkaDebtCache.daily || [];
+  const lastDaily = daily.length ? daily[daily.length - 1] : null;
   const badN = Number(verify?.report?.bad_count);
   const normN = Number(verify?.report?.norm);
   const checkedN = Number(verify?.report?.total);
@@ -4369,6 +4383,11 @@ function renderVyrobotkaDebt() {
     const kpiRows = [
       ["Σ недоплат", fmtMoneyUa(debtSum), `${debtN} квитанций`],
       ["Квитанций с долгом", fmtMoneyUa(debtN), "все недели"],
+      [
+        "CRM дебиторка",
+        fmtMoneyUa(lastDaily?.crm_debt_sum),
+        lastDaily ? `снимок ${fmtQualityDate(lastDaily.day)}` : "после сверки",
+      ],
       ["Посл. Σ недоплат", fmtMoneyUa(last?.debt_sum), last?.sheet_title || "—"],
       ["Посл. шт. долгов", fmtMoneyUa(last?.debt_count), fmtPct(last?.debt_ratio)],
       ["Ср. долг (посл.)", fmtMoneyUa(last?.avg_debt), "на квитанцию"],
@@ -4476,18 +4495,39 @@ function renderVyrobotkaDebt() {
     }
   }
 
+  const dailyMeta = $("#vyrobotka-debt-daily-meta");
+  if (dailyMeta) {
+    if (!daily.length) {
+      dailyMeta.textContent = "Точек динамики пока нет — появится после «Сверить новые» или «Перепроверить все».";
+    } else {
+      const tip = daily[daily.length - 1];
+      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${fmtQualityDate(tip.day)} · CRM ${fmtMoneyUa(
+        tip.crm_debt_sum,
+      )} · отчёты ${fmtMoneyUa(tip.sheets_debt_sum)}`;
+    }
+  }
+
   if (!canvas || typeof Chart === "undefined") return;
   if (vyrobotkaDebtChart) {
     vyrobotkaDebtChart.destroy();
     vyrobotkaDebtChart = null;
   }
-  const labels = sheets.map((s) => shortVyrobotkaLabel(s.sheet_title));
+  if (!daily.length) {
+    resizeVyrobotkaCharts();
+    return;
+  }
+  const labels = daily.map((d) => {
+    const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}` : d.day;
+  });
   const base = vyrobotkaLineDefaults();
+  const n = daily.length;
+  const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
   const line = {
     tension: 0.3,
     spanGaps: true,
-    pointRadius: 2,
-    pointHoverRadius: 4,
+    pointRadius: radii,
+    pointHoverRadius: 6,
     borderWidth: 2.25,
     backgroundColor: "transparent",
   };
@@ -4499,18 +4539,16 @@ function renderVyrobotkaDebt() {
       datasets: [
         {
           ...line,
-          label: "Σ недоплат",
-          data: sheets.map((s) => s.debt_sum),
+          label: "CRM (ожидаемая оплата)",
+          data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
           borderColor: "#a12828",
-          yAxisID: "y",
         },
         {
           ...line,
-          label: "Квитанций с долгом",
-          data: sheets.map((s) => s.debt_count),
-          borderColor: "#c45c26",
+          label: "Отчёты мастеров",
+          data: daily.map((d) => (d.sheets_debt_sum == null ? null : Number(d.sheets_debt_sum))),
+          borderColor: "#1a5f8a",
           borderDash: [5, 4],
-          yAxisID: "y1",
         },
       ],
     },
@@ -4520,11 +4558,10 @@ function renderVyrobotkaDebt() {
         ...base.plugins,
         tooltip: {
           callbacks: {
-            title: (items) => sheets[items[0]?.dataIndex]?.sheet_title || "",
+            title: (items) => fmtQualityDate(daily[items[0]?.dataIndex]?.day),
             label(ctx) {
               const v = ctx.parsed.y;
               if (v == null) return `${ctx.dataset.label}: —`;
-              if (ctx.dataset.yAxisID === "y1") return `${ctx.dataset.label}: ${v}`;
               return `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
             },
           },
@@ -4532,9 +4569,13 @@ function renderVyrobotkaDebt() {
       },
       scales: {
         ...base.scales,
+        x: {
+          ...base.scales?.x,
+          ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } },
+          grid: { color: "rgba(28,36,48,0.05)" },
+        },
         y: {
           beginAtZero: true,
-          position: "left",
           title: { display: true, text: "₴", color: "#5d6b7c", font: { size: 11 } },
           grid: { color: "rgba(28,36,48,0.07)" },
           ticks: {
@@ -4542,13 +4583,6 @@ function renderVyrobotkaDebt() {
             font: { size: 10 },
             callback: (v) => fmtMoneyUa(v),
           },
-        },
-        y1: {
-          beginAtZero: true,
-          position: "right",
-          title: { display: true, text: "шт", color: "#5d6b7c", font: { size: 11 } },
-          grid: { drawOnChartArea: false },
-          ticks: { color: "#5d6b7c", font: { size: 10 } },
         },
       },
     },
@@ -4586,7 +4620,9 @@ async function loadVyrobotkaStats() {
       debt_sum: 0,
       tickets_count: 0,
       verify: null,
+      daily: [],
     };
+    if (!Array.isArray(vyrobotkaDebtCache.daily)) vyrobotkaDebtCache.daily = [];
     if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
     renderVyrobotkaAll();
     if (vyrobotkaDebtCache.verify?.status === "running") startVyrobotkaVerifyPoll();

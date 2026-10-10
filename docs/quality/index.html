@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261009-hub1" />
-  <link rel="stylesheet" href="./styles.css?v=20261009-hub1" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261010-dyn1" />
+  <link rel="stylesheet" href="./styles.css?v=20261010-dyn1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261008-sort2" defer></script>
+  <script src="./app.js?v=20261010-dyn1" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -118,6 +118,24 @@
             <div class="card">
               <h3>Сроки, дни</h3>
               <div class="chart-wrap is-dynamics"><canvas id="chart-days"></canvas></div>
+            </div>
+          </div>
+          <div class="card dynamics-table-card">
+            <h3>Снимки по дням</h3>
+            <div class="table-wrap">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th>День</th>
+                    <th>Заказов</th>
+                    <th>KPI</th>
+                    <th>Звонки</th>
+                    <th>Дораб.</th>
+                    <th>Всего дн</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-dynamics"></tbody>
+              </table>
             </div>
           </div>
         </div>

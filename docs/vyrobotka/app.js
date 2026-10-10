@@ -258,7 +258,8 @@ function renderUpsell(sheets) {
 function renderDebt(sheets, tickets, report) {
   const empty = $("#debt-empty");
   const body = $("#debt-body");
-  if (!sheets?.length && !tickets?.length) {
+  const daily = DATA?.debt_daily || [];
+  if (!sheets?.length && !tickets?.length && !daily.length) {
     if (empty) empty.hidden = false;
     if (body) body.hidden = true;
     return;
@@ -268,6 +269,7 @@ function renderDebt(sheets, tickets, report) {
 
   const last = sheets[sheets.length - 1];
   const debtSum = tickets.reduce((a, t) => a + (Number(t.debt) || 0), 0);
+  const lastDaily = daily.length ? daily[daily.length - 1] : null;
   const byV = { mismatch: 0, norm: 0, ok: 0, missing: 0, error: 0 };
   for (const t of tickets) {
     const v = resolveVerdict(t.verify);
@@ -278,6 +280,13 @@ function renderDebt(sheets, tickets, report) {
   if (kpis) {
     const rows = [
       ["Σ недоплат", fmtMoney(debtSum), `${tickets.length} квитанций`],
+      [
+        "CRM дебиторка",
+        fmtMoney(lastDaily?.crm_debt_sum),
+        lastDaily
+          ? String(lastDaily.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1")
+          : "—",
+      ],
       ["Посл. Σ", fmtMoney(last?.debt_sum), last?.sheet_title || ""],
       ["Посл. шт.", fmtMoney(last?.debt_count), fmtPct(last?.debt_ratio)],
     ];
@@ -362,25 +371,54 @@ function renderDebt(sheets, tickets, report) {
       .join("");
   }
 
+  const daily = DATA?.debt_daily || [];
+  const dailyMeta = $("#debt-daily-meta");
+  if (dailyMeta) {
+    if (!daily.length) {
+      dailyMeta.textContent = "Точек динамики пока нет в снимке.";
+    } else {
+      const last = daily[daily.length - 1];
+      const dayLabel = String(last.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
+      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${dayLabel} · CRM ${fmtMoney(
+        last.crm_debt_sum,
+      )} · отчёты ${fmtMoney(last.sheets_debt_sum)}`;
+    }
+  }
+
   const canvas = $("#chart-debt");
-  if (canvas && typeof Chart !== "undefined" && sheets.length) {
+  if (canvas && typeof Chart !== "undefined" && daily.length) {
     debtChart?.destroy();
-    const labels = sheets.map((s) => shortLabel(s.sheet_title));
+    const labels = daily.map((d) => {
+      const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? `${m[3]}.${m[2]}` : d.day;
+    });
     const base = lineDefaults();
-    const line = { tension: 0.3, spanGaps: true, pointRadius: 2, borderWidth: 2.25, backgroundColor: "transparent" };
+    const n = daily.length;
+    const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
+    const line = {
+      tension: 0.3,
+      spanGaps: true,
+      pointRadius: radii,
+      borderWidth: 2.25,
+      backgroundColor: "transparent",
+    };
     debtChart = new Chart(canvas, {
       type: "line",
       data: {
         labels,
         datasets: [
-          { ...line, label: "Σ недоплат", data: sheets.map((s) => s.debt_sum), borderColor: "#a12828", yAxisID: "y" },
           {
             ...line,
-            label: "Квитанций с долгом",
-            data: sheets.map((s) => s.debt_count),
-            borderColor: "#c45c26",
+            label: "CRM (ожидаемая оплата)",
+            data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
+            borderColor: "#a12828",
+          },
+          {
+            ...line,
+            label: "Отчёты мастеров",
+            data: daily.map((d) => (d.sheets_debt_sum == null ? null : Number(d.sheets_debt_sum))),
+            borderColor: "#1a5f8a",
             borderDash: [5, 4],
-            yAxisID: "y1",
           },
         ],
       },
@@ -388,17 +426,11 @@ function renderDebt(sheets, tickets, report) {
         ...base,
         scales: {
           ...base.scales,
+          x: { ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } } },
           y: {
             beginAtZero: true,
-            position: "left",
             ticks: { callback: (v) => fmtMoney(v), color: "#5d6b7c", font: { size: 10 } },
             grid: { color: "rgba(28,36,48,0.07)" },
-          },
-          y1: {
-            beginAtZero: true,
-            position: "right",
-            grid: { drawOnChartArea: false },
-            ticks: { color: "#5d6b7c", font: { size: 10 } },
           },
         },
       },
@@ -413,7 +445,13 @@ function renderAll() {
   if (meta) {
     const when = DATA.exported_at ? new Date(DATA.exported_at).toLocaleString("ru-RU") : "—";
     const title = DATA.spreadsheet_title ? ` · ${DATA.spreadsheet_title}` : "";
-    meta.textContent = `Снимок: ${when}${title}`;
+    let line = `Снимок: ${when}${title}`;
+    if (DATA.debt_daily?.length) {
+      const last = DATA.debt_daily[DATA.debt_daily.length - 1];
+      const dayLabel = String(last.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
+      line += ` · дебиторка CRM ${fmtMoney(last.crm_debt_sum)} (${dayLabel})`;
+    }
+    meta.textContent = line;
   }
   renderUpsell(DATA.upsell_sheets || []);
   renderDebt(DATA.debt_sheets || [], DATA.debt_tickets || [], DATA.verify_report || null);

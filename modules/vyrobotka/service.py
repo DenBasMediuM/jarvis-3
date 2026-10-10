@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Awaitable, Callable
 
 from core.db import Database
@@ -35,6 +35,16 @@ _verify_task: asyncio.Task | None = None
 VERIFY_PAUSE_S = 0.75
 VERIFY_BATCH_EVERY = 20
 VERIFY_BATCH_PAUSE_S = 4.0
+
+# Фильтр списка ремонтов = «Ожидаемая сумма оплаты» в колонке «Оплачено».
+# https://itserviceoutsourcing.gincore.net/orders?other=pay&dep=…#show_repair_orders
+CRM_DEBT_LIST_PARAMS: dict[str, str] = {
+    "other": "pay",
+    "dep": (
+        "1-a,1-l,9-a,9-l,13-a,13-l,19-a,19-l,20-a,20-l,"
+        "23-a,23-l,26-a,26-l,31-a,31-l,34-a,34-l,37-a,37-l,l-l"
+    ),
+}
 
 
 def _now() -> str:
@@ -97,6 +107,7 @@ class VyrobotkaService:
                     "crm_status": vr.get("crm_status"),
                     "crm_url": vr.get("crm_url"),
                 }
+        debt_daily = await self.db.vyrobotka_list_debt_daily(limit=730)
         return {
             "ok": True,
             "sheets": sheets,
@@ -108,6 +119,7 @@ class VyrobotkaService:
                 "tickets_count": len(underpaid),
                 "debt_sum": round(sum(float(t.get("debt") or 0) for t in underpaid), 2),
                 "verify": verify,
+                "daily": debt_daily,
             },
         }
 
@@ -233,6 +245,7 @@ class VyrobotkaService:
             sync=sync,
             spreadsheet_title=title,
             verify_rows=verify_rows,
+            debt_daily=debt.get("daily") or [],
         )
         out = write_vyrobotka_pages_json(payload, Path(path) if path else None)
         return {
@@ -240,6 +253,7 @@ class VyrobotkaService:
             "path": str(out),
             "upsell_sheets": payload["counts"]["upsell_sheets"],
             "debt_tickets": payload["counts"]["debt_tickets"],
+            "debt_daily": payload["counts"].get("debt_daily", 0),
             "exported_at": payload["exported_at"],
         }
 
@@ -325,10 +339,20 @@ class VyrobotkaService:
             started_at=_now(),
             finished_at=None,
         )
+        assert self._gincore_client_factory is not None
+        client = await self._gincore_client_factory()
+        await client.ensure_login()
+
         if not tickets:
             # для mode=new сохраняем прошлый отчёт по всем уже проверенным
             all_checked = await self.db.vyrobotka_list_debt_verify_rows() if mode == "new" else []
             report = build_verify_report(all_checked)
+            snap = await self._snapshot_debt_daily(client, source=f"verify-{mode}")
+            snap_msg = (
+                f" · дебиторка CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
+                if snap
+                else ""
+            )
             msg = (
                 "Нет новых недоплаченных квитанций — всё уже сверено"
                 if mode == "new"
@@ -338,15 +362,12 @@ class VyrobotkaService:
                 status="idle",
                 done=0,
                 total=0 if mode != "new" else len(all_checked),
-                message=msg,
+                message=f"{msg}{snap_msg}",
                 report=report,
                 finished_at=_now(),
             )
+            await self._safe_export_pages()
             return
-
-        assert self._gincore_client_factory is not None
-        client = await self._gincore_client_factory()
-        await client.ensure_login()
 
         batch_results: list[dict[str, Any]] = []
         for i, ticket in enumerate(tickets):
@@ -399,6 +420,18 @@ class VyrobotkaService:
         report = build_verify_report(all_checked)
         prefix = "Новые сверены" if mode == "new" else "Сверка готова"
         await self.db.vyrobotka_set_debt_verify_state(
+            status="running",
+            total=len(all_checked),
+            done=len(all_checked),
+            message="Считаю общую дебиторку CRM (ожидаемая оплата)…",
+        )
+        snap = await self._snapshot_debt_daily(client, source=f"verify-{mode}")
+        snap_msg = (
+            f" · дебиторка CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
+            if snap
+            else ""
+        )
+        await self.db.vyrobotka_set_debt_verify_state(
             status="idle",
             total=len(all_checked),
             done=len(all_checked),
@@ -407,12 +440,81 @@ class VyrobotkaService:
                 f"всего ок {report['ok']}, "
                 f"расхождений {report['mismatch']}, "
                 f"нет в CRM {report['missing']}, "
-                f"ошибок {report['error']}"
+                f"ошибок {report['error']}{snap_msg}"
             ),
             report=report,
             cancel_requested=0,
             finished_at=_now(),
         )
+        await self._safe_export_pages()
+
+    async def _snapshot_debt_daily(
+        self,
+        client: Any,
+        *,
+        source: str = "verify",
+        day: date | None = None,
+        crm_debt_sum: float | None = None,
+        crm_orders: int | None = None,
+    ) -> dict[str, Any] | None:
+        """Одна точка в день: CRM «ожидаемая оплата» + Σ недоплат из отчётов мастеров."""
+        all_rows = await self.db.vyrobotka_list_rows()
+        underpaid = collect_underpaid_tickets(all_rows)
+        sheets_debt_sum = round(sum(float(t.get("debt") or 0) for t in underpaid), 2)
+        sheets_tickets = len(underpaid)
+
+        if crm_debt_sum is None:
+            try:
+                totals = await client.fetch_orders_expected_payment_sum(
+                    crm_params=CRM_DEBT_LIST_PARAMS
+                )
+                crm_debt_sum = float(totals.get("expected_payment_sum") or 0)
+                crm_orders = int(totals.get("orders") or totals.get("listed_total") or 0)
+            except Exception:  # noqa: BLE001
+                crm_debt_sum = None
+                crm_orders = 0
+
+        snap = {
+            "day": (day or date.today()).isoformat(),
+            "crm_debt_sum": crm_debt_sum,
+            "sheets_debt_sum": sheets_debt_sum,
+            "crm_orders": int(crm_orders or 0),
+            "sheets_tickets": sheets_tickets,
+            "source": source,
+            "updated_at": _now(),
+        }
+        await self.db.vyrobotka_upsert_debt_daily(snap)
+        return snap
+
+    async def _safe_export_pages(self) -> None:
+        try:
+            await self.export_pages_snapshot()
+        except Exception:  # noqa: BLE001
+            pass
+
+    async def pin_debt_daily_point(
+        self,
+        *,
+        crm_debt_sum: float,
+        day: date | None = None,
+        source: str = "pin",
+        crm_orders: int | None = None,
+    ) -> dict[str, Any]:
+        """Закрепить точку динамики (без полного прогона сверки)."""
+        all_rows = await self.db.vyrobotka_list_rows()
+        underpaid = collect_underpaid_tickets(all_rows)
+        snap = {
+            "day": (day or date.today()).isoformat(),
+            "crm_debt_sum": float(crm_debt_sum),
+            "sheets_debt_sum": round(sum(float(t.get("debt") or 0) for t in underpaid), 2),
+            "crm_orders": int(crm_orders or 0),
+            "sheets_tickets": len(underpaid),
+            "source": source,
+            "updated_at": _now(),
+        }
+        await self.db.vyrobotka_upsert_debt_daily(snap)
+        await self._safe_export_pages()
+        return snap
 
     async def _verify_one(self, client: Any, ticket: dict[str, Any]) -> dict[str, Any]:
         from modules.gincore.client import GincoreError

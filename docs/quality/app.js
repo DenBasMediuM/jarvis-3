@@ -848,26 +848,54 @@ function renderSummary() {
   });
 }
 
+function pointRadii(n, base = 4, last = 7) {
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? last : base));
+}
+
+function fmtNum(v, digits = 1) {
+  if (v == null || Number.isNaN(Number(v))) return "—";
+  return String(Math.round(Number(v) * 10 ** digits) / 10 ** digits);
+}
+
 function renderDynamics() {
   const days = DATA?.daily_stats || [];
   const empty = $("#dynamics-empty");
   const body = $("#dynamics-body");
+  const tbody = $("#tbody-dynamics");
   if (!days.length) {
     empty.hidden = false;
     body.hidden = true;
+    if (tbody) tbody.innerHTML = "";
     return;
   }
   empty.hidden = true;
   body.hidden = false;
+  const last = days[days.length - 1];
   $("#dynamics-meta").textContent = `Точек: ${days.length} · с ${fmtDate(days[0].day)} по ${fmtDate(
-    days[days.length - 1].day,
-  )}`;
+    last.day,
+  )} · последний снимок: ${fmtDate(last.day)} · ${last.orders_count ?? "—"} зак. · KPI ${fmtNum(last.avg_order_kpi)}`;
+  if (tbody) {
+    tbody.innerHTML = days
+      .map((d, i) => {
+        const isLast = i === days.length - 1;
+        return `<tr class="${isLast ? "is-latest" : ""}">
+        <td>${esc(fmtDate(d.day))}${isLast ? ' <span class="pill">новый</span>' : ""}</td>
+        <td>${esc(d.orders_count ?? "—")}</td>
+        <td>${esc(fmtNum(d.avg_order_kpi))}</td>
+        <td>${esc(fmtNum(d.avg_calls_kpi))}</td>
+        <td>${esc(fmtNum(d.avg_rework_kpi))}</td>
+        <td>${esc(fmtNum(d.avg_total_days))}</td>
+      </tr>`;
+      })
+      .join("");
+  }
   if (typeof Chart === "undefined") return;
   const labels = days.map((d) => {
     const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m ? `${m[3]}.${m[2]}` : d.day;
   });
   const series = (key) => days.map((d) => (d[key] == null ? null : Number(d[key])));
+  const radii = pointRadii(days.length);
   if (chartKpi) chartKpi.destroy();
   if (chartDays) chartDays.destroy();
   const opts = {
@@ -878,78 +906,83 @@ function renderDynamics() {
       legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
     },
     scales: {
-      x: { grid: { color: "rgba(28,36,48,0.05)" } },
+      x: { grid: { color: "rgba(28,36,48,0.05)" }, ticks: { maxRotation: 0, autoSkip: false } },
       y: { grid: { color: "rgba(28,36,48,0.06)" } },
     },
   };
-  chartKpi = new Chart($("#chart-kpi"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "KPI",
-          data: series("avg_order_kpi"),
-          borderColor: "#0f6e56",
-          backgroundColor: "rgba(15,110,86,0.12)",
-          fill: true,
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-        {
-          label: "Звонки",
-          data: series("avg_calls_kpi"),
-          borderColor: "#1a5f8a",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-        {
-          label: "Дораб.",
-          data: series("avg_rework_kpi"),
-          borderColor: "#c45c26",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-      ],
-    },
-    options: { ...opts, scales: { ...opts.scales, y: { ...opts.scales.y, min: 0, max: 100 } } },
-  });
-  chartDays = new Chart($("#chart-days"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Всего дн",
-          data: series("avg_total_days"),
-          borderColor: "#a12828",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-        {
-          label: "До мастера",
-          data: series("avg_wait_master_days"),
-          borderColor: "#a15c12",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-        {
-          label: "До диагн.",
-          data: series("avg_diag_days"),
-          borderColor: "#5d6b7c",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 4,
-        },
-      ],
-    },
-    options: opts,
-  });
+  const paint = () => {
+    chartKpi = new Chart($("#chart-kpi"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "KPI",
+            data: series("avg_order_kpi"),
+            borderColor: "#0f6e56",
+            backgroundColor: "rgba(15,110,86,0.12)",
+            fill: true,
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+            pointHoverRadius: 8,
+          },
+          {
+            label: "Звонки",
+            data: series("avg_calls_kpi"),
+            borderColor: "#1a5f8a",
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+          },
+          {
+            label: "Дораб.",
+            data: series("avg_rework_kpi"),
+            borderColor: "#c45c26",
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+          },
+        ],
+      },
+      options: { ...opts, scales: { ...opts.scales, y: { ...opts.scales.y, min: 0, max: 100 } } },
+    });
+    chartDays = new Chart($("#chart-days"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Всего дн",
+            data: series("avg_total_days"),
+            borderColor: "#a12828",
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+          },
+          {
+            label: "До мастера",
+            data: series("avg_wait_master_days"),
+            borderColor: "#a15c12",
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+          },
+          {
+            label: "До диагн.",
+            data: series("avg_diag_days"),
+            borderColor: "#5d6b7c",
+            tension: 0.3,
+            spanGaps: true,
+            pointRadius: radii,
+          },
+        ],
+      },
+      options: opts,
+    });
+  };
+  // Панель могла быть hidden — даём layout примениться до измерения canvas.
+  requestAnimationFrame(() => requestAnimationFrame(paint));
 }
 
 function sevLabel(s) {
@@ -1065,13 +1098,18 @@ async function boot() {
     btn.addEventListener("click", () => setTab(btn.dataset.tab));
   });
   try {
-    const res = await fetch(`${DATA_URL}?t=${Date.now()}`);
+    const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     DATA = await res.json();
     const n = DATA.counts?.orders ?? DATA.orders?.length ?? 0;
+    const days = DATA.daily_stats || [];
+    const lastDay = days.length ? days[days.length - 1] : null;
+    const dynLine = lastDay
+      ? `<br />динамика: <strong>${esc(days.length)}</strong> точ. · посл. <strong>${esc(fmtDate(lastDay.day))}</strong>`
+      : `<br />динамика: нет точек`;
     $("#export-meta").innerHTML = DATA.exported_at
-      ? `Снимок: <strong>${esc(fmtDate(DATA.exported_at))}</strong><br />заказов: ${esc(n)}`
-      : `data.json пустой · заказов: ${esc(n)}`;
+      ? `Снимок: <strong>${esc(fmtDate(DATA.exported_at))}</strong><br />заказов: ${esc(n)}${dynLine}`
+      : `data.json пустой · заказов: ${esc(n)}${dynLine}`;
     renderOverview();
   } catch (err) {
     $("#export-meta").textContent = `Ошибка загрузки: ${err.message || err}`;
