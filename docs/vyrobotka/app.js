@@ -371,17 +371,16 @@ function renderDebt(sheets, tickets, report) {
       .join("");
   }
 
-  const daily = DATA?.debt_daily || [];
   const dailyMeta = $("#debt-daily-meta");
   if (dailyMeta) {
     if (!daily.length) {
       dailyMeta.textContent = "Точек динамики пока нет в снимке.";
     } else {
-      const last = daily[daily.length - 1];
-      const dayLabel = String(last.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
+      const tip = daily[daily.length - 1];
+      const dayLabel = String(tip.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
       dailyMeta.textContent = `Точек: ${daily.length} · посл. ${dayLabel} · CRM ${fmtMoney(
-        last.crm_debt_sum,
-      )} · отчёты ${fmtMoney(last.sheets_debt_sum)}`;
+        tip.crm_debt_sum,
+      )} · отчёты ${fmtMoney(tip.sheets_debt_sum)}`;
     }
   }
 
