@@ -2499,7 +2499,11 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+.updates-actions:empty {
+  display: none;
 }
 
 .vitrine-users-layout {
@@ -2519,51 +2523,110 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
 .vitrine-access-fieldset {
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 10px 12px 12px;
-  margin: 0 0 12px;
+  padding: 12px 14px 14px;
+  margin: 0 0 14px;
 }
 .vitrine-access-fieldset legend {
   padding: 0 6px;
   font-size: 0.85rem;
   font-weight: 600;
 }
-.vitrine-access-options { display: flex; flex-direction: column; gap: 12px; }
+.vitrine-access-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .vitrine-access-group-title {
-  font-size: 0.75rem;
-  font-weight: 650;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--muted);
-  margin-bottom: 4px;
+  margin: 0 0 6px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.vitrine-access-item {
+/* Перебить .form-card label { display: grid } — иначе чекбоксы «ломаются». */
+.form-card label.vitrine-access-item,
+.form-card label.vitrine-enabled-label {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin: 0;
   font-size: 0.92rem;
-  margin: 3px 0;
+  font-weight: 500;
   cursor: pointer;
+  line-height: 1.3;
 }
-.vitrine-enabled-label {
+.form-card label.vitrine-access-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.form-card label.vitrine-access-item:hover {
+  background: rgba(28, 36, 48, 0.04);
+}
+.form-card label.vitrine-access-item input,
+.form-card label.vitrine-enabled-label input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+}
+.form-card label.vitrine-enabled-label {
+  margin: 0 0 14px;
+  padding: 2px 0;
+  font-weight: 600;
+}
+.vitrine-access-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 2px;
 }
 .vitrine-user-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 8px;
+  align-items: center;
 }
 .vitrine-users-list-title {
   margin: 0 0 12px;
   font-size: 1.05rem;
 }
-.vitrine-access-cell { font-size: 0.85rem; color: var(--muted); }
+.vitrine-access-cell {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 22rem;
+  white-space: normal;
+  line-height: 1.35;
+}
+.vitrine-users-list-card .quality-table {
+  width: 100%;
+  table-layout: auto;
+}
+.vitrine-users-list-card .quality-table th,
+.vitrine-users-list-card .quality-table td {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  vertical-align: middle;
+}
+.vitrine-users-list-card .quality-table th {
+  padding: 8px 10px;
+}
+.vitrine-users-list-card .quality-table td.vitrine-users-row-actions {
+  width: 1%;
+  white-space: nowrap;
+}
 .vitrine-users-row-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  align-items: center;
+}
+.vitrine-users-row-actions .cj-import-btn {
+  flex: 0 0 auto;
   white-space: nowrap;
+  color: #4a5560;
+  background: #fff;
 }

@@ -5202,6 +5202,23 @@ async function runUpdatesAction(actionId) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ force: false }),
       });
+    } else if (actionId === "quality-force") {
+      if (
+        !confirm(
+          "Перекачать ленту по всем заказам из списка? Это ~300 запросов к CRM (несколько минут).",
+        )
+      ) {
+        updatesBusy = false;
+        await loadUpdatesStatus();
+        return;
+      }
+      res = await fetch("/api/quality/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: true }),
+      });
+    } else if (actionId === "quality-tg") {
+      res = await fetch("/api/quality/analysis/telegram", { method: "POST" });
     } else if (actionId === "quality-export") {
       res = await fetch("/api/quality/export-pages", { method: "POST" });
     } else if (actionId === "vyrobotka-sync") {
@@ -5231,15 +5248,26 @@ async function runUpdatesAction(actionId) {
       throw new Error(`Неизвестное действие: ${actionId}`);
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (!res.ok) {
+      const detail = data.detail || data.error || res.statusText;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
     if (statusEl) {
-      if (actionId.endsWith("export") || actionId === "users-export") {
+      if (actionId === "quality-tg") {
+        statusEl.textContent = `В ТГ отправлено ${data.sent ?? "—"} сообщ.`;
+      } else if (actionId.endsWith("export") || actionId === "users-export") {
         statusEl.textContent = `Экспорт готов → ${data.path || "docs/…"} (сделайте git push)`;
       } else {
         statusEl.textContent = data.sync?.message || data.verify?.message || "Запущено";
       }
     }
-    startUpdatesPoll();
+    const needsPoll =
+      actionId === "quality-sync" ||
+      actionId === "quality-force" ||
+      actionId === "vyrobotka-sync" ||
+      actionId === "debt-verify-new" ||
+      actionId === "debt-verify-all";
+    if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {
     if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;

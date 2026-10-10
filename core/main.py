@@ -872,6 +872,8 @@ async def updates_status() -> dict[str, Any]:
             "finished_at": quality_sync.get("finished_at"),
             "actions": [
                 {"id": "quality-sync", "label": "Обновить из CRM", "kind": "primary"},
+                {"id": "quality-force", "label": "Полный пересбор лент", "kind": "muted"},
+                {"id": "quality-tg", "label": "Отправить в ТГ", "kind": "muted"},
                 {"id": "quality-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/quality/data.json"),
