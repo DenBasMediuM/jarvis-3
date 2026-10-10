@@ -6,16 +6,33 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const messagesEl = $("#messages");
 
-function showView(view) {
+const PROCESSES_TAB_KEY = "jarvis.processes.tab";
+let processesTab = "upsell";
+
+function showView(view, opts = {}) {
+  const resolved = view === "vyrobotka" ? "processes" : view;
   document.querySelectorAll(".nav-btn").forEach((b) => {
-    b.classList.toggle("active", b.dataset.view === view);
+    b.classList.toggle("active", b.dataset.view === resolved);
+  });
+  document.querySelectorAll(".nav-sub-btn").forEach((b) => {
+    const on =
+      resolved === "processes" &&
+      b.getAttribute("data-processes-tab") === (opts.processesTab || processesTab);
+    b.classList.toggle("is-active", on);
+  });
+  document.querySelectorAll(".nav-group").forEach((g) => {
+    g.classList.toggle("is-open", g.getAttribute("data-nav-group") === resolved);
   });
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  const el = $(`#view-${view}`);
+  const el = $(`#view-${resolved}`);
   if (el) el.classList.add("active");
-  document.querySelector(".app")?.classList.toggle("app--quality", view === "quality");
-  document.querySelector(".app")?.classList.toggle("app--vyrobotka", view === "vyrobotka");
-  if (view === "quality") {
+  document.querySelector(".app")?.classList.toggle("app--quality", resolved === "quality");
+  document.querySelector(".app")?.classList.toggle(
+    "app--vyrobotka",
+    resolved === "processes",
+  );
+  document.querySelector(".app")?.classList.toggle("app--processes", resolved === "processes");
+  if (resolved === "quality") {
     // Сначала показать вкладку, потом мерить столбцы (display:none даёт width=0).
     requestAnimationFrame(() => {
       initQualityTabs();
@@ -28,7 +45,9 @@ function showView(view) {
   } else {
     stopQualityPoll();
   }
-  if (view === "vyrobotka") {
+  if (resolved === "processes") {
+    if (opts.processesTab) setProcessesTab(opts.processesTab);
+    else initProcessesTabs();
     requestAnimationFrame(() => {
       initVyrobotkaSplits();
       loadVyrobotkaStats().then((sync) => {
@@ -40,10 +59,65 @@ function showView(view) {
     stopVyrobotkaPoll();
     stopVyrobotkaVerifyPoll();
   }
+  if (resolved === "vitrine-users") {
+    loadVitrineUsers();
+  }
 }
 
-document.querySelectorAll(".nav-btn").forEach((btn) => {
+function setProcessesTab(tab) {
+  const id = tab === "debt" ? "debt" : "upsell";
+  processesTab = id;
+  try {
+    localStorage.setItem(PROCESSES_TAB_KEY, id);
+  } catch {
+    /* ignore */
+  }
+  const root = $("#view-processes");
+  if (!root) return;
+  root.querySelectorAll(".quality-tab[data-processes-tab]").forEach((btn) => {
+    const on = btn.getAttribute("data-processes-tab") === id;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll(".nav-sub-btn[data-processes-tab]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.getAttribute("data-processes-tab") === id);
+  });
+  const upsell = $("#vyrobotka-upsell-body");
+  const debt = $("#vyrobotka-debt-body");
+  const empty = $("#vyrobotka-empty");
+  const hasData = !(empty && !empty.hidden);
+  if (upsell) upsell.hidden = !(hasData && id === "upsell");
+  if (debt) debt.hidden = !(hasData && id === "debt");
+  if (id === "debt") {
+    requestAnimationFrame(() => resizeVyrobotkaCharts());
+  }
+}
+
+function initProcessesTabs() {
+  const root = $("#view-processes");
+  if (!root) return;
+  if (!root.dataset.processesTabsReady) {
+    root.dataset.processesTabsReady = "1";
+    root.querySelectorAll(".quality-tab[data-processes-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => setProcessesTab(btn.getAttribute("data-processes-tab")));
+    });
+  }
+  let saved = "upsell";
+  try {
+    saved = localStorage.getItem(PROCESSES_TAB_KEY) || "upsell";
+  } catch {
+    saved = "upsell";
+  }
+  setProcessesTab(saved);
+}
+
+document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
   btn.addEventListener("click", () => showView(btn.dataset.view));
+});
+document.querySelectorAll(".nav-sub-btn[data-view]").forEach((btn) => {
+  btn.addEventListener("click", () =>
+    showView(btn.dataset.view, { processesTab: btn.getAttribute("data-processes-tab") }),
+  );
 });
 
 $("#quality-back-btn")?.addEventListener("click", () => showView("chat"));
@@ -4009,7 +4083,7 @@ function initVyrobotkaSplits() {
   if (!vyrobotkaWindowResizeBound) {
     vyrobotkaWindowResizeBound = true;
     window.addEventListener("resize", () => {
-      if ($("#view-vyrobotka")?.classList.contains("active")) resizeVyrobotkaCharts();
+      if ($("#view-processes")?.classList.contains("active")) resizeVyrobotkaCharts();
     });
   }
 }
@@ -4605,6 +4679,7 @@ function renderVyrobotkaAll() {
   }
   renderVyrobotkaUpsell();
   renderVyrobotkaDebt();
+  setProcessesTab(processesTab);
 }
 
 async function loadVyrobotkaStats() {
@@ -4734,7 +4809,7 @@ async function startVyrobotkaSync() {
 const VYROBOTKA_PANEL_KEY = "jarvis.vyrobotka.panelCollapsed";
 
 function applyVyrobotkaPanelCollapsed(collapsed) {
-  const view = $("#view-vyrobotka");
+  const view = $("#view-processes");
   const btn = $("#vyrobotka-panel-toggle");
   if (!view || !btn) return;
   view.classList.toggle("is-panel-collapsed", !!collapsed);
@@ -4760,7 +4835,7 @@ function initVyrobotkaPanelToggle() {
   }
   applyVyrobotkaPanelCollapsed(collapsed);
   btn.addEventListener("click", () => {
-    const view = $("#view-vyrobotka");
+    const view = $("#view-processes");
     applyVyrobotkaPanelCollapsed(!view?.classList.contains("is-panel-collapsed"));
   });
 }
@@ -4793,9 +4868,208 @@ $("#vyrobotka-debt-verify-new-btn")?.addEventListener("click", () =>
 );
 $("#vyrobotka-debt-verify-cancel")?.addEventListener("click", () => cancelVyrobotkaDebtVerify());
 
+/* —— Пользователи витрины —— */
+let vitrineAccessOptions = [];
+let vitrineUsersCache = [];
+
+function accessLabel(id) {
+  return vitrineAccessOptions.find((o) => o.id === id)?.label || id;
+}
+
+function renderVitrineAccessOptions(selected = []) {
+  const box = $("#vitrine-access-options");
+  if (!box) return;
+  const byGroup = {};
+  for (const opt of vitrineAccessOptions) {
+    const g = opt.group || "Прочее";
+    (byGroup[g] ||= []).push(opt);
+  }
+  box.innerHTML = Object.entries(byGroup)
+    .map(
+      ([group, opts]) => `<div class="vitrine-access-group">
+        <div class="vitrine-access-group-title">${escapeHtml(group)}</div>
+        ${opts
+          .map(
+            (o) => `<label class="vitrine-access-item">
+          <input type="checkbox" name="access" value="${escapeHtml(o.id)}" ${
+              selected.includes(o.id) ? "checked" : ""
+            } />
+          <span>${escapeHtml(o.label)}</span>
+        </label>`
+          )
+          .join("")}
+      </div>`
+    )
+    .join("");
+}
+
+function resetVitrineUserForm() {
+  const form = $("#vitrine-user-form");
+  if (!form) return;
+  form.reset();
+  form.id.value = "";
+  form.enabled.checked = true;
+  const pass = form.password;
+  if (pass) {
+    pass.required = true;
+    pass.placeholder = "мин. 4 символа";
+  }
+  const hint = $("#vitrine-user-pass-hint");
+  if (hint) hint.textContent = "При создании пароль обязателен. При правке — оставьте пустым, чтобы не менять.";
+  renderVitrineAccessOptions([]);
+}
+
+function editVitrineUser(user) {
+  const form = $("#vitrine-user-form");
+  if (!form || !user) return;
+  form.id.value = String(user.id);
+  form.login.value = user.login || "";
+  form.password.value = "";
+  form.password.required = false;
+  form.password.placeholder = "без изменений";
+  form.enabled.checked = !!user.enabled;
+  const hint = $("#vitrine-user-pass-hint");
+  if (hint) hint.textContent = "Пароль можно не заполнять — останется прежний.";
+  renderVitrineAccessOptions(user.access || []);
+  form.login.focus();
+}
+
+function renderVitrineUsersTable() {
+  const tbody = $("#vitrine-users-tbody");
+  if (!tbody) return;
+  if (!vitrineUsersCache.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="quality-empty">Пользователей пока нет — создайте первого.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = vitrineUsersCache
+    .map((u) => {
+      const access = (u.access || []).map(accessLabel).join(", ") || "—";
+      return `<tr>
+        <td><strong>${escapeHtml(u.login)}</strong></td>
+        <td class="vitrine-access-cell">${escapeHtml(access)}</td>
+        <td>${u.enabled ? "активен" : "выкл"}</td>
+        <td class="vitrine-users-row-actions">
+          <button type="button" class="cj-import-btn is-muted" data-edit-user="${u.id}">Изменить</button>
+          <button type="button" class="cj-import-btn is-muted" data-del-user="${u.id}">Удалить</button>
+        </td>
+      </tr>`;
+    })
+    .join("");
+  tbody.querySelectorAll("[data-edit-user]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const u = vitrineUsersCache.find((x) => String(x.id) === btn.getAttribute("data-edit-user"));
+      if (u) editVitrineUser(u);
+    });
+  });
+  tbody.querySelectorAll("[data-del-user]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-del-user");
+      const u = vitrineUsersCache.find((x) => String(x.id) === id);
+      if (!u || !confirm(`Удалить пользователя «${u.login}»?`)) return;
+      const statusEl = $("#vitrine-users-status");
+      try {
+        const res = await fetch(`/api/vitrine/users/${id}`, { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+        if (statusEl) statusEl.textContent = `Удалён · экспорт ${data.export?.users ?? 0} польз. → docs/auth/users.json`;
+        await loadVitrineUsers();
+        resetVitrineUserForm();
+      } catch (err) {
+        if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+      }
+    });
+  });
+}
+
+async function loadVitrineUsers() {
+  const statusEl = $("#vitrine-users-status");
+  try {
+    if (!vitrineAccessOptions.length) {
+      const optRes = await fetch("/api/vitrine/access-options");
+      const optData = await optRes.json().catch(() => ({}));
+      vitrineAccessOptions = optData.options || [];
+    }
+    const res = await fetch("/api/vitrine/users");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    vitrineUsersCache = data.users || [];
+    const form = $("#vitrine-user-form");
+    const editingId = form?.id?.value;
+    if (editingId) {
+      const u = vitrineUsersCache.find((x) => String(x.id) === String(editingId));
+      if (u) editVitrineUser(u);
+      else resetVitrineUserForm();
+    } else if (!$("#vitrine-access-options")?.children.length) {
+      renderVitrineAccessOptions([]);
+    }
+    renderVitrineUsersTable();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+$("#vitrine-user-form")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const statusEl = $("#vitrine-users-status");
+  const id = String(form.id.value || "").trim();
+  const login = String(form.login.value || "").trim();
+  const password = String(form.password.value || "");
+  const access = [...form.querySelectorAll('input[name="access"]:checked')].map((el) => el.value);
+  const enabled = !!form.enabled.checked;
+  if (!login) {
+    if (statusEl) statusEl.textContent = "Укажите логин";
+    return;
+  }
+  if (!id && password.length < 4) {
+    if (statusEl) statusEl.textContent = "Пароль обязателен (мин. 4 символа)";
+    return;
+  }
+  const body = { login, access, enabled };
+  if (password) body.password = password;
+  try {
+    const res = await fetch(id ? `/api/vitrine/users/${id}` : "/api/vitrine/users", {
+      method: id ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Сохранено · экспорт ${data.export?.users ?? 0} польз. → docs/auth/users.json (git push)`;
+    }
+    await loadVitrineUsers();
+    resetVitrineUserForm();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+});
+
+$("#vitrine-user-reset")?.addEventListener("click", () => {
+  resetVitrineUserForm();
+  const statusEl = $("#vitrine-users-status");
+  if (statusEl) statusEl.textContent = "";
+});
+
+$("#vitrine-users-export-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#vitrine-users-status");
+  try {
+    const res = await fetch("/api/vitrine/users/export", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Экспорт: ${data.users ?? 0} польз. → docs/auth/users.json (git push)`;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+});
+
 initQualityPanelToggle();
 initQualityTabs();
 initVyrobotkaPanelToggle();
+initProcessesTabs();
+resetVitrineUserForm();
 
 addBubble(
   "assistant",

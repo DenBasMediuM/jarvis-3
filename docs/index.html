@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./shared/styles.css?v=20261009-hub1" />
+  <link rel="stylesheet" href="./shared/styles.css?v=20261010-nav-auth1" />
+  <script src="./shared/auth.js?v=20261010-nav-auth1" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -16,40 +17,75 @@
         <span class="shell-mark">J</span>
         <span class="shell-brand-text">
           <span class="shell-brand-name">Jarvis</span>
-          <span class="shell-brand-sub">публичная витрина</span>
+          <span class="shell-brand-sub">витрина</span>
         </span>
       </a>
-      <div class="shell-mods">
-        <a class="shell-mod" href="./quality/">Качество</a>
-        <a class="shell-mod" href="./vyrobotka/">Выработка</a>
-      </div>
+      <div class="shell-mods"></div>
     </nav>
 
     <header class="hub-hero">
-      <h1>Операционные модули</h1>
-      <p>Снимки с локального Jarvis: KPI, динамика и сверки — без паролей и без личных данных клиентов.</p>
+      <h1>Операционные блоки</h1>
+      <p>Качество, процессы и финансы — снимки из локального Jarvis. Вход по выданному логину.</p>
     </header>
 
-    <div class="hub-grid">
-      <a class="hub-card" data-mod="quality" href="./quality/">
-        <span class="hub-card-kicker">Сервис</span>
-        <h2>Качество</h2>
-        <p>KPI по квитанциям, мастера, динамика сроков и операционный анализ.</p>
-        <span class="hub-card-cta">Открыть →</span>
-      </a>
-      <a class="hub-card" data-mod="vyrobotka" href="./vyrobotka/">
-        <span class="hub-card-kicker">Финансы</span>
-        <h2>Выработка</h2>
-        <p>Досогласования по неделям и дебиторка: недоплаты и сверка с CRM.</p>
-        <span class="hub-card-cta">Открыть →</span>
-      </a>
-      <div class="hub-card is-soon" aria-disabled="true">
-        <span class="hub-card-kicker">Скоро</span>
-        <h2>Новый модуль</h2>
-        <p>Сюда добавятся следующие витрины — тот же каркас и навигация.</p>
-        <span class="hub-card-cta">—</span>
-      </div>
-    </div>
+    <div class="hub-grid" id="hub-grid"></div>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const auth = window.JarvisVitrineAuth;
+      if (!auth?.requireAuth()) return;
+      const s = auth.session();
+      auth.applyShellNav(null);
+      const cards = [
+        {
+          id: "quality",
+          href: "./quality/",
+          kicker: "Сервис",
+          title: "Качество",
+          text: "KPI по квитанциям, мастера, динамика сроков и операционный анализ.",
+        },
+        {
+          id: "processes",
+          href: "./vyrobotka/",
+          kicker: "Операции",
+          title: "Процессы",
+          text: "Досогласования по неделям и дебиторка: недоплаты и сверка с CRM.",
+        },
+        {
+          id: "finance",
+          href: "./finance/",
+          kicker: "Скоро",
+          title: "Финансы",
+          text: "Раздел в подготовке — финансовые отчёты появятся позже.",
+          soon: true,
+        },
+      ];
+      const grid = document.getElementById("hub-grid");
+      grid.innerHTML = cards
+        .filter((c) => auth.canSeeNav(s.access, c.id))
+        .map((c) => {
+          if (c.soon && c.id === "finance") {
+            return `<a class="hub-card" data-mod="${c.id}" href="${c.href}">
+              <span class="hub-card-kicker">${c.kicker}</span>
+              <h2>${c.title}</h2>
+              <p>${c.text}</p>
+              <span class="hub-card-cta">Открыть →</span>
+            </a>`;
+          }
+          return `<a class="hub-card" data-mod="${c.id}" href="${c.href}">
+            <span class="hub-card-kicker">${c.kicker}</span>
+            <h2>${c.title}</h2>
+            <p>${c.text}</p>
+            <span class="hub-card-cta">Открыть →</span>
+          </a>`;
+        })
+        .join("");
+      if (!grid.innerHTML) {
+        grid.innerHTML = `<div class="hub-card is-soon"><span class="hub-card-kicker">Доступ</span>
+          <h2>Нет разделов</h2><p>В вашей учётной записи не отмечены блоки. Обратитесь к администратору Jarvis.</p>
+          <span class="hub-card-cta">—</span></div>`;
+      }
+    });
+  </script>
 </body>
 </html>

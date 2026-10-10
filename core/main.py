@@ -13,6 +13,14 @@ from core.config import WEB_DIR, settings
 from core.crypto import SecretBox
 from core.db import Database
 from core.llm import LLMService
+from core.vitrine_auth import (
+    ACCESS_OPTIONS,
+    export_users_payload,
+    hash_password,
+    normalize_access,
+    public_user_row,
+    write_users_json,
+)
 from modules import load_modules
 from modules.base import BaseModule, ToolSpec
 from modules.cash_journal.parser import is_parts_attach_line
@@ -790,6 +798,113 @@ async def chat(body: ChatRequest) -> dict[str, Any]:
         "cash_journals": result.get("cash_journals") or [],
         "tool_traces": result.get("tool_traces") or [],
     }
+
+
+class VitrineUserCreate(BaseModel):
+    login: str = Field(min_length=2, max_length=64)
+    password: str = Field(min_length=4, max_length=128)
+    access: list[str] = Field(default_factory=list)
+    enabled: bool = True
+
+
+class VitrineUserUpdate(BaseModel):
+    login: str | None = Field(default=None, min_length=2, max_length=64)
+    password: str | None = Field(default=None, min_length=4, max_length=128)
+    access: list[str] | None = None
+    enabled: bool | None = None
+
+
+async def _export_vitrine_users_file() -> dict[str, Any]:
+    rows = await db.vitrine_list_users()
+    payload = export_users_payload(rows)
+    path = write_users_json(payload)
+    return {
+        "ok": True,
+        "path": str(path),
+        "users": len(payload["users"]),
+        "exported_at": payload["exported_at"],
+    }
+
+
+@app.get("/api/vitrine/access-options")
+async def vitrine_access_options() -> dict[str, Any]:
+    return {"ok": True, "options": ACCESS_OPTIONS}
+
+
+@app.get("/api/vitrine/users")
+async def vitrine_users_list() -> dict[str, Any]:
+    rows = await db.vitrine_list_users()
+    return {"ok": True, "users": [public_user_row(r) for r in rows]}
+
+
+@app.post("/api/vitrine/users/export")
+async def vitrine_users_export() -> dict[str, Any]:
+    return await _export_vitrine_users_file()
+
+
+@app.post("/api/vitrine/users")
+async def vitrine_users_create(body: VitrineUserCreate) -> dict[str, Any]:
+    login = body.login.strip()
+    if not login:
+        raise HTTPException(400, "Укажите логин")
+    existing = await db.vitrine_get_user_by_login(login)
+    if existing:
+        raise HTTPException(400, f"Логин «{login}» уже занят")
+    try:
+        salt, pw_hash = hash_password(body.password)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    access = normalize_access(body.access)
+    row = await db.vitrine_create_user(
+        {
+            "login": login,
+            "salt": salt,
+            "password_hash": pw_hash,
+            "access_json": json.dumps(access, ensure_ascii=False),
+            "enabled": 1 if body.enabled else 0,
+        }
+    )
+    exp = await _export_vitrine_users_file()
+    return {"ok": True, "user": public_user_row(row), "export": exp}
+
+
+@app.put("/api/vitrine/users/{user_id}")
+async def vitrine_users_update(user_id: int, body: VitrineUserUpdate) -> dict[str, Any]:
+    current = await db.vitrine_get_user(user_id)
+    if not current:
+        raise HTTPException(404, "Пользователь не найден")
+    fields: dict[str, Any] = {}
+    if body.login is not None:
+        login = body.login.strip()
+        if not login:
+            raise HTTPException(400, "Укажите логин")
+        other = await db.vitrine_get_user_by_login(login)
+        if other and int(other["id"]) != int(user_id):
+            raise HTTPException(400, f"Логин «{login}» уже занят")
+        fields["login"] = login
+    if body.password:
+        try:
+            salt, pw_hash = hash_password(body.password)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        fields["salt"] = salt
+        fields["password_hash"] = pw_hash
+    if body.access is not None:
+        fields["access_json"] = json.dumps(normalize_access(body.access), ensure_ascii=False)
+    if body.enabled is not None:
+        fields["enabled"] = 1 if body.enabled else 0
+    row = await db.vitrine_update_user(user_id, fields)
+    exp = await _export_vitrine_users_file()
+    return {"ok": True, "user": public_user_row(row or current), "export": exp}
+
+
+@app.delete("/api/vitrine/users/{user_id}")
+async def vitrine_users_delete(user_id: int) -> dict[str, Any]:
+    ok = await db.vitrine_delete_user(user_id)
+    if not ok:
+        raise HTTPException(404, "Пользователь не найден")
+    exp = await _export_vitrine_users_file()
+    return {"ok": True, "export": exp}
 
 
 def create_app() -> FastAPI:

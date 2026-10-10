@@ -7,10 +7,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261010-debt-daily2" />
-  <link rel="stylesheet" href="./styles.css?v=20261010-debt-daily2" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261010-nav-auth1" />
+  <link rel="stylesheet" href="./styles.css?v=20261010-nav-auth1" />
+  <script src="../shared/auth.js?v=20261010-nav-auth1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261010-debt-daily2" defer></script>
+  <script src="./app.js?v=20261010-nav-auth1" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const auth = window.JarvisVitrineAuth;
+      if (!auth?.requireAuth("processes")) return;
+      const s = auth.session();
+      const params = new URLSearchParams(location.search);
+      const want = params.get("tab");
+      let active = "processes";
+      if (want === "debt" && auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
+      else if (auth.hasAccess(s.access, "processes.upsell")) active = "processes.upsell";
+      else if (auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
+      auth.applyShellNav(active);
+      auth.filterProcessesTabs(s.access);
+      if (want === "debt" || want === "upsell") {
+        const btn = document.querySelector(`.mod-tab[data-tab="${want}"]`);
+        if (btn && !btn.hidden) btn.click();
+      }
+    });
+  </script>
 </head>
 <body>
   <div class="shell">
@@ -19,18 +39,15 @@
         <span class="shell-mark">J</span>
         <span class="shell-brand-text">
           <span class="shell-brand-name">Jarvis</span>
-          <span class="shell-brand-sub">публичная витрина</span>
+          <span class="shell-brand-sub">витрина</span>
         </span>
       </a>
-      <div class="shell-mods">
-        <a class="shell-mod" href="../quality/">Качество</a>
-        <a class="shell-mod is-active" href="./">Выработка</a>
-      </div>
+      <div class="shell-mods"></div>
     </nav>
 
     <header class="mod-top">
       <div>
-        <h1>Выработка</h1>
+        <h1>Процессы</h1>
         <p class="mod-sub">Досогласования и дебиторка · снимок из локального Jarvis</p>
       </div>
       <div class="mod-meta" id="export-meta">Загрузка data.json…</div>

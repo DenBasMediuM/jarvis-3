@@ -25,7 +25,8 @@ body {
     linear-gradient(160deg, var(--bg0), var(--bg1));
 }
 body:has(.app--quality),
-body:has(.app--vyrobotka) {
+body:has(.app--vyrobotka),
+body:has(.app--processes) {
   overflow: hidden;
 }
 
@@ -35,30 +36,36 @@ body:has(.app--vyrobotka) {
   min-height: 100vh;
 }
 .app.app--quality,
-.app.app--vyrobotka {
+.app.app--vyrobotka,
+.app.app--processes {
   grid-template-columns: 1fr;
   height: 100vh;
   min-height: 0;
   overflow: hidden;
 }
 .app.app--quality .sidebar,
-.app.app--vyrobotka .sidebar {
+.app.app--vyrobotka .sidebar,
+.app.app--processes .sidebar {
   display: none;
 }
 .app.app--quality .main,
-.app.app--vyrobotka .main {
+.app.app--vyrobotka .main,
+.app.app--processes .main {
   height: 100%;
   min-height: 0;
   overflow: hidden;
   padding: 16px 18px 12px;
 }
 #view-quality.active,
+#view-processes.active,
 #view-vyrobotka.active {
   min-height: 0;
   overflow: hidden;
 }
 #view-quality .quality-topbar,
 #view-quality .quality-tabs,
+#view-processes .quality-topbar,
+#view-processes .quality-tabs,
 #view-vyrobotka .quality-topbar,
 #view-vyrobotka .quality-tabs {
   flex: 0 0 auto;
@@ -78,6 +85,7 @@ body:has(.app--vyrobotka) {
 #view-quality .quality-tab-lead {
   flex: 0 0 auto;
 }
+#view-processes .vyrobotka-sections,
 #view-vyrobotka .vyrobotka-sections {
   flex: 1 1 auto;
   min-height: 0;
@@ -109,6 +117,34 @@ body:has(.app--vyrobotka) {
 .brand-sub { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
 .nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-group { display: flex; flex-direction: column; gap: 4px; }
+.nav-sub {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 0 10px;
+  padding: 0 0 0 8px;
+  border-left: 2px solid rgba(28, 36, 48, 0.1);
+}
+.nav-group.is-open .nav-sub,
+.nav-group:has(.nav-btn.active) .nav-sub { display: flex; }
+.nav-sub-btn {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9em;
+  color: #5d6b7c;
+}
+.nav-sub-btn:hover { background: rgba(255,255,255,0.55); color: inherit; }
+.nav-sub-btn.is-active {
+  background: rgba(15, 110, 86, 0.12);
+  color: #0f6e56;
+  font-weight: 600;
+}
 .nav-btn {
   border: 1px solid transparent;
   background: transparent;
@@ -752,10 +788,12 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   display: block;
 }
 #view-quality.is-panel-collapsed .quality-panel-body,
+#view-processes.is-panel-collapsed .quality-panel-body,
 #view-vyrobotka.is-panel-collapsed .quality-panel-body {
   display: none;
 }
 #view-quality.is-panel-collapsed .quality-topbar,
+#view-processes.is-panel-collapsed .quality-topbar,
 #view-vyrobotka.is-panel-collapsed .quality-topbar {
   margin-bottom: 8px;
 }
@@ -2356,4 +2394,72 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
   }
   .nav { flex-direction: row; flex-wrap: wrap; }
   .sidebar-note { margin-top: 0; }
+}
+
+.finance-empty { padding: 24px 0; }
+
+.vitrine-users-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .vitrine-users-layout { grid-template-columns: 1fr; }
+}
+.vitrine-user-form .vitrine-user-hint {
+  margin: -4px 0 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.vitrine-access-fieldset {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px 12px;
+  margin: 0 0 12px;
+}
+.vitrine-access-fieldset legend {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.vitrine-access-options { display: flex; flex-direction: column; gap: 12px; }
+.vitrine-access-group-title {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vitrine-access-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  margin: 3px 0;
+  cursor: pointer;
+}
+.vitrine-enabled-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.vitrine-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.vitrine-users-list-title {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+.vitrine-access-cell { font-size: 0.85rem; color: var(--muted); }
+.vitrine-users-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  white-space: nowrap;
 }

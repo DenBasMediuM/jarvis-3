@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход · Jarvis Витрина</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./shared/styles.css?v=20261010-nav-auth1" />
+  <script src="./shared/auth.js?v=20261010-nav-auth1" defer></script>
+</head>
+<body class="login-page">
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="shell-mark">J</span>
+        <div>
+          <div class="shell-brand-name">Jarvis</div>
+          <div class="shell-brand-sub">вход на витрину</div>
+        </div>
+      </div>
+      <h1>Вход</h1>
+      <p class="login-lead" id="login-lead">Укажите логин и пароль, выданные в админке Jarvis.</p>
+      <form id="login-form" class="login-form">
+        <label>
+          Логин
+          <input name="login" type="text" autocomplete="username" required autofocus />
+        </label>
+        <label>
+          Пароль
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="login-submit">Войти</button>
+        <p class="login-status" id="login-status" hidden></p>
+      </form>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(location.search);
+      const lead = document.getElementById("login-lead");
+      const status = document.getElementById("login-status");
+      const form = document.getElementById("login-form");
+      if (params.get("denied") && lead) {
+        lead.textContent = "Нет доступа к этому разделу. Войдите под другой учётной записью.";
+      }
+      const sess = window.JarvisVitrineAuth?.session?.();
+      if (sess?.login && !params.get("denied")) {
+        location.replace(params.get("next") || "./");
+        return;
+      }
+      form?.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const login = form.login.value.trim();
+        const password = form.password.value;
+        status.hidden = false;
+        status.textContent = "Проверка…";
+        status.className = "login-status";
+        try {
+          await window.JarvisVitrineAuth.login(login, password);
+          const next = params.get("next") || "./";
+          location.replace(next.startsWith("/") || next.startsWith("./") || next.startsWith("../") ? next : "./");
+        } catch (err) {
+          status.textContent = err.message || String(err);
+          status.className = "login-status is-error";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

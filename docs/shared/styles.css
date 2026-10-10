@@ -117,6 +117,130 @@ html, body {
   box-shadow: 0 1px 4px rgba(28, 36, 48, 0.06);
 }
 
+.shell-mod-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shell-submods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-left: 6px;
+}
+.shell-submod {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.shell-submod:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--line);
+}
+.shell-submod.is-active {
+  color: var(--accent);
+  background: #fff;
+  border-color: rgba(15, 110, 86, 0.22);
+}
+.shell-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+.shell-user-name {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+.shell-logout {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+}
+.shell-logout:hover { color: var(--ink); }
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+.login-shell { width: min(420px, 100%); }
+.login-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+  padding: 28px 24px 26px;
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.login-card h1 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 1.65rem;
+}
+.login-lead {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.login-form input {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.login-submit {
+  margin-top: 4px;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(145deg, #0f6e56, #1a8f6e);
+}
+.login-status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.login-status.is-error { color: #a12828; }
+
 /* —— Hub —— */
 .hub-hero {
   padding: 28px 8px 10px;

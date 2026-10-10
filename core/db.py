@@ -171,6 +171,17 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_daily (
   source TEXT,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS vitrine_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  login TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  salt TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  access_json TEXT NOT NULL DEFAULT '[]',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -817,3 +828,78 @@ class Database:
         )
         rows = await cur.fetchall()
         return [dict(r) for r in rows]
+
+    async def vitrine_list_users(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            "SELECT * FROM vitrine_users ORDER BY login COLLATE NOCASE ASC"
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def vitrine_get_user(self, user_id: int) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM vitrine_users WHERE id = ?", (int(user_id),)
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def vitrine_get_user_by_login(self, login: str) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM vitrine_users WHERE login = ? COLLATE NOCASE",
+            (str(login or "").strip(),),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def vitrine_create_user(self, row: dict[str, Any]) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).isoformat()
+        cur = await self.conn.execute(
+            """
+            INSERT INTO vitrine_users(login, salt, password_hash, access_json, enabled, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                row["login"],
+                row["salt"],
+                row["password_hash"],
+                row.get("access_json") or "[]",
+                int(row.get("enabled", 1)),
+                now,
+                now,
+            ),
+        )
+        await self.conn.commit()
+        created = await self.vitrine_get_user(int(cur.lastrowid))
+        assert created is not None
+        return created
+
+    async def vitrine_update_user(self, user_id: int, fields: dict[str, Any]) -> dict[str, Any] | None:
+        current = await self.vitrine_get_user(user_id)
+        if not current:
+            return None
+        data = {**current, **fields, "updated_at": datetime.now(timezone.utc).isoformat()}
+        await self.conn.execute(
+            """
+            UPDATE vitrine_users SET
+              login = ?, salt = ?, password_hash = ?, access_json = ?,
+              enabled = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                data["login"],
+                data["salt"],
+                data["password_hash"],
+                data.get("access_json") or "[]",
+                int(data.get("enabled", 1)),
+                data["updated_at"],
+                int(user_id),
+            ),
+        )
+        await self.conn.commit()
+        return await self.vitrine_get_user(user_id)
+
+    async def vitrine_delete_user(self, user_id: int) -> bool:
+        cur = await self.conn.execute(
+            "DELETE FROM vitrine_users WHERE id = ?", (int(user_id),)
+        )
+        await self.conn.commit()
+        return cur.rowcount > 0

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261010-debt-daily1" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261010-nav-auth1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -23,7 +23,15 @@
       <nav class="nav">
         <button class="nav-btn active" data-view="chat">Чат</button>
         <button class="nav-btn" data-view="quality">Качество</button>
-        <button class="nav-btn" data-view="vyrobotka">Выработка</button>
+        <div class="nav-group" data-nav-group="processes">
+          <button class="nav-btn" data-view="processes" type="button">Процессы</button>
+          <div class="nav-sub">
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="upsell">Досогласования</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="debt">Дебиторка</button>
+          </div>
+        </div>
+        <button class="nav-btn" data-view="finance">Финансы</button>
+        <button class="nav-btn" data-view="vitrine-users">Пользователи витрины</button>
         <button class="nav-btn" data-view="modules">Модули</button>
         <button class="nav-btn" data-view="settings">ИИ</button>
       </nav>
@@ -213,11 +221,11 @@
         </div>
       </section>
 
-      <section id="view-vyrobotka" class="view">
+      <section id="view-processes" class="view">
         <div class="quality-topbar">
           <div class="quality-topbar-head">
             <button type="button" id="vyrobotka-back-btn" class="quality-back-btn" title="К меню">← Меню</button>
-            <h1 class="quality-topbar-title">Выработка</h1>
+            <h1 class="quality-topbar-title">Процессы</h1>
             <button
               type="button"
               id="vyrobotka-panel-toggle"
@@ -230,8 +238,8 @@
           <div id="vyrobotka-panel-body" class="quality-panel-body">
             <header class="view-header quality-header">
               <p>
-                Недельные листы из Google Таблицы. Сейчас — динамика досогласований
-                (dosoglasi, «Затраты», «Прибль…» и «Сводка» не участвуют).
+                Операционные процессы: досогласования по недельным листам и дебиторка
+                (сверка с CRM). Листы dosoglasi, «Затраты», «Прибль…» и «Сводка» не участвуют.
               </p>
             </header>
             <div class="quality-toolbar">
@@ -241,6 +249,10 @@
             </div>
           </div>
         </div>
+        <nav class="quality-tabs" role="tablist" aria-label="Процессы">
+          <button type="button" class="quality-tab is-active" data-processes-tab="upsell" role="tab" aria-selected="true">Досогласования</button>
+          <button type="button" class="quality-tab" data-processes-tab="debt" role="tab" aria-selected="false">Дебиторка</button>
+        </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
             Нет данных. Нажмите «Обновить из таблицы».
@@ -381,6 +393,72 @@
         </div>
       </section>
 
+      <section id="view-finance" class="view">
+        <header class="view-header">
+          <h1>Финансы</h1>
+          <p>Раздел в подготовке — сюда позже попадут финансовые отчёты и касса.</p>
+        </header>
+        <div class="finance-empty">
+          <p class="quality-empty">Пока пусто. Блок зарезервирован под будущие модули.</p>
+        </div>
+      </section>
+
+      <section id="view-vitrine-users" class="view">
+        <header class="view-header">
+          <h1>Пользователи витрины</h1>
+          <p>
+            Логины для GitHub Pages. Доступ к блокам и подблокам. После сохранения
+            автоматически пишется <code>docs/auth/users.json</code> — сделайте git push.
+          </p>
+        </header>
+        <div class="vitrine-users-layout">
+          <form id="vitrine-user-form" class="form-card vitrine-user-form">
+            <input type="hidden" name="id" value="" />
+            <label>
+              Логин
+              <input name="login" type="text" autocomplete="off" required minlength="2" placeholder="ivanov" />
+            </label>
+            <label>
+              Пароль
+              <input name="password" type="password" autocomplete="new-password" minlength="4" placeholder="мин. 4 символа" />
+            </label>
+            <p class="vitrine-user-hint" id="vitrine-user-pass-hint">При создании пароль обязателен. При правке — оставьте пустым, чтобы не менять.</p>
+            <fieldset class="vitrine-access-fieldset">
+              <legend>Доступ</legend>
+              <div id="vitrine-access-options" class="vitrine-access-options"></div>
+            </fieldset>
+            <label class="vitrine-enabled-label">
+              <input name="enabled" type="checkbox" checked />
+              Активен
+            </label>
+            <div class="vitrine-user-actions">
+              <button type="submit" class="cj-import-open">Сохранить</button>
+              <button type="button" id="vitrine-user-reset" class="cj-import-btn is-muted">Сброс</button>
+              <button type="button" id="vitrine-users-export-btn" class="cj-import-btn is-muted">Экспорт в Pages</button>
+            </div>
+            <p id="vitrine-users-status" class="status"></p>
+          </form>
+          <div class="vitrine-users-list-card form-card">
+            <h2 class="vitrine-users-list-title">Список</h2>
+            <div class="table-wrap">
+              <table class="quality-table" id="vitrine-users-table">
+                <thead>
+                  <tr>
+                    <th>Логин</th>
+                    <th>Доступ</th>
+                    <th>Статус</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="vitrine-users-tbody">
+                  <tr><td colspan="4" class="quality-empty">Загрузка…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="view-modules" class="view">
         <header class="view-header">
           <h1>Модули</h1>
@@ -413,6 +491,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261010-debt-daily2"></script>
+  <script src="/static/app.js?v=20261010-nav-auth1"></script>
 </body>
 </html>
