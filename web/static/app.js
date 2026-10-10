@@ -62,6 +62,12 @@ function showView(view, opts = {}) {
   if (resolved === "vitrine-users") {
     loadVitrineUsers();
   }
+  if (resolved === "updates") {
+    loadUpdatesStatus();
+    startUpdatesPoll();
+  } else {
+    stopUpdatesPoll();
+  }
 }
 
 function setProcessesTab(tab) {
@@ -5060,6 +5066,190 @@ $("#vitrine-users-export-btn")?.addEventListener("click", async () => {
     if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
   }
 });
+
+/* —— Страница «Обновления» —— */
+let updatesPollTimer = null;
+let updatesBusy = false;
+
+function stopUpdatesPoll() {
+  if (updatesPollTimer) {
+    clearInterval(updatesPollTimer);
+    updatesPollTimer = null;
+  }
+}
+
+function startUpdatesPoll() {
+  stopUpdatesPoll();
+  updatesPollTimer = setInterval(() => {
+    if ($("#view-updates")?.classList.contains("active")) loadUpdatesStatus({ quiet: true });
+  }, 4000);
+}
+
+function fmtUpdatesWhen(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("ru-RU");
+  } catch {
+    return String(iso).slice(0, 19).replace("T", " ");
+  }
+}
+
+function updatesStatusChip(status) {
+  const st = String(status || "idle");
+  if (st === "running") return { cls: "is-run", label: "идёт" };
+  if (st === "error") return { cls: "is-err", label: "ошибка" };
+  return { cls: "is-idle", label: "готово" };
+}
+
+function renderUpdatesGrid(modules) {
+  const grid = $("#updates-grid");
+  if (!grid) return;
+  if (!modules?.length) {
+    grid.innerHTML = `<p class="quality-empty">Нет модулей в сводке.</p>`;
+    return;
+  }
+  grid.innerHTML = modules
+    .map((m) => {
+      const chip = updatesStatusChip(m.status);
+      const pages = m.pages || {};
+      const snap = m.snapshot;
+      const prog = m.progress;
+      const progLine =
+        m.status === "running" && prog && prog.total
+          ? `<div class="updates-meta">Прогресс: ${prog.done}/${prog.total}</div>`
+          : "";
+      const snapLine = snap
+        ? `<div class="updates-meta">Снимок дебиторки ${escapeHtml(snap.day || "—")}: CRM ${fmtMoneyUa(
+            snap.crm_debt_sum,
+          )} · отчёты ${fmtMoneyUa(snap.sheets_debt_sum)}</div>`
+        : "";
+      const pagesLine = pages.exists
+        ? `<div class="updates-meta">Pages: <code>${escapeHtml(pages.path)}</code> · ${fmtUpdatesWhen(
+            pages.exported_at,
+          )}${
+            pages.users_count != null ? ` · ${pages.users_count} польз.` : ""
+          }</div>`
+        : `<div class="updates-meta">Pages: файла ещё нет</div>`;
+      const actions = (m.actions || [])
+        .map((a) => {
+          const cls = a.kind === "primary" ? "cj-import-open" : "cj-import-btn is-muted";
+          const disabled = updatesBusy || m.status === "running" ? " disabled" : "";
+          return `<button type="button" class="${cls}" data-updates-action="${escapeHtml(
+            a.id,
+          )}" data-module="${escapeHtml(m.id)}"${disabled}>${escapeHtml(a.label)}</button>`;
+        })
+        .join("");
+      return `<article class="updates-card" data-module-id="${escapeHtml(m.id)}">
+        <div class="updates-card-top">
+          <span class="updates-block">${escapeHtml(m.block || "")}</span>
+          <span class="updates-chip ${chip.cls}">${chip.label}</span>
+        </div>
+        <h2>${escapeHtml(m.title)}</h2>
+        <p class="updates-desc">${escapeHtml(m.description || "")}</p>
+        <div class="updates-meta"><strong>Обновлено:</strong> ${fmtUpdatesWhen(
+          m.finished_at || pages.exported_at,
+        )}</div>
+        ${m.message ? `<div class="updates-msg">${escapeHtml(m.message)}</div>` : ""}
+        ${progLine}
+        ${snapLine}
+        ${pagesLine}
+        <div class="updates-actions">${actions}</div>
+      </article>`;
+    })
+    .join("");
+
+  grid.querySelectorAll("[data-updates-action]").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      runUpdatesAction(btn.getAttribute("data-updates-action")),
+    );
+  });
+}
+
+async function loadUpdatesStatus({ quiet = false } = {}) {
+  const statusEl = $("#updates-status");
+  const grid = $("#updates-grid");
+  try {
+    const res = await fetch("/api/updates/status");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderUpdatesGrid(data.modules || []);
+    if (!quiet && statusEl) statusEl.textContent = "";
+    const anyRunning = (data.modules || []).some((m) => m.status === "running");
+    if (anyRunning) startUpdatesPoll();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+    if (grid && !quiet) {
+      grid.innerHTML = `<p class="quality-empty">Не удалось загрузить статус.</p>`;
+    }
+  }
+}
+
+async function runUpdatesAction(actionId) {
+  const statusEl = $("#updates-status");
+  if (!actionId || updatesBusy) return;
+  updatesBusy = true;
+  if (statusEl) statusEl.textContent = "Запуск…";
+  $("#updates-grid")
+    ?.querySelectorAll("[data-updates-action]")
+    .forEach((b) => {
+      b.disabled = true;
+    });
+  try {
+    let res;
+    if (actionId === "quality-sync") {
+      res = await fetch("/api/quality/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: false }),
+      });
+    } else if (actionId === "quality-export") {
+      res = await fetch("/api/quality/export-pages", { method: "POST" });
+    } else if (actionId === "vyrobotka-sync") {
+      res = await fetch("/api/vyrobotka/sync", { method: "POST" });
+    } else if (actionId === "vyrobotka-export") {
+      res = await fetch("/api/vyrobotka/export-pages", { method: "POST" });
+    } else if (actionId === "debt-verify-new") {
+      res = await fetch("/api/vyrobotka/debt-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "new" }),
+      });
+    } else if (actionId === "debt-verify-all") {
+      if (!confirm("Перепроверить все недоплаченные квитанции в Gincore? Это может занять несколько минут.")) {
+        updatesBusy = false;
+        await loadUpdatesStatus();
+        return;
+      }
+      res = await fetch("/api/vyrobotka/debt-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "all" }),
+      });
+    } else if (actionId === "users-export") {
+      res = await fetch("/api/vitrine/users/export", { method: "POST" });
+    } else {
+      throw new Error(`Неизвестное действие: ${actionId}`);
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      if (actionId.endsWith("export") || actionId === "users-export") {
+        statusEl.textContent = `Экспорт готов → ${data.path || "docs/…"} (сделайте git push)`;
+      } else {
+        statusEl.textContent = data.sync?.message || data.verify?.message || "Запущено";
+      }
+    }
+    startUpdatesPoll();
+    await loadUpdatesStatus({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    updatesBusy = false;
+    await loadUpdatesStatus({ quiet: true });
+  }
+}
+
+$("#updates-refresh-btn")?.addEventListener("click", () => loadUpdatesStatus());
 
 initQualityPanelToggle();
 initQualityTabs();

@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from core.config import WEB_DIR, settings
+from core.config import ROOT, WEB_DIR, settings
 from core.crypto import SecretBox
 from core.db import Database
 from core.llm import LLMService
@@ -824,6 +824,117 @@ async def _export_vitrine_users_file() -> dict[str, Any]:
         "users": len(payload["users"]),
         "exported_at": payload["exported_at"],
     }
+
+
+def _read_pages_export_meta(rel: str) -> dict[str, Any]:
+    path = ROOT / rel
+    meta: dict[str, Any] = {
+        "path": rel,
+        "exists": path.is_file(),
+        "exported_at": None,
+        "mtime": None,
+    }
+    if not path.is_file():
+        return meta
+    try:
+        meta["mtime"] = path.stat().st_mtime
+    except OSError:
+        pass
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        meta["exported_at"] = data.get("exported_at")
+        if "counts" in data:
+            meta["counts"] = data.get("counts")
+        if "users" in data and isinstance(data["users"], list):
+            meta["users_count"] = len(data["users"])
+    except (OSError, json.JSONDecodeError):
+        pass
+    return meta
+
+
+@app.get("/api/updates/status")
+async def updates_status() -> dict[str, Any]:
+    """Сводка: когда обновлялись модули и снимки витрины."""
+    quality_sync = await db.quality_get_sync_state()
+    vyrobotka_sync = await db.vyrobotka_get_sync_state()
+    debt_verify = await db.vyrobotka_get_debt_verify_state()
+    debt_daily = await db.vyrobotka_list_debt_daily(limit=1)
+    last_daily = debt_daily[-1] if debt_daily else None
+    modules = [
+        {
+            "id": "quality",
+            "block": "Качество",
+            "title": "Качество (CRM)",
+            "description": "Рабочие заказы, KPI, динамика и анализ из Gincore.",
+            "status": quality_sync.get("status") or "idle",
+            "message": quality_sync.get("message"),
+            "started_at": quality_sync.get("started_at"),
+            "finished_at": quality_sync.get("finished_at"),
+            "actions": [
+                {"id": "quality-sync", "label": "Обновить из CRM", "kind": "primary"},
+                {"id": "quality-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/quality/data.json"),
+        },
+        {
+            "id": "processes-upsell",
+            "block": "Процессы",
+            "title": "Досогласования (таблица)",
+            "description": "Недельные листы Google Sheets → досогласования и отчёты мастеров.",
+            "status": vyrobotka_sync.get("status") or "idle",
+            "message": vyrobotka_sync.get("message"),
+            "started_at": vyrobotka_sync.get("started_at"),
+            "finished_at": vyrobotka_sync.get("finished_at"),
+            "actions": [
+                {"id": "vyrobotka-sync", "label": "Обновить из таблицы", "kind": "primary"},
+                {"id": "vyrobotka-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/vyrobotka/data.json"),
+        },
+        {
+            "id": "processes-debt",
+            "block": "Процессы",
+            "title": "Дебиторка (сверка)",
+            "description": "Сверка недоплат с Gincore и снимок общей дебиторки CRM / отчётов.",
+            "status": debt_verify.get("status") or "idle",
+            "message": debt_verify.get("message"),
+            "started_at": debt_verify.get("started_at"),
+            "finished_at": debt_verify.get("finished_at"),
+            "progress": {
+                "done": int(debt_verify.get("done") or 0),
+                "total": int(debt_verify.get("total") or 0),
+            },
+            "snapshot": {
+                "day": (last_daily or {}).get("day"),
+                "crm_debt_sum": (last_daily or {}).get("crm_debt_sum"),
+                "sheets_debt_sum": (last_daily or {}).get("sheets_debt_sum"),
+                "updated_at": (last_daily or {}).get("updated_at"),
+            }
+            if last_daily
+            else None,
+            "actions": [
+                {"id": "debt-verify-new", "label": "Сверить новые", "kind": "muted"},
+                {"id": "debt-verify-all", "label": "Перепроверить все", "kind": "primary"},
+                {"id": "vyrobotka-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/vyrobotka/data.json"),
+        },
+        {
+            "id": "vitrine-users",
+            "block": "Витрина",
+            "title": "Пользователи витрины",
+            "description": "Логины и доступы для GitHub Pages (docs/auth/users.json).",
+            "status": "idle",
+            "message": None,
+            "started_at": None,
+            "finished_at": _read_pages_export_meta("docs/auth/users.json").get("exported_at"),
+            "actions": [
+                {"id": "users-export", "label": "Экспорт в Pages", "kind": "primary"},
+            ],
+            "pages": _read_pages_export_meta("docs/auth/users.json"),
+        },
+    ]
+    return {"ok": True, "modules": modules}
 
 
 @app.get("/api/vitrine/access-options")
