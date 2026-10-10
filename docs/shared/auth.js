@@ -1,16 +1,24 @@
 /* Вход на витрину Pages: PBKDF2 по docs/auth/users.json */
 (function () {
   const SESSION_KEY = "jarvis.vitrine.session";
-  // auth.js лежит в shared/ → users.json в auth/
-  const usersUrlFromHere = (() => {
+  // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
+  const scriptBase = (() => {
     try {
       const script = document.currentScript;
-      if (script?.src) return new URL("../auth/users.json", script.src).href;
+      if (script?.src) return script.src;
     } catch {
       /* ignore */
     }
-    return "./auth/users.json";
+    const el = document.querySelector('script[src*="shared/auth.js"]');
+    return el?.src || "";
   })();
+  // auth.js лежит в shared/ → users.json в auth/, login.html рядом с docs/
+  const usersUrlFromHere = scriptBase
+    ? new URL("../auth/users.json", scriptBase).href
+    : "./auth/users.json";
+  const loginUrlFromHere = scriptBase
+    ? new URL("../login.html", scriptBase).href
+    : "./login.html";
 
   function session() {
     try {
@@ -96,25 +104,20 @@
   }
 
   function loginPath() {
-    // shared/auth.js → ../login.html
-    try {
-      const script = document.currentScript;
-      if (script?.src) return new URL("../login.html", script.src).href;
-    } catch {
-      /* ignore */
-    }
-    return "/login.html";
+    return loginUrlFromHere;
   }
 
   function requireAuth(need) {
     const s = session();
     if (!s?.login) {
       const next = encodeURIComponent(location.pathname + location.search + location.hash);
-      location.href = `${loginPath()}?next=${next}`;
+      const sep = loginPath().includes("?") ? "&" : "?";
+      location.href = `${loginPath()}${sep}next=${next}`;
       return null;
     }
     if (need && !hasAccess(s.access, need)) {
-      location.href = `${loginPath()}?denied=1`;
+      const sep = loginPath().includes("?") ? "&" : "?";
+      location.href = `${loginPath()}${sep}denied=1`;
       return null;
     }
     return s;
@@ -176,7 +179,7 @@
 
     document.getElementById("jarvis-vitrine-logout")?.addEventListener("click", () => {
       clearSession();
-      location.href = `${root}login.html`;
+      location.href = loginPath();
     });
   }
 
