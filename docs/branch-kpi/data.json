@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-10T10:51:25.357738+00:00",
+  "exported_at": "2026-10-11T07:20:57.523998+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -272,8 +272,8 @@
       "gross_profit": 50000.0,
       "net_profit": 6500.0,
       "expense": -43500.0,
-      "refusals": 25,
-      "return_rate": 0.4545
+      "refusals": 26,
+      "return_rate": 0.4727
     },
     {
       "year": 2026,
@@ -316,19 +316,19 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 88,
-      "return_rate": 0.3177
+      "refusals": 91,
+      "return_rate": 0.3285
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "karetn",
-      "acceptances": 64,
+      "acceptances": 68,
       "gross_profit": 103900.0,
       "net_profit": 31506.0,
       "expense": -72394.0,
-      "refusals": 5,
-      "return_rate": 0.0781
+      "refusals": 6,
+      "return_rate": 0.0882
     },
     {
       "year": 2026,
@@ -345,12 +345,12 @@
       "year": 2026,
       "month": 10,
       "branch_id": "seged",
-      "acceptances": 87,
+      "acceptances": 92,
       "gross_profit": 110520.0,
       "net_profit": 42147.0,
       "expense": -68373.0,
-      "refusals": 10,
-      "return_rate": 0.1149
+      "refusals": 12,
+      "return_rate": 0.1304
     }
   ],
   "charts": {
@@ -381,7 +381,7 @@
           261,
           263,
           270,
-          64
+          68
         ]
       },
       {
@@ -398,7 +398,7 @@
           229,
           255,
           277,
-          87
+          92
         ]
       },
       {
@@ -540,7 +540,7 @@
           36.78,
           39.16,
           33.7,
-          7.81
+          8.82
         ]
       },
       {
@@ -556,8 +556,8 @@
           36.28,
           30.13,
           33.33,
-          31.77,
-          11.49
+          32.85,
+          13.04
         ]
       },
       {
@@ -572,7 +572,7 @@
           45.28,
           63.24,
           37.5,
-          45.45,
+          47.27,
           34.48,
           17.65
         ]
