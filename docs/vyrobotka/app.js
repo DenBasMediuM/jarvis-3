@@ -207,9 +207,27 @@ function renderUpsell(sheets) {
       data: {
         labels,
         datasets: [
-          { ...line, label: "Ср. досогласование", data: sheets.map((s) => s.avg_upsell), borderColor: "#0f6e56" },
-          { ...line, label: "Σ досогласований", data: sheets.map((s) => s.upsell_sum), borderColor: "#c45c26" },
-          { ...line, label: "Σ в отчёте", data: sheets.map((s) => s.report_sum), borderColor: "#1a5f8a" },
+          {
+            ...line,
+            label: "Ср. досогласование",
+            data: sheets.map((s) => s.avg_upsell),
+            borderColor: "#0f6e56",
+            yAxisID: "yAvg",
+          },
+          {
+            ...line,
+            label: "Σ досогласований",
+            data: sheets.map((s) => s.upsell_sum),
+            borderColor: "#c45c26",
+            yAxisID: "y",
+          },
+          {
+            ...line,
+            label: "Σ в отчёте",
+            data: sheets.map((s) => s.report_sum),
+            borderColor: "#1a5f8a",
+            yAxisID: "y",
+          },
         ],
       },
       options: {
@@ -218,8 +236,17 @@ function renderUpsell(sheets) {
           ...base.scales,
           y: {
             beginAtZero: true,
+            position: "left",
+            title: { display: true, text: "Σ", color: "#5d6b7c", font: { size: 11 } },
             ticks: { callback: (v) => fmtMoney(v), color: "#5d6b7c", font: { size: 10 } },
             grid: { color: "rgba(28,36,48,0.07)" },
+          },
+          yAvg: {
+            beginAtZero: true,
+            position: "right",
+            title: { display: true, text: "Ср.", color: "#0f6e56", font: { size: 11 } },
+            grid: { drawOnChartArea: false },
+            ticks: { callback: (v) => fmtMoney(v), color: "#0f6e56", font: { size: 10 } },
           },
         },
       },
