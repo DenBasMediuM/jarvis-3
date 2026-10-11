@@ -1397,6 +1397,10 @@ def build_quality_analysis(
                         narrative.append(f"{title}: +{dlt:.1f} к {prev_day}")
                     elif dlt <= -2:
                         narrative.append(f"{title}: {dlt:.1f} к {prev_day}")
+            if not narrative and deltas:
+                narrative.append(
+                    f"К снимку {prev_day} заметных сдвигов нет — изменения в пределах шума"
+                )
         else:
             narrative.append(
                 f"В динамике пока одна точка ({curr_day}) — тренд появится после следующего дня обновления"

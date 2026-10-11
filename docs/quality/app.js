@@ -989,6 +989,23 @@ function sevLabel(s) {
   return ({ critical: "крит.", high: "высок.", medium: "средн." }[s] || s || "—");
 }
 
+function fmtAnalysisDelta(key, v) {
+  if (v == null || Number.isNaN(Number(v))) {
+    return `<span class="delta-chip is-flat">—</span>`;
+  }
+  const n = Number(v);
+  const isDays = String(key).includes("days");
+  const sign = n > 0 ? "+" : "";
+  const unit = isDays ? " дн" : "";
+  let tone = "is-flat";
+  if (isDays) {
+    if (n <= -1) tone = "is-up";
+    else if (n >= 1) tone = "is-down";
+  } else if (n >= 2) tone = "is-up";
+  else if (n <= -2) tone = "is-down";
+  return `<span class="delta-chip ${tone}">${sign}${n.toFixed(1)}${unit}</span>`;
+}
+
 function renderAnalysis() {
   const a = DATA?.analysis;
   const empty = $("#analysis-empty");
@@ -1062,8 +1079,36 @@ function renderAnalysis() {
       </div>
     </div>
     <div class="card">
-      <h3>Динамика</h3>
-      <ul>${(dyn.narrative || []).map((n) => `<li>${esc(n)}</li>`).join("") || "<li>—</li>"}</ul>
+      <h3>Динамика к прошлому снимку</h3>
+      <p class="muted dynamics-compare">
+        ${
+          dyn.points
+            ? `Снимков: ${esc(dyn.points)}${
+                dyn.prev_day ? ` · Δ к ${esc(fmtDate(dyn.prev_day))}` : ""
+              }${dyn.curr_day ? ` · текущий ${esc(fmtDate(dyn.curr_day))}` : ""}`
+            : "Снимков динамики пока нет"
+        }
+      </p>
+      <div class="dynamics-deltas">
+        ${[
+          ["avg_order_kpi", "Средний KPI"],
+          ["avg_calls_kpi", "Звонки"],
+          ["avg_rework_kpi", "Дораб."],
+          ["avg_total_days", "Всего дн"],
+          ["avg_wait_master_days", "До мастера"],
+          ["avg_diag_days", "До диагн."],
+        ]
+          .map(([key, title]) => {
+            const raw = (dyn.deltas || {})[key];
+            const chip = fmtAnalysisDelta(key, raw);
+            return `<div class="delta-row"><span>${esc(title)}</span>${chip}</div>`;
+          })
+          .join("")}
+      </div>
+      <ul class="dynamics-narrative">${
+        (dyn.narrative || []).map((n) => `<li>${esc(n)}</li>`).join("") ||
+        "<li>Нет изменений для комментария</li>"
+      }</ul>
     </div>
     <div class="card"><h3>Зоны внимания</h3>${focus || '<p class="muted">—</p>'}</div>
     <div class="card">
