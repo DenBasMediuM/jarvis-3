@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-11T07:20:15.211643+00:00",
+  "exported_at": "2026-10-12T05:53:56.502777+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
-    "finished_at": "2026-10-11T07:10:13.844053+00:00",
-    "message": "Готово: 55 листов, 3170 квитанций. Таблица: Рассчет прибыльности июнь, pages 415 долгов",
+    "finished_at": "2026-10-12T05:39:44.113559+00:00",
+    "message": "Готово: 55 листов, 3170 квитанций. Таблица: Рассчет прибыльности июнь, pages 416 долгов",
     "status": "idle"
   },
   "upsell_sheets": [
@@ -1084,10 +1084,10 @@
       "sort_a": 24,
       "sort_b": 31,
       "tickets_count": 84,
-      "debt_sum": 1750.0,
-      "debt_count": 2,
-      "debt_ratio": 0.023809523809523808,
-      "avg_debt": 875.0
+      "debt_sum": 3750.0,
+      "debt_count": 3,
+      "debt_ratio": 0.03571428571428571,
+      "avg_debt": 1250.0
     },
     {
       "sheet_title": "202606(01-08)",
@@ -1871,12 +1871,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2250 ≠ CRM 6500; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 2250.0,
+            "crm": 6500.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 4250.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 6500.0,
-        "crm_paid": 2250.0,
-        "crm_debt": 4250.0,
+        "crm_paid": 6500.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123596"
       }
@@ -2347,12 +2358,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 6000 ≠ CRM 9500; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 6000.0,
+            "crm": 9500.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 3500.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 9500.0,
-        "crm_paid": 6000.0,
-        "crm_debt": 3500.0,
+        "crm_paid": 9500.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123724"
       }
@@ -3224,12 +3246,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Лажа",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 3000 ≠ CRM 5600; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 3000.0,
+            "crm": 5600.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2600.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 5600.0,
-        "crm_paid": 3000.0,
-        "crm_debt": 2600.0,
+        "crm_paid": 5600.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122489"
       }
@@ -3245,12 +3278,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2500 ≠ CRM 5100; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 2500.0,
+            "crm": 5100.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2600.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 5100.0,
-        "crm_paid": 2500.0,
-        "crm_debt": 2600.0,
+        "crm_paid": 5100.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124168"
       }
@@ -3467,12 +3511,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2500.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2500.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 2500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2500.0,
+        "crm_paid": 2500.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124065"
       }
@@ -3488,12 +3543,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2500.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2500.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 2500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2500.0,
+        "crm_paid": 2500.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124110"
       }
@@ -3652,12 +3718,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2000 ≠ CRM 4400; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 2000.0,
+            "crm": 4400.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2400.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 4400.0,
-        "crm_paid": 2000.0,
-        "crm_debt": 2400.0,
+        "crm_paid": 4400.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124251"
       }
@@ -4382,6 +4459,38 @@
       }
     },
     {
+      "sheet_title": "202605(24-31)",
+      "master": "Сатаулов",
+      "ticket": "121169",
+      "total_repair": 2000.0,
+      "paid": 0.0,
+      "debt": 2000.0,
+      "status": "Выдан",
+      "control": "#ERROR! ( Exceeded maximum execution time (line 0).)",
+      "arith_check": "Норм",
+      "verify": {
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
+        "crm_total": 2000.0,
+        "crm_paid": 2000.0,
+        "crm_debt": null,
+        "crm_status": "Выдан",
+        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121169"
+      }
+    },
+    {
       "sheet_title": "202606(01-08)",
       "master": "Левітана",
       "ticket": "121569",
@@ -4688,12 +4797,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 9000 ≠ CRM 11000; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 9000.0,
+            "crm": 11000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 11000.0,
-        "crm_paid": 9000.0,
-        "crm_debt": 2000.0,
+        "crm_paid": 11000.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124051"
       }
@@ -4709,9 +4829,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -4719,8 +4849,8 @@
           }
         },
         "crm_total": 2000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2000.0,
+        "crm_paid": 2000.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124247"
       }
@@ -4737,8 +4867,18 @@
       "arith_check": "Норм",
       "verify": {
         "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
+        "summary": "оплачено: таблица 0 ≠ CRM 1000; долг: таблица 2000 ≠ CRM 1000; статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": 1000.0,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Передан курьеру",
             "crm": "У курьера ГОТОВ",
@@ -4746,8 +4886,8 @@
           }
         },
         "crm_total": 2000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2000.0,
+        "crm_paid": 1000.0,
+        "crm_debt": 1000.0,
         "crm_status": "У курьера ГОТОВ",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124333"
       }
@@ -4763,12 +4903,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 2000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2000.0,
+        "crm_paid": 2000.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124438"
       }
@@ -5528,9 +5679,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1800; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1800.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 1800.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -5538,8 +5699,8 @@
           }
         },
         "crm_total": 1800.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1800.0,
+        "crm_paid": 1800.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124293"
       }
@@ -6162,12 +6323,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1700.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 1700.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 1700.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1700.0,
+        "crm_paid": 1700.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124365"
       }
@@ -6416,9 +6588,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 6800 ≠ CRM 8400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 6800.0,
+            "crm": 8400.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 1600.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -6426,8 +6608,8 @@
           }
         },
         "crm_total": 8400.0,
-        "crm_paid": 6800.0,
-        "crm_debt": 1600.0,
+        "crm_paid": 8400.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123426"
       }
@@ -7029,12 +7211,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1500; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1500.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 1500.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 1500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1500.0,
+        "crm_paid": 1500.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124263"
       }
@@ -7711,12 +7904,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1300; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1300.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 1300.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 1300.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1300.0,
+        "crm_paid": 1300.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124253"
       }
@@ -9530,8 +9734,8 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "стоимость: таблица 1900 ≠ CRM 2600; оплачено: таблица 1000 ≠ CRM 1900; долг: таблица 900 ≠ CRM 700; статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · стоимость: таблица 1900 ≠ CRM 2600; оплачено: таблица 1000 ≠ CRM 2600; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
           "total": {
             "sheet": 1900.0,
@@ -9540,12 +9744,12 @@
           },
           "paid": {
             "sheet": 1000.0,
-            "crm": 1900.0,
+            "crm": 2600.0,
             "label": "оплачено"
           },
           "debt": {
             "sheet": 900.0,
-            "crm": 700.0,
+            "crm": null,
             "label": "долг"
           },
           "status": {
@@ -9555,8 +9759,8 @@
           }
         },
         "crm_total": 2600.0,
-        "crm_paid": 1900.0,
-        "crm_debt": 700.0,
+        "crm_paid": 2600.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/117069"
       }
@@ -12220,9 +12424,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 750.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 750.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -12230,8 +12444,8 @@
           }
         },
         "crm_total": 750.0,
-        "crm_paid": 0.0,
-        "crm_debt": 750.0,
+        "crm_paid": 750.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124060"
       }
@@ -12247,9 +12461,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 750.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 750.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -12257,8 +12481,8 @@
           }
         },
         "crm_total": 750.0,
-        "crm_paid": 0.0,
-        "crm_debt": 750.0,
+        "crm_paid": 750.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124061"
       }
@@ -12274,12 +12498,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 750.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 750.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 750.0,
-        "crm_paid": 0.0,
-        "crm_debt": 750.0,
+        "crm_paid": 750.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124366"
       }
@@ -13942,9 +14177,19 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1200 ≠ CRM 1600; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
+          "paid": {
+            "sheet": 1200.0,
+            "crm": 1600.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 400.0,
+            "crm": null,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -13952,8 +14197,8 @@
           }
         },
         "crm_total": 1600.0,
-        "crm_paid": 1200.0,
-        "crm_debt": 400.0,
+        "crm_paid": 1600.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124241"
       }
@@ -13969,12 +14214,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1200 ≠ CRM 1600; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 1200.0,
+            "crm": 1600.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 400.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 1600.0,
-        "crm_paid": 1200.0,
-        "crm_debt": 400.0,
+        "crm_paid": 1600.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124241"
       }
@@ -14011,12 +14267,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 400.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 400.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 400.0,
-        "crm_paid": 0.0,
-        "crm_debt": 400.0,
+        "crm_paid": 400.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124457"
       }
@@ -14032,12 +14299,23 @@
       "control": "Лажа по оплате",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
+        "verdict": "norm",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 400.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 400.0,
+            "crm": null,
+            "label": "долг"
+          }
+        },
         "crm_total": 400.0,
-        "crm_paid": 0.0,
-        "crm_debt": 400.0,
+        "crm_paid": 400.0,
+        "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124512"
       }
@@ -14363,16 +14641,25 @@
       "sheets_tickets": 415,
       "source": "verify-all",
       "updated_at": "2026-10-11T07:19:37.217485+00:00"
+    },
+    {
+      "day": "2026-10-12",
+      "crm_debt_sum": 151350.0,
+      "sheets_debt_sum": 699567.0,
+      "crm_orders": 89,
+      "sheets_tickets": 416,
+      "source": "verify-all",
+      "updated_at": "2026-10-12T05:48:52.101173+00:00"
     }
   ],
   "verify_report": {
-    "total": 414,
-    "ok": 109,
-    "norm": 236,
-    "mismatch": 69,
+    "total": 415,
+    "ok": 93,
+    "norm": 260,
+    "mismatch": 62,
     "missing": 0,
     "error": 0,
-    "bad_count": 69,
+    "bad_count": 62,
     "top_issues": [
       {
         "ticket": "123261",
@@ -14580,28 +14867,23 @@
         }
       },
       {
-        "ticket": "124247",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
-        "sheet_debt": 2000.0,
-        "crm_debt": 2000.0,
-        "field_diffs": {
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        }
-      },
-      {
         "ticket": "124333",
         "sheet_title": "202610(01-08)",
         "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
+        "summary": "оплачено: таблица 0 ≠ CRM 1000; долг: таблица 2000 ≠ CRM 1000; статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
         "sheet_debt": 2000.0,
-        "crm_debt": 2000.0,
+        "crm_debt": 1000.0,
         "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 1000.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2000.0,
+            "crm": 1000.0,
+            "label": "долг"
+          },
           "status": {
             "sheet": "Передан курьеру",
             "crm": "У курьера ГОТОВ",
@@ -14635,21 +14917,6 @@
         }
       },
       {
-        "ticket": "124293",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
-        "sheet_debt": 1800.0,
-        "crm_debt": 1800.0,
-        "field_diffs": {
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        }
-      },
-      {
         "ticket": "124373",
         "sheet_title": "202610(01-08)",
         "verdict": "mismatch",
@@ -14660,21 +14927,6 @@
           "status": {
             "sheet": "Передан курьеру",
             "crm": "У курьера ГОТОВ",
-            "label": "статус"
-          }
-        }
-      },
-      {
-        "ticket": "123426",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "статус: «Готов» ≠ «Выдан»",
-        "sheet_debt": 1600.0,
-        "crm_debt": 1600.0,
-        "field_diffs": {
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
             "label": "статус"
           }
         }
@@ -14812,36 +15064,6 @@
         "sheet_debt": 1000.0,
         "crm_debt": 1000.0,
         "field_diffs": {
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        }
-      },
-      {
-        "ticket": "117069",
-        "sheet_title": "202608(01-08)",
-        "verdict": "mismatch",
-        "summary": "стоимость: таблица 1900 ≠ CRM 2600; оплачено: таблица 1000 ≠ CRM 1900; долг: таблица 900 ≠ CRM 700; статус: «Готов» ≠ «Выдан»",
-        "sheet_debt": 900.0,
-        "crm_debt": 700.0,
-        "field_diffs": {
-          "total": {
-            "sheet": 1900.0,
-            "crm": 2600.0,
-            "label": "стоимость"
-          },
-          "paid": {
-            "sheet": 1000.0,
-            "crm": 1900.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 900.0,
-            "crm": 700.0,
-            "label": "долг"
-          },
           "status": {
             "sheet": "Готов",
             "crm": "Выдан",
@@ -15103,14 +15325,74 @@
             "label": "статус"
           }
         }
+      },
+      {
+        "ticket": "116273",
+        "sheet_title": "20251009(09-15)",
+        "verdict": "mismatch",
+        "summary": "статус: «Готов» ≠ «Выдан без ремонта»",
+        "sheet_debt": 750.0,
+        "crm_debt": 750.0,
+        "field_diffs": {
+          "status": {
+            "sheet": "Готов",
+            "crm": "Выдан без ремонта",
+            "label": "статус"
+          }
+        }
+      },
+      {
+        "ticket": "116989",
+        "sheet_title": "20251116(09-15)",
+        "verdict": "mismatch",
+        "summary": "стоимость: таблица 750 ≠ CRM 0",
+        "sheet_debt": 750.0,
+        "crm_debt": 750.0,
+        "field_diffs": {
+          "total": {
+            "sheet": 750.0,
+            "crm": 0.0,
+            "label": "стоимость"
+          }
+        }
+      },
+      {
+        "ticket": "117086",
+        "sheet_title": "20251116(09-15)",
+        "verdict": "mismatch",
+        "summary": "стоимость: таблица 750 ≠ CRM 0",
+        "sheet_debt": 750.0,
+        "crm_debt": 750.0,
+        "field_diffs": {
+          "total": {
+            "sheet": 750.0,
+            "crm": 0.0,
+            "label": "стоимость"
+          }
+        }
+      },
+      {
+        "ticket": "117907",
+        "sheet_title": "202512(09-15)",
+        "verdict": "mismatch",
+        "summary": "статус: «Готов» ≠ «Выдан без ремонта»",
+        "sheet_debt": 750.0,
+        "crm_debt": 750.0,
+        "field_diffs": {
+          "status": {
+            "sheet": "Готов",
+            "crm": "Выдан без ремонта",
+            "label": "статус"
+          }
+        }
       }
     ]
   },
   "counts": {
     "upsell_sheets": 55,
     "debt_sheets": 55,
-    "debt_tickets": 415,
-    "verify_rows": 414,
-    "debt_daily": 2
+    "debt_tickets": 416,
+    "verify_rows": 415,
+    "debt_daily": 3
   }
 }
