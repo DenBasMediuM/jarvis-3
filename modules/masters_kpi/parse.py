@@ -395,13 +395,14 @@ def apply_ready_fallback(
     rows: list[dict[str, Any]],
     fallback: date | None,
     *,
-    max_undated: int = 25,
+    max_undated: int = 40,
     max_undated_ratio: float = 0.55,
 ) -> list[dict[str, Any]]:
-    """Подставить дату из имени файла только для коротких недельных отчётов.
+    """Подставить дату из имени файла для коротких недельных отчётов.
 
-    Для накопительных листов (сотни строк без даты) fallback не ставим —
-    иначе вся история сваливается в одну неделю.
+    Недельные листы Сатаулова часто без колонки даты (все строки undated) —
+    для них fallback нужен. Накопительные (много строк И высокая доля без даты)
+    не трогаем, иначе вся история сваливается в одну неделю.
     """
     if not fallback or not rows:
         return rows
@@ -409,7 +410,9 @@ def apply_ready_fallback(
     if not undated:
         return rows
     ratio = len(undated) / max(len(rows), 1)
-    if len(undated) > max_undated or ratio > max_undated_ratio:
+    # AND: короткий недельный отчёт (≤40 строк без даты) всегда ок,
+    # даже если 100% строк без даты.
+    if len(undated) > max_undated and ratio > max_undated_ratio:
         return rows
     day = fallback.isoformat()
     for r in undated:

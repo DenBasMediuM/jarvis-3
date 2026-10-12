@@ -34,3 +34,63 @@
 #table-upsell td:nth-child(1) {
   text-align: left;
 }
+
+.chart-box--tall { height: 320px; }
+
+.masters-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.masters-kpi-card {
+  border: 1px solid rgba(28, 36, 48, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.masters-kpi-card h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.masters-kpi-card .mk-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.masters-kpi-card .mk-sub {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: #5d6b7c;
+}
+
+.masters-kpi-card .mk-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.masters-kpi-card .mk-metrics span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5d6b7c;
+}
+
+.masters-kpi-card .mk-metrics strong {
+  font-size: 0.95rem;
+}
+
+.masters-kpi-card .mk-mini {
+  height: 72px;
+  position: relative;
+}

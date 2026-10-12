@@ -1,14 +1,14 @@
-/* global Chart, JarvisAuth */
+/* global Chart, JarvisVitrineAuth */
 (async function () {
-  const auth = window.JarvisAuth;
-  const gate = await auth.requireLogin({ need: "processes.masters_kpi" });
-  if (!gate.ok) return;
+  const auth = window.JarvisVitrineAuth;
+  if (!auth?.requireAuth("processes.masters_kpi")) return;
+  auth.applyShellNav("processes.masters_kpi");
 
   const el = (id) => document.getElementById(id);
   const money = (n) =>
     n == null || Number.isNaN(Number(n))
       ? "—"
-      : Number(n).toLocaleString("uk-UA", { maximumFractionDigits: 0 }) + " ₴";
+      : Number(n).toLocaleString("uk-UA", { maximumFractionDigits: 0 });
 
   let data;
   try {
@@ -27,7 +27,6 @@
     ? `Экспорт ${new Date(data.exported_at).toLocaleString("ru-RU")} · ${masters.length} мастеров`
     : `${masters.length} мастеров`;
 
-  const totalWork = masters.reduce((s, m) => s + (Number(m.work_sum) || 0), 0);
   el("kpis").innerHTML = masters
     .slice(0, 6)
     .map(
@@ -44,7 +43,10 @@
     maintainAspectRatio: false,
     interaction: { mode: "index", intersect: false },
     plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } },
-    scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } },
+    scales: {
+      x: { ticks: { font: { size: 10 } } },
+      y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+    },
   };
   const mkLine = (canvas, series, labels) => {
     if (!canvas || typeof Chart === "undefined") return;
@@ -76,8 +78,8 @@
         <dl>
           <div><dt>Σ работ</dt><dd>${money(m.work_sum)}</dd></div>
           <div><dt>Кв.</dt><dd>${m.tickets ?? "—"}</dd></div>
-          <div><dt>Часы</dt><dd>${m.hours ?? "—"}</dd></div>
-          <div><dt>КПД</dt><dd>${m.efficiency ?? "—"}</dd></div>
+          <div><dt>Ср. квит.</dt><dd>${m.avg_ticket == null ? "—" : money(m.avg_ticket)}</dd></div>
+          <div><dt>КПД</dt><dd>${m.efficiency == null ? "—" : Number(m.efficiency).toLocaleString("uk-UA")}</dd></div>
         </dl>
       </article>`,
     )

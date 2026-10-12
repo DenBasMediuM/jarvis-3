@@ -114,3 +114,13 @@ def test_fallback_ok_for_short_week_report():
     out = apply_ready_fallback(rows, date(2025, 9, 9))
     assert out[0]["ready_day"] == "2025-09-09"
     assert out[1]["ready_day"] == "2025-09-08"
+
+
+def test_fallback_ok_when_all_rows_undated_short_report():
+    """Как у Сатаулова: недельный лист без колонки дат, дата только в имени."""
+    rows = [
+        {"ticket": str(2000 + i), "work_sum": 1000.0, "ready_day": None}
+        for i in range(30)
+    ]
+    out = apply_ready_fallback(rows, date(2026, 8, 1))
+    assert all(r["ready_day"] == "2026-08-01" for r in out)

@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261010-branch-kpi1" />
-  <link rel="stylesheet" href="./styles.css?v=20261010-branch-kpi1" />
-  <script src="../shared/auth.js?v=20261010-branch-kpi1"></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261012-masters-kpi-vitrine1" />
+  <link rel="stylesheet" href="./styles.css?v=20261012-masters-kpi-vitrine1" />
+  <script src="../shared/auth.js?v=20261012-masters-kpi-vitrine1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261011-upsell-avg-axis" defer></script>
+  <script src="./app.js?v=20261012-masters-kpi-vitrine1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -22,12 +22,14 @@
       let active = "processes";
       if (want === "debt" && auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
       else if (want === "branch_kpi" && auth.hasAccess(s.access, "processes.branch_kpi")) active = "processes.branch_kpi";
+      else if (want === "masters_kpi" && auth.hasAccess(s.access, "processes.masters_kpi")) active = "processes.masters_kpi";
       else if (auth.hasAccess(s.access, "processes.upsell")) active = "processes.upsell";
       else if (auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
       else if (auth.hasAccess(s.access, "processes.branch_kpi")) active = "processes.branch_kpi";
+      else if (auth.hasAccess(s.access, "processes.masters_kpi")) active = "processes.masters_kpi";
       auth.applyShellNav(active);
       auth.filterProcessesTabs(s.access);
-      if (want === "debt" || want === "upsell" || want === "branch_kpi") {
+      if (want === "debt" || want === "upsell" || want === "branch_kpi" || want === "masters_kpi") {
         const btn = document.querySelector(`.mod-tab[data-tab="${want}"]`);
         if (btn && !btn.hidden) btn.click();
       }
@@ -50,7 +52,7 @@
     <header class="mod-top">
       <div>
         <h1>Процессы</h1>
-        <p class="mod-sub">Досогласования, дебиторка и КПД филиалов · снимок из локального Jarvis</p>
+        <p class="mod-sub">Досогласования, дебиторка, КПД филиалов и КПД мастеров · снимок из локального Jarvis</p>
       </div>
       <div class="mod-meta" id="export-meta">Загрузка data.json…</div>
     </header>
@@ -59,6 +61,7 @@
       <button type="button" class="mod-tab is-active" data-tab="upsell">Досогласования</button>
       <button type="button" class="mod-tab" data-tab="debt">Дебиторка</button>
       <button type="button" class="mod-tab" data-tab="branch_kpi">КПД филиалов</button>
+      <button type="button" class="mod-tab" data-tab="masters_kpi">КПД мастеров</button>
     </nav>
 
     <main>
@@ -183,6 +186,26 @@
               </table>
             </div>
           </article>
+        </div>
+      </section>
+
+      <section id="panel-masters_kpi" class="panel" hidden>
+        <div id="masters-kpi-empty" class="empty" hidden>Нет снимка КПД мастеров. Экспортируйте из Jarvis → Процессы → КПД мастеров.</div>
+        <div id="masters-kpi-body" class="stack" hidden>
+          <div class="kpis" id="masters-kpi-kpis"></div>
+          <div class="charts-grid">
+            <article class="card">
+              <h3>Сравнение КПД</h3>
+              <p class="card-sub">Индекс: сумма работ × (ср. чек / 1000) по ISO-неделям.</p>
+              <div class="chart-box chart-box--tall"><canvas id="chart-mk-eff"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Сумма работ по неделям</h3>
+              <p class="card-sub">Выработка мастеров из отчётов Drive, с 2025-W31.</p>
+              <div class="chart-box chart-box--tall"><canvas id="chart-mk-work"></canvas></div>
+            </article>
+          </div>
+          <div class="masters-kpi-grid" id="masters-kpi-cards"></div>
         </div>
       </section>
     </main>

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-12T12:12:27.515058+00:00",
+  "exported_at": "2026-10-12T12:28:22.357768+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -14,7 +14,6 @@
         "processes.upsell",
         "processes.debt",
         "processes.branch_kpi",
-        "processes.masters_kpi",
         "finance"
       ]
     }
