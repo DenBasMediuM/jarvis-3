@@ -29,6 +29,7 @@ from core.telegram import send_telegram_messages, telegram_configured
 from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
+from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
 
 
@@ -39,6 +40,7 @@ gincore_module: GincoreModule | None = None
 quality_service: QualityService | None = None
 vyrobotka_service: VyrobotkaService | None = None
 branch_kpi_service: BranchKpiService | None = None
+masters_kpi_service: MastersKpiService | None = None
 
 
 class ChatRequest(BaseModel):
@@ -143,6 +145,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
+    global masters_kpi_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -175,6 +178,9 @@ async def lifespan(_: FastAPI):
         return client
 
     branch_kpi_service = BranchKpiService(db, gincore_client_factory=_branch_kpi_gincore)
+    masters_kpi_service = MastersKpiService(
+        db, lambda: get_module_settings("vyrobotka")
+    )
     yield
     await db.close()
 
@@ -392,6 +398,40 @@ async def branch_kpi_export_pages() -> dict[str, Any]:
         raise HTTPException(503, "Сервис КПД филиалов не готов")
     try:
         return await branch_kpi_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/masters-kpi/stats")
+async def masters_kpi_stats() -> dict[str, Any]:
+    if not masters_kpi_service:
+        raise HTTPException(503, "Сервис КПД мастеров не готов")
+    return await masters_kpi_service.get_stats()
+
+
+@app.get("/api/masters-kpi/sync")
+async def masters_kpi_sync_status() -> dict[str, Any]:
+    if not masters_kpi_service:
+        raise HTTPException(503, "Сервис КПД мастеров не готов")
+    return {"ok": True, "sync": await masters_kpi_service.get_sync_state()}
+
+
+@app.post("/api/masters-kpi/sync")
+async def masters_kpi_sync_start() -> dict[str, Any]:
+    if not masters_kpi_service:
+        raise HTTPException(503, "Сервис КПД мастеров не готов")
+    try:
+        return await masters_kpi_service.start_sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/masters-kpi/export-pages")
+async def masters_kpi_export_pages() -> dict[str, Any]:
+    if not masters_kpi_service:
+        raise HTTPException(503, "Сервис КПД мастеров не готов")
+    try:
+        return await masters_kpi_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 
@@ -904,6 +944,7 @@ async def updates_status() -> dict[str, Any]:
     debt_daily = await db.vyrobotka_list_debt_daily(limit=1)
     last_daily = debt_daily[-1] if debt_daily else None
     branch_kpi_sync = await db.branch_kpi_get_sync_state()
+    masters_kpi_sync = await db.masters_kpi_get_sync_state()
     modules = [
         {
             "id": "quality",
@@ -983,6 +1024,25 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
+        },
+        {
+            "id": "processes-masters-kpi",
+            "block": "Процессы",
+            "title": "КПД мастеров",
+            "description": "Выработка и КПД (грн/час) по отчётам Google Drive / Sheets.",
+            "status": masters_kpi_sync.get("status") or "idle",
+            "message": masters_kpi_sync.get("message"),
+            "started_at": masters_kpi_sync.get("started_at"),
+            "finished_at": masters_kpi_sync.get("finished_at"),
+            "progress": {
+                "done": int(masters_kpi_sync.get("done") or 0),
+                "total": int(masters_kpi_sync.get("total") or 0),
+            },
+            "actions": [
+                {"id": "masters-kpi-sync", "label": "Обновить из Drive", "kind": "primary"},
+                {"id": "masters-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/masters-kpi/data.json"),
         },
         {
             "id": "vitrine-users",

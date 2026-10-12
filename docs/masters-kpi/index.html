@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>КПД мастеров · Jarvis</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  <script src="../shared/auth.js"></script>
+  <style>
+    .masters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 16px 0 32px;
+    }
+    .masters-card {
+      border: 1px solid var(--line, #ddd);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fff;
+    }
+    .masters-card h3 {
+      margin: 0 0 10px;
+      padding-left: 8px;
+      border-left: 3px solid #334155;
+      font-size: 1rem;
+    }
+    .masters-card dl {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 0;
+    }
+    .masters-card dt { font-size: 0.7rem; color: #666; }
+    .masters-card dd { margin: 0; font-weight: 600; }
+    .mod-chart { height: 260px; position: relative; }
+  </style>
+</head>
+<body>
+  <div id="app" class="mod-app" hidden>
+    <header class="mod-top">
+      <a class="mod-back" href="../">← Витрина</a>
+      <div>
+        <h1>КПД мастеров</h1>
+        <p class="mod-sub" id="meta">Снимок из локального Jarvis</p>
+      </div>
+    </header>
+    <div id="kpis" class="mod-kpis"></div>
+    <section class="mod-panel">
+      <h2>Сравнение КПД, грн/час</h2>
+      <div class="mod-chart"><canvas id="chart-eff"></canvas></div>
+    </section>
+    <section class="mod-panel">
+      <h2>Сумма работ</h2>
+      <div class="mod-chart"><canvas id="chart-work"></canvas></div>
+    </section>
+    <div id="cards" class="masters-grid"></div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

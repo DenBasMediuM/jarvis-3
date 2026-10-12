@@ -844,6 +844,93 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 #branch-kpi-body .branch-kpi-charts .vyrobotka-chart-box {
   height: 220px;
 }
+#masters-kpi-body.vyrobotka-section {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+#masters-kpi-body.vyrobotka-section:not([hidden]) {
+  flex: 1 1 auto;
+}
+.masters-kpi-layout .vyrobotka-stack-top {
+  overflow: visible;
+}
+.masters-kpi-compare-box {
+  height: 280px;
+}
+.masters-kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 4px 0 18px;
+}
+@media (max-width: 900px) {
+  .masters-kpi-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.masters-kpi-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(165deg, #fff 0%, #f7f4ee 100%);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 210px;
+}
+.masters-kpi-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.masters-kpi-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex: 0 0 auto;
+}
+.masters-kpi-card-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.masters-kpi-card-head p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.masters-kpi-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
+}
+.masters-kpi-card-metrics--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.masters-kpi-card-metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.masters-kpi-card-metrics span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.masters-kpi-card-metrics strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.masters-kpi-card-chart {
+  height: 72px;
+  margin-top: auto;
+}
 .vyrobotka-section-head {
   flex: 0 0 auto;
   padding: 14px 18px 12px;
@@ -1335,6 +1422,16 @@ body.vyrobotka-resizing canvas {
   gap: 10px;
   align-items: center;
   margin: 0 0 14px;
+}
+.quality-toolbar[hidden] {
+  display: none !important;
+}
+.quality-toolbar-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-right: 4px;
+  min-width: 9.5rem;
 }
 #view-quality .quality-table-wrap {
   flex: 1 1 auto;

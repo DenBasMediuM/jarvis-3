@@ -32,6 +32,11 @@ ACCESS_OPTIONS: list[dict[str, str]] = [
         "label": "КПД филиалов",
         "group": "Процессы",
     },
+    {
+        "id": "processes.masters_kpi",
+        "label": "КПД мастеров",
+        "group": "Процессы",
+    },
     {"id": "finance", "label": "Финансы", "group": "Финансы"},
 ]
 

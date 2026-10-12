@@ -206,6 +206,47 @@ CREATE TABLE IF NOT EXISTS branch_kpi_sync_state (
   started_at TEXT,
   finished_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS masters_kpi_masters (
+  master_key TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  folder_name TEXT,
+  folder_id TEXT,
+  color TEXT,
+  files INTEGER NOT NULL DEFAULT 0,
+  lines INTEGER NOT NULL DEFAULT 0,
+  tickets INTEGER NOT NULL DEFAULT 0,
+  work_sum REAL,
+  hours REAL,
+  avg_ticket REAL,
+  efficiency REAL,
+  crm_orders INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS masters_kpi_weeks (
+  master_key TEXT NOT NULL,
+  iso_year INTEGER NOT NULL,
+  iso_week INTEGER NOT NULL,
+  week_start TEXT,
+  tickets INTEGER,
+  lines INTEGER,
+  work_sum REAL,
+  hours REAL,
+  avg_ticket REAL,
+  efficiency REAL,
+  PRIMARY KEY (master_key, iso_year, iso_week)
+);
+
+CREATE TABLE IF NOT EXISTS masters_kpi_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  started_at TEXT,
+  finished_at TEXT
+);
 """
 
 
@@ -1005,6 +1046,127 @@ class Database:
             """
             SELECT * FROM branch_kpi_months
             ORDER BY year ASC, month ASC, branch_id ASC
+            """
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def masters_kpi_get_sync_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM masters_kpi_sync_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO masters_kpi_sync_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "message": None,
+                "started_at": None,
+                "finished_at": None,
+            }
+        return dict(row)
+
+    async def masters_kpi_set_sync_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.masters_kpi_get_sync_state()
+        current.update(fields)
+        await self.conn.execute(
+            """
+            INSERT INTO masters_kpi_sync_state(
+              id, status, total, done, message, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              message = excluded.message,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                current.get("status") or "idle",
+                int(current.get("total") or 0),
+                int(current.get("done") or 0),
+                current.get("message"),
+                current.get("started_at"),
+                current.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.masters_kpi_get_sync_state()
+
+    async def masters_kpi_replace_all(
+        self,
+        masters: list[dict[str, Any]],
+        weeks: list[dict[str, Any]],
+    ) -> None:
+        await self.conn.execute("DELETE FROM masters_kpi_weeks")
+        await self.conn.execute("DELETE FROM masters_kpi_masters")
+        for m in masters:
+            await self.conn.execute(
+                """
+                INSERT INTO masters_kpi_masters(
+                  master_key, display_name, folder_name, folder_id, color,
+                  files, lines, tickets, work_sum, hours, avg_ticket,
+                  efficiency, crm_orders, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    str(m["master_key"]),
+                    str(m.get("display_name") or m["master_key"]),
+                    m.get("folder_name"),
+                    m.get("folder_id"),
+                    m.get("color"),
+                    int(m.get("files") or 0),
+                    int(m.get("lines") or 0),
+                    int(m.get("tickets") or 0),
+                    m.get("work_sum"),
+                    m.get("hours"),
+                    m.get("avg_ticket"),
+                    m.get("efficiency"),
+                    int(m.get("crm_orders") or 0),
+                ),
+            )
+        for w in weeks:
+            await self.conn.execute(
+                """
+                INSERT INTO masters_kpi_weeks(
+                  master_key, iso_year, iso_week, week_start, tickets, lines,
+                  work_sum, hours, avg_ticket, efficiency
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(w["master_key"]),
+                    int(w["iso_year"]),
+                    int(w["iso_week"]),
+                    w.get("week_start"),
+                    w.get("tickets"),
+                    w.get("lines"),
+                    w.get("work_sum"),
+                    w.get("hours"),
+                    w.get("avg_ticket"),
+                    w.get("efficiency"),
+                ),
+            )
+        await self.conn.commit()
+
+    async def masters_kpi_list_masters(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM masters_kpi_masters
+            ORDER BY (work_sum IS NULL), work_sum DESC, display_name ASC
+            """
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def masters_kpi_list_weeks(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM masters_kpi_weeks
+            ORDER BY iso_year ASC, iso_week ASC, master_key ASC
             """
         )
         return [dict(r) for r in await cur.fetchall()]

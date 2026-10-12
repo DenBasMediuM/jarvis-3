@@ -72,7 +72,12 @@ function showView(view, opts = {}) {
 
 function setProcessesTab(tab) {
   const id =
-    tab === "debt" || tab === "branch_kpi" || tab === "upsell" ? tab : "upsell";
+    tab === "debt" ||
+    tab === "branch_kpi" ||
+    tab === "masters_kpi" ||
+    tab === "upsell"
+      ? tab
+      : "upsell";
   processesTab = id;
   try {
     localStorage.setItem(PROCESSES_TAB_KEY, id);
@@ -92,19 +97,33 @@ function setProcessesTab(tab) {
   const upsell = $("#vyrobotka-upsell-body");
   const debt = $("#vyrobotka-debt-body");
   const branchKpi = $("#branch-kpi-body");
+  const mastersKpi = $("#masters-kpi-body");
   const empty = $("#vyrobotka-empty");
   const sheetsToolbar = $("#vyrobotka-toolbar");
   const kpiToolbar = $("#branch-kpi-toolbar");
-  const isKpi = id === "branch_kpi";
-  if (sheetsToolbar) sheetsToolbar.hidden = isKpi;
-  if (kpiToolbar) kpiToolbar.hidden = !isKpi;
-  if (branchKpi) branchKpi.hidden = !isKpi;
-  if (isKpi) {
+  const mastersToolbar = $("#masters-kpi-toolbar");
+  const isBranchKpi = id === "branch_kpi";
+  const isMastersKpi = id === "masters_kpi";
+  const isStandalone = isBranchKpi || isMastersKpi;
+  if (sheetsToolbar) sheetsToolbar.hidden = isStandalone;
+  if (kpiToolbar) kpiToolbar.hidden = !isBranchKpi;
+  if (mastersToolbar) mastersToolbar.hidden = !isMastersKpi;
+  if (branchKpi) branchKpi.hidden = !isBranchKpi;
+  if (mastersKpi) mastersKpi.hidden = !isMastersKpi;
+  if (isBranchKpi) {
     if (upsell) upsell.hidden = true;
     if (debt) debt.hidden = true;
     if (empty) empty.hidden = true;
     loadBranchKpiStats();
     requestAnimationFrame(() => resizeBranchKpiCharts());
+    return;
+  }
+  if (isMastersKpi) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadMastersKpiStats();
+    requestAnimationFrame(() => resizeMastersKpiCharts());
     return;
   }
   const hasData = (typeof vyrobotkaSheetsCache !== "undefined" ? vyrobotkaSheetsCache : []).length > 0;
@@ -131,7 +150,14 @@ function initProcessesTabs() {
   } catch {
     saved = "upsell";
   }
-  if (saved !== "debt" && saved !== "branch_kpi" && saved !== "upsell") saved = "upsell";
+  if (
+    saved !== "debt" &&
+    saved !== "branch_kpi" &&
+    saved !== "masters_kpi" &&
+    saved !== "upsell"
+  ) {
+    saved = "upsell";
+  }
   setProcessesTab(saved);
 }
 
@@ -5362,6 +5388,294 @@ async function exportBranchKpiPages() {
 $("#branch-kpi-sync-btn")?.addEventListener("click", () => runBranchKpiSync());
 $("#branch-kpi-export-pages-btn")?.addEventListener("click", () => exportBranchKpiPages());
 
+/* —— КПД мастеров —— */
+let mastersKpiCache = null;
+let mastersKpiCharts = {};
+let mastersKpiPollTimer = null;
+
+function destroyMastersKpiCharts() {
+  Object.values(mastersKpiCharts).forEach((c) => {
+    try {
+      c.destroy();
+    } catch {
+      /* ignore */
+    }
+  });
+  mastersKpiCharts = {};
+}
+
+function resizeMastersKpiCharts() {
+  Object.values(mastersKpiCharts).forEach((c) => {
+    try {
+      c.resize();
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+function mastersKpiLineChart(canvas, series, labels, { money = false } = {}) {
+  if (!canvas || typeof Chart === "undefined") return null;
+  const line = {
+    tension: 0.28,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.1,
+    backgroundColor: "transparent",
+  };
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: (series || []).map((s) => ({
+        ...line,
+        label: s.label,
+        data: s.data,
+        borderColor: s.color || "#0f6e56",
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              const v = ctx.parsed.y;
+              if (v == null) return `${ctx.dataset.label}: —`;
+              if (money) return `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
+              return `${ctx.dataset.label}: ${Number(v).toLocaleString("uk-UA")}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxRotation: 0, font: { size: 10 }, autoSkip: true, maxTicksLimit: 16 } },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 10 },
+            callback: (v) => (money ? fmtMoneyUa(v) : v),
+          },
+        },
+      },
+    },
+  });
+}
+
+function mastersKpiMiniChart(canvas, labels, data, color) {
+  if (!canvas || typeof Chart === "undefined") return null;
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          data,
+          borderColor: color || "#0f6e56",
+          backgroundColor: "transparent",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      scales: {
+        x: { display: false },
+        y: { display: false },
+      },
+    },
+  });
+}
+
+function renderMastersKpiStats(data) {
+  mastersKpiCache = data;
+  const masters = data?.masters || [];
+  const charts = data?.charts || {};
+  const sync = data?.sync || {};
+  const meta = $("#masters-kpi-meta");
+  if (meta) {
+    meta.textContent = masters.length
+      ? `${masters.length} мастеров · КПД = Σ работ × (ср. чек / 1000)` +
+        (sync.finished_at ? ` · обновлено ${fmtUpdatesWhen(sync.finished_at)}` : "")
+      : "Выработка по отчётам Drive. КПД = сумма работ × (средний чек / 1000).";
+  }
+  const statusEl = $("#masters-kpi-sync-status");
+  if (statusEl) {
+    if (sync.status === "running") {
+      statusEl.textContent = `Идёт: ${sync.message || "…"} (${sync.done || 0}/${sync.total || "—"})`;
+    } else if (sync.status === "error") {
+      statusEl.textContent = `Ошибка: ${sync.message || "—"}`;
+    } else {
+      statusEl.textContent = sync.message || "—";
+    }
+  }
+
+  const kpis = $("#masters-kpi-kpis");
+  if (kpis) {
+    if (!masters.length) {
+      kpis.innerHTML = `<div class="vyrobotka-kpi"><span class="vyrobotka-kpi-label">Данных нет</span><strong>—</strong></div>`;
+    } else {
+      const totalWork = masters.reduce((s, m) => s + (Number(m.work_sum) || 0), 0);
+      const totalTickets = masters.reduce((s, m) => s + (Number(m.tickets) || 0), 0);
+      const withEff = masters.filter((m) => m.efficiency != null);
+      const best = withEff.slice().sort((a, b) => Number(b.efficiency) - Number(a.efficiency))[0];
+      kpis.innerHTML = `
+        <div class="vyrobotka-kpi">
+          <span class="vyrobotka-kpi-label">Σ работ</span>
+          <strong>${fmtMoneyUa(totalWork)}</strong>
+          <span class="vyrobotka-kpi-sub">${totalTickets} кв. · ${masters.length} мастеров</span>
+        </div>
+        <div class="vyrobotka-kpi">
+          <span class="vyrobotka-kpi-label">Лучший КПД</span>
+          <strong>${best ? escapeHtml(best.display_name) : "—"}</strong>
+          <span class="vyrobotka-kpi-sub">${best?.efficiency != null ? Number(best.efficiency).toLocaleString("uk-UA") : "—"}</span>
+        </div>
+        ${masters
+          .slice(0, 4)
+          .map(
+            (m) => `<div class="vyrobotka-kpi">
+            <span class="vyrobotka-kpi-label" style="color:${escapeHtml(m.color || "#334155")}">${escapeHtml(m.display_name)}</span>
+            <strong>${fmtMoneyUa(m.work_sum)}</strong>
+            <span class="vyrobotka-kpi-sub">${m.tickets ?? "—"} кв. · КПД ${m.efficiency == null ? "—" : Number(m.efficiency).toLocaleString("uk-UA")}</span>
+          </div>`,
+          )
+          .join("")}`;
+    }
+  }
+
+  destroyMastersKpiCharts();
+  const labels = charts.labels || [];
+  mastersKpiCharts.compare = mastersKpiLineChart(
+    $("#masters-kpi-chart-compare"),
+    charts.efficiency,
+    labels,
+  );
+  mastersKpiCharts.work = mastersKpiLineChart(
+    $("#masters-kpi-chart-work"),
+    charts.work_sum,
+    labels,
+    { money: true },
+  );
+
+  const cards = $("#masters-kpi-cards");
+  const per = charts.per_master || {};
+  if (cards) {
+    if (!masters.length) {
+      cards.innerHTML = `<p class="quality-empty">Нет данных. Нажмите «Обновить из Drive».</p>`;
+    } else {
+      cards.innerHTML = masters
+        .map((m) => {
+          const canvasId = `masters-kpi-mini-${escapeHtml(m.master_key)}`;
+          return `<article class="masters-kpi-card" data-master="${escapeHtml(m.master_key)}">
+            <header class="masters-kpi-card-head">
+              <span class="masters-kpi-dot" style="background:${escapeHtml(m.color || "#334155")}"></span>
+              <div>
+                <h3>${escapeHtml(m.display_name)}</h3>
+                <p>${m.crm_orders || 0} в CRM · ${m.files || 0} отчётов</p>
+              </div>
+            </header>
+            <div class="masters-kpi-card-metrics masters-kpi-card-metrics--4">
+              <div><span>Σ работ</span><strong>${fmtMoneyUa(m.work_sum)}</strong></div>
+              <div><span>Квитанции</span><strong>${m.tickets ?? "—"}</strong></div>
+              <div><span>КПД</span><strong>${m.efficiency == null ? "—" : Number(m.efficiency).toLocaleString("uk-UA")}</strong></div>
+              <div><span>Ср. квит.</span><strong>${m.avg_ticket == null ? "—" : fmtMoneyUa(m.avg_ticket)}</strong></div>
+            </div>
+            <div class="masters-kpi-card-chart">
+              <canvas id="${canvasId}"></canvas>
+            </div>
+          </article>`;
+        })
+        .join("");
+      masters.forEach((m) => {
+        const pm = per[m.master_key] || {};
+        const el = document.getElementById(`masters-kpi-mini-${m.master_key}`);
+        const rawLabels = pm.labels || [];
+        const rawVals = pm.work_sum || [];
+        const pairs = rawLabels
+          .map((lab, i) => ({ lab, v: rawVals[i] }))
+          .filter((p) => p.v != null && Number(p.v) !== 0);
+        mastersKpiCharts[`mini_${m.master_key}`] = mastersKpiMiniChart(
+          el,
+          pairs.map((p) => p.lab),
+          pairs.map((p) => p.v),
+          m.color,
+        );
+      });
+    }
+  }
+}
+
+async function loadMastersKpiStats({ quiet = false } = {}) {
+  const statusEl = $("#masters-kpi-sync-status");
+  try {
+    const res = await fetch("/api/masters-kpi/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderMastersKpiStats(data);
+    if (data.sync?.status === "running") startMastersKpiPoll();
+    else stopMastersKpiPoll();
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+function stopMastersKpiPoll() {
+  if (mastersKpiPollTimer) {
+    clearInterval(mastersKpiPollTimer);
+    mastersKpiPollTimer = null;
+  }
+}
+
+function startMastersKpiPoll() {
+  stopMastersKpiPoll();
+  mastersKpiPollTimer = setInterval(() => {
+    if (processesTab === "masters_kpi") loadMastersKpiStats({ quiet: true });
+  }, 2500);
+}
+
+async function runMastersKpiSync() {
+  const statusEl = $("#masters-kpi-sync-status");
+  const btn = $("#masters-kpi-sync-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/masters-kpi/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
+    startMastersKpiPoll();
+    await loadMastersKpiStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function exportMastersKpiPages() {
+  const statusEl = $("#masters-kpi-sync-status");
+  try {
+    const res = await fetch("/api/masters-kpi/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = `Экспорт: ${data.path || "docs/masters-kpi/data.json"}`;
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+}
+
+$("#masters-kpi-sync-btn")?.addEventListener("click", () => runMastersKpiSync());
+$("#masters-kpi-export-pages-btn")?.addEventListener("click", () => exportMastersKpiPages());
+
 /* —— Страница «Обновления» —— */
 let updatesPollTimer = null;
 let updatesBusy = false;
@@ -5543,6 +5857,10 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/branch-kpi/sync", { method: "POST" });
     } else if (actionId === "branch-kpi-export") {
       res = await fetch("/api/branch-kpi/export-pages", { method: "POST" });
+    } else if (actionId === "masters-kpi-sync") {
+      res = await fetch("/api/masters-kpi/sync", { method: "POST" });
+    } else if (actionId === "masters-kpi-export") {
+      res = await fetch("/api/masters-kpi/export-pages", { method: "POST" });
     } else {
       throw new Error(`Неизвестное действие: ${actionId}`);
     }
@@ -5566,7 +5884,8 @@ async function runUpdatesAction(actionId) {
       actionId === "vyrobotka-sync" ||
       actionId === "debt-verify-new" ||
       actionId === "debt-verify-all" ||
-      actionId === "branch-kpi-sync";
+      actionId === "branch-kpi-sync" ||
+      actionId === "masters-kpi-sync";
     if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {
