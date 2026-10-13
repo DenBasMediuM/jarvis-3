@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-12T05:54:26.437480+00:00",
+  "exported_at": "2026-10-13T05:47:01.815009+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -41,8 +41,8 @@
       "gross_profit": 44850.0,
       "net_profit": -10930.0,
       "expense": -55780.0,
-      "refusals": 25,
-      "return_rate": 0.4717
+      "refusals": 24,
+      "return_rate": 0.4528
     },
     {
       "year": 2026,
@@ -294,8 +294,8 @@
       "gross_profit": 373185.0,
       "net_profit": 94137.0,
       "expense": -279048.0,
-      "refusals": 91,
-      "return_rate": 0.337
+      "refusals": 94,
+      "return_rate": 0.3481
     },
     {
       "year": 2026,
@@ -316,41 +316,41 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 90,
-      "return_rate": 0.3249
+      "refusals": 89,
+      "return_rate": 0.3213
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "karetn",
-      "acceptances": 70,
-      "gross_profit": 146400.0,
-      "net_profit": 39492.0,
-      "expense": -106908.0,
-      "refusals": 6,
-      "return_rate": 0.0857
+      "acceptances": 80,
+      "gross_profit": 164315.0,
+      "net_profit": 53907.0,
+      "expense": -110408.0,
+      "refusals": 8,
+      "return_rate": 0.1
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "levitan",
-      "acceptances": 17,
+      "acceptances": 18,
       "gross_profit": 5800.0,
       "net_profit": -1900.0,
       "expense": -7700.0,
-      "refusals": 3,
-      "return_rate": 0.1765
+      "refusals": 4,
+      "return_rate": 0.2222
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "seged",
-      "acceptances": 92,
-      "gross_profit": 128270.0,
-      "net_profit": 47077.0,
-      "expense": -81193.0,
-      "refusals": 12,
-      "return_rate": 0.1304
+      "acceptances": 101,
+      "gross_profit": 134820.01,
+      "net_profit": 47477.01,
+      "expense": -87343.0,
+      "refusals": 20,
+      "return_rate": 0.198
     }
   ],
   "charts": {
@@ -381,7 +381,7 @@
           261,
           263,
           270,
-          70
+          80
         ]
       },
       {
@@ -398,7 +398,7 @@
           229,
           255,
           277,
-          92
+          101
         ]
       },
       {
@@ -415,7 +415,7 @@
           64,
           55,
           29,
-          17
+          18
         ]
       }
     ],
@@ -434,7 +434,7 @@
           410071.0,
           400183.0,
           373185.0,
-          146400.0
+          164315.0
         ]
       },
       {
@@ -451,7 +451,7 @@
           286044.0,
           335555.0,
           305105.0,
-          128270.0
+          134820.01
         ]
       },
       {
@@ -487,7 +487,7 @@
           109517.0,
           109722.0,
           94137.0,
-          39492.0
+          53907.0
         ]
       },
       {
@@ -504,7 +504,7 @@
           68827.0,
           92494.0,
           117223.0,
-          47077.0
+          47477.01
         ]
       },
       {
@@ -539,8 +539,8 @@
           35.87,
           36.78,
           39.16,
-          33.7,
-          8.57
+          34.81,
+          10.0
         ]
       },
       {
@@ -556,8 +556,8 @@
           36.28,
           30.13,
           33.33,
-          32.49,
-          13.04
+          32.13,
+          19.8
         ]
       },
       {
@@ -565,7 +565,7 @@
         "branch_id": "levitan",
         "color": "#8a4b1a",
         "data": [
-          47.17,
+          45.28,
           60.98,
           53.85,
           41.67,
@@ -574,7 +574,7 @@
           37.5,
           47.27,
           34.48,
-          17.65
+          22.22
         ]
       }
     ]
