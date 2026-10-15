@@ -8,10 +8,12 @@ from modules.vyrobotka.parse import (
     sheet_sort_key,
     underpayment_amount,
 )
+from modules.vyrobotka.sheets import GoogleSheetsClient
 from modules.vyrobotka.verify import (
     apply_display_verdicts,
     compare_ticket_with_crm,
     display_verdict,
+    is_atypical_debt_case,
     unpack_issues_payload,
 )
 
@@ -154,3 +156,72 @@ def test_display_verdict_norm_for_issued_paid():
         crm_status="Выдан",
     )
     assert settled["verdict"] == "norm"
+
+
+def test_atypical_debt_case_rules():
+    # Отказ в CRM + долг в CRM ещё есть + работы в отчёте
+    assert is_atypical_debt_case(
+        sheet_total=5000,
+        crm_total=0,
+        sheet_debt=5000,
+        report_amount=3000,
+        crm_status="Выдан без ремонта",
+        crm_debt=5000,
+        crm_paid=0,
+    )
+    assert is_atypical_debt_case(
+        sheet_total=4000,
+        crm_total=1000,
+        sheet_debt=4000,
+        report_amount=2000,
+        crm_status="У курьера БЕЗ РЕМОНТ",
+        crm_debt=4000,
+    )
+    # 116077: в CRM долг остался
+    assert is_atypical_debt_case(
+        sheet_total=1700,
+        crm_total=1700,
+        sheet_debt=1700,
+        report_amount=350,
+        crm_status="Выдан без ремонта",
+        crm_debt=1700,
+        crm_paid=0,
+    )
+    # 121399: в CRM уже оплачено — не нетипичный (устаревшая таблица)
+    assert not is_atypical_debt_case(
+        sheet_total=750,
+        crm_total=750,
+        sheet_debt=750,
+        report_amount=750,
+        crm_status="Выдан без ремонта",
+        crm_debt=None,
+        crm_paid=750,
+    )
+    # 123849: обычный «у курьера готов» — не нетипичный
+    assert not is_atypical_debt_case(
+        sheet_total=6600,
+        crm_total=6600,
+        sheet_debt=6600,
+        report_amount=5500,
+        crm_status="У курьера ГОТОВ",
+        crm_debt=6600,
+    )
+    # нет работ мастера
+    assert not is_atypical_debt_case(
+        sheet_total=5000,
+        crm_total=0,
+        sheet_debt=5000,
+        report_amount=0,
+        crm_status="Не подлежит ремонту",
+        crm_debt=5000,
+    )
+
+
+def test_sheet_tab_url_includes_gid():
+    url = GoogleSheetsClient.sheet_tab_url("abc", 42, row_index=22)
+    assert "gid=42" in url
+    assert url.count("gid=42") >= 2
+    assert "range=A22" in url
+    assert GoogleSheetsClient.sheet_tab_url("abc", None) == (
+        "https://docs.google.com/spreadsheets/d/abc/edit"
+    )

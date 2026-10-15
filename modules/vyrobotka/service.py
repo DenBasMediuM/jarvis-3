@@ -14,6 +14,8 @@ from modules.vyrobotka.parse import (
     normalize_sheet_title,
     parse_week_rows,
     select_week_sheets,
+    sheet_sort_key,
+    underpayment_amount,
 )
 from modules.vyrobotka.sheets import GoogleSheetsClient, SheetsError
 from modules.vyrobotka.verify import (
@@ -21,6 +23,7 @@ from modules.vyrobotka.verify import (
     build_verify_report,
     compare_ticket_with_crm,
     crm_totals_from_payment,
+    is_atypical_debt_case,
 )
 
 SettingsProvider = Callable[[], Awaitable[dict[str, Any]]]
@@ -86,7 +89,11 @@ class VyrobotkaService:
         for s in sheets:
             title = str(s.get("sheet_title") or "")
             debt_sheets.append(aggregate_sheet_debt(title, by_sheet.get(title) or []))
-        underpaid = collect_underpaid_tickets(all_rows)
+
+        underpaid_all = collect_underpaid_tickets(all_rows)
+        baseline = await self.ensure_debt_baseline(underpaid_all)
+        underpaid = self._filter_underpaid_by_baseline(underpaid_all, baseline)
+
         verify = await self.get_debt_verify()
         by_key = {
             f"{r.get('sheet_title')}::{r.get('ticket')}": r
@@ -107,7 +114,46 @@ class VyrobotkaService:
                     "crm_status": vr.get("crm_status"),
                     "crm_url": vr.get("crm_url"),
                 }
+
+        debt_sum = (
+            float(baseline["sheets_debt_sum"])
+            if baseline and baseline.get("sheets_debt_sum") is not None
+            else round(sum(float(t.get("debt") or 0) for t in underpaid), 2)
+        )
+        debt_n = (
+            int(baseline["sheets_tickets"])
+            if baseline and baseline.get("sheets_tickets") is not None
+            else len(underpaid)
+        )
+
         debt_daily = await self.db.vyrobotka_list_debt_daily(limit=730)
+        # На графике линия отчётов мастеров — только первый слепок
+        if baseline and baseline.get("sheets_debt_sum") is not None:
+            frozen = float(baseline["sheets_debt_sum"])
+            frozen_n = int(baseline.get("sheets_tickets") or 0)
+            debt_daily = [
+                {
+                    **d,
+                    "sheets_debt_sum": frozen,
+                    "sheets_tickets": frozen_n or d.get("sheets_tickets"),
+                }
+                for d in debt_daily
+            ]
+
+        # gid вкладок нужны для ссылок «открыть лист квитанции»
+        if sheets and any(s.get("sheet_id") is None for s in sheets):
+            try:
+                await self.refresh_sheet_ids()
+                sheets = await self.db.vyrobotka_list_sheet_stats()
+            except Exception:  # noqa: BLE001
+                pass
+
+        atypical = self._build_atypical_cases(
+            verify_rows=verify.get("rows") or [],
+            all_rows=all_rows,
+            sheet_stats=sheets,
+        )
+
         return {
             "ok": True,
             "sheets": sheets,
@@ -116,12 +162,186 @@ class VyrobotkaService:
             "debt": {
                 "sheets": debt_sheets,
                 "tickets": underpaid,
-                "tickets_count": len(underpaid),
-                "debt_sum": round(sum(float(t.get("debt") or 0) for t in underpaid), 2),
+                "tickets_count": debt_n,
+                "debt_sum": debt_sum,
                 "verify": verify,
                 "daily": debt_daily,
+                "baseline": baseline,
+                "atypical": atypical,
             },
         }
+
+    async def ensure_debt_baseline(
+        self, underpaid: list[dict[str, Any]] | None = None
+    ) -> dict[str, Any] | None:
+        """Первый слепок дебиторки по отчётам: суммы + набор квитанций."""
+        existing = await self.db.vyrobotka_get_debt_baseline()
+        if existing and existing.get("day"):
+            tickets = await self.db.vyrobotka_list_debt_baseline_tickets()
+            return {**existing, "tickets": tickets}
+
+        daily = await self.db.vyrobotka_list_debt_daily(limit=730)
+        if not daily:
+            return None
+        first = daily[0]
+        if underpaid is None:
+            underpaid = collect_underpaid_tickets(await self.db.vyrobotka_list_rows())
+        picked = self._pick_baseline_tickets(
+            underpaid,
+            target_tickets=int(first.get("sheets_tickets") or 0),
+            target_sum=float(first.get("sheets_debt_sum") or 0),
+        )
+        locked = await self.db.vyrobotka_set_debt_baseline(
+            day=str(first.get("day")),
+            sheets_debt_sum=float(first.get("sheets_debt_sum") or 0),
+            sheets_tickets=int(first.get("sheets_tickets") or len(picked)),
+            tickets=picked,
+            locked_at=_now(),
+        )
+        locked["tickets"] = picked
+        return locked
+
+    @staticmethod
+    def _pick_baseline_tickets(
+        underpaid: list[dict[str, Any]],
+        *,
+        target_tickets: int,
+        target_sum: float,
+    ) -> list[dict[str, Any]]:
+        """Восстановить набор первого слепка: убираем квитанции с самых новых листов."""
+        if not underpaid:
+            return []
+        selected = list(underpaid)
+        if target_tickets <= 0 or len(selected) <= target_tickets:
+            return selected
+        # Снимаем с самых новых листов, пока не дойдём до числа квитанций первого слепка
+        while len(selected) > target_tickets:
+            newest = max(
+                selected,
+                key=lambda t: (
+                    sheet_sort_key(str(t.get("sheet_title") or "")),
+                    str(t.get("ticket") or ""),
+                ),
+            )
+            selected.remove(newest)
+        if target_sum > 0:
+            # если сумма сильно разъехалась — ничего, в KPI всё равно берём target_sum
+            pass
+        return selected
+
+    @staticmethod
+    def _filter_underpaid_by_baseline(
+        underpaid: list[dict[str, Any]],
+        baseline: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        if not baseline:
+            return underpaid
+        keys = {
+            f"{t.get('sheet_title')}::{t.get('ticket')}"
+            for t in (baseline.get("tickets") or [])
+        }
+        if not keys:
+            # только суммы слепка, набор квитанций ещё не сохранён
+            return underpaid
+        return [
+            t
+            for t in underpaid
+            if f"{t.get('sheet_title')}::{t.get('ticket')}" in keys
+        ]
+
+    async def refresh_sheet_ids(self) -> dict[str, int]:
+        """Подтянуть gid вкладок из метаданных таблицы (без чтения значений)."""
+        client, sid = await self._client()
+        probe = await client.probe(sid)
+        known = await self.db.vyrobotka_known_sheet_meta()
+        title_to_id: dict[str, int] = {}
+        for sh in probe.get("sheets") or []:
+            title = normalize_sheet_title(str(sh.get("title") or ""))
+            gid = sh.get("sheet_id")
+            if not title or gid is None:
+                continue
+            title_to_id[title] = int(gid)
+            prev = known.get(title)
+            if not prev:
+                continue
+            if prev.get("sheet_id") == int(gid):
+                continue
+            st = dict(prev)
+            st["sheet_id"] = int(gid)
+            st["spreadsheet_title"] = probe.get("title")
+            await self.db.vyrobotka_touch_sheet_meta(st)
+        return title_to_id
+
+    def _build_atypical_cases(
+        self,
+        *,
+        verify_rows: list[dict[str, Any]],
+        all_rows: list[dict[str, Any]],
+        sheet_stats: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Отказ/без ремонта в CRM, а в отчёте — долг клиента и сумма работ мастера."""
+        row_by_key = {
+            f"{r.get('sheet_title')}::{r.get('ticket')}": r for r in all_rows
+        }
+        stats_by_title = {
+            str(s.get("sheet_title") or ""): s for s in sheet_stats
+        }
+        out: list[dict[str, Any]] = []
+        for vr in verify_rows:
+            key = f"{vr.get('sheet_title')}::{vr.get('ticket')}"
+            src = row_by_key.get(key) or {}
+            report_amount = src.get("report_amount")
+            sheet_debt = vr.get("sheet_debt")
+            if sheet_debt is None:
+                sheet_debt = underpayment_amount(
+                    vr.get("sheet_total") if vr.get("sheet_total") is not None else src.get("total_repair"),
+                    vr.get("sheet_paid") if vr.get("sheet_paid") is not None else src.get("paid"),
+                )
+            if not is_atypical_debt_case(
+                sheet_total=vr.get("sheet_total")
+                if vr.get("sheet_total") is not None
+                else src.get("total_repair"),
+                crm_total=vr.get("crm_total"),
+                sheet_debt=sheet_debt,
+                report_amount=report_amount,
+                crm_status=vr.get("crm_status"),
+                crm_debt=vr.get("crm_debt"),
+                crm_paid=vr.get("crm_paid"),
+            ):
+                continue
+            st = stats_by_title.get(str(vr.get("sheet_title") or "")) or {}
+            sid = src.get("spreadsheet_id") or st.get("spreadsheet_id")
+            sheet_url = GoogleSheetsClient.sheet_tab_url(
+                sid,
+                st.get("sheet_id"),
+                row_index=src.get("row_index"),
+            )
+            out.append(
+                {
+                    "ticket": vr.get("ticket"),
+                    "master": vr.get("master") or src.get("master"),
+                    "sheet_title": vr.get("sheet_title"),
+                    "sheet_total": vr.get("sheet_total")
+                    if vr.get("sheet_total") is not None
+                    else src.get("total_repair"),
+                    "crm_total": vr.get("crm_total"),
+                    "crm_status": vr.get("crm_status"),
+                    "report_amount": report_amount,
+                    "crm_paid": vr.get("crm_paid"),
+                    "sheet_debt": sheet_debt,
+                    "sheet_url": sheet_url,
+                    "crm_url": vr.get("crm_url"),
+                    "summary": vr.get("summary"),
+                    "row_index": src.get("row_index"),
+                }
+            )
+        out.sort(
+            key=lambda x: (
+                -sheet_sort_key(str(x.get("sheet_title") or ""))[0],
+                str(x.get("ticket") or ""),
+            )
+        )
+        return out
 
     async def start_sync(self) -> dict[str, Any]:
         global _sync_task
@@ -145,6 +365,7 @@ class VyrobotkaService:
         return {"ok": True, "started": True, "sync": state}
 
     async def _run_sync(self) -> None:
+        """Инкрементальная синхронизация: первый прогон — все листы, далее только новые/выросшие."""
         await self.db.vyrobotka_set_sync_state(
             status="running",
             total=0,
@@ -156,14 +377,12 @@ class VyrobotkaService:
         client, sid = await self._client()
         probe = await client.probe(sid)
         weeks = select_week_sheets(probe.get("sheets") or [])
-        await self.db.vyrobotka_set_sync_state(
-            status="running",
-            total=len(weeks),
-            done=0,
-            message=f"Загрузка {len(weeks)} недельных листов…",
-        )
+        known = await self.db.vyrobotka_known_sheet_meta()
+        is_first = not known
+
         if not weeks:
-            await self.db.vyrobotka_replace_all([], [])
+            if is_first:
+                await self.db.vyrobotka_replace_all([], [])
             await self.db.vyrobotka_set_sync_state(
                 status="idle",
                 done=0,
@@ -173,16 +392,40 @@ class VyrobotkaService:
             )
             return
 
-        ranges = [client.a1_range(str(s.get("title") or "")) for s in weeks]
+        title_to_meta = {
+            normalize_sheet_title(str(s.get("title") or "")): s for s in weeks
+        }
+        # Какие листы читать: все при первом слепке; иначе — неизвестные + самый свежий
+        # (на нём обычно дописывают строки).
+        if is_first:
+            to_fetch = [normalize_sheet_title(str(s.get("title") or "")) for s in weeks]
+        else:
+            unknown = [
+                normalize_sheet_title(str(s.get("title") or ""))
+                for s in weeks
+                if normalize_sheet_title(str(s.get("title") or "")) not in known
+            ]
+            newest = normalize_sheet_title(str(weeks[-1].get("title") or ""))
+            to_fetch = list(dict.fromkeys([*unknown, newest]))
+
+        await self.db.vyrobotka_set_sync_state(
+            status="running",
+            total=len(to_fetch),
+            done=0,
+            message=(
+                f"{'Первый слепок' if is_first else 'Инкремент'}: "
+                f"{len(to_fetch)} лист(ов)…"
+            ),
+        )
+
+        ranges = [client.a1_range(t) for t in to_fetch]
         values_map = await client.batch_get_values(sid, ranges)
 
-        all_rows: list[dict[str, Any]] = []
-        sheet_stats: list[dict[str, Any]] = []
-        for idx, sh in enumerate(weeks):
-            title = normalize_sheet_title(str(sh.get("title") or ""))
+        updated = 0
+        skipped_same = 0
+        for idx, title in enumerate(to_fetch):
             rng = client.a1_range(title)
             values = values_map.get(rng) or []
-            # fallback: искать по title в ключах
             if not values:
                 for k, v in values_map.items():
                     if k.split("!", 1)[0].strip("'") == title:
@@ -191,19 +434,66 @@ class VyrobotkaService:
             rows = parse_week_rows(title, values)
             for r in rows:
                 r["spreadsheet_id"] = sid
-            all_rows.extend(rows)
+            prev = known.get(title) or {}
+            prev_n = int(prev.get("tickets_count") or prev.get("row_count") or 0)
+            sheet_id = (title_to_meta.get(title) or {}).get("sheet_id")
             stats = aggregate_sheet_upsell(title, rows)
             stats["spreadsheet_id"] = sid
             stats["spreadsheet_title"] = probe.get("title")
-            sheet_stats.append(stats)
+            stats["sheet_id"] = sheet_id
+            stats["row_count"] = len(rows)
+
+            # Уже известный лист без новых квитанций — не затираем первый слепок
+            if not is_first and title in known and len(rows) <= prev_n:
+                prev_stats = dict(prev)
+                prev_stats["sheet_id"] = sheet_id
+                prev_stats["spreadsheet_title"] = probe.get("title")
+                await self.db.vyrobotka_touch_sheet_meta(prev_stats)
+                skipped_same += 1
+            else:
+                await self.db.vyrobotka_replace_sheet_rows(
+                    spreadsheet_id=sid,
+                    sheet_title=title,
+                    rows=rows,
+                    sheet_stats=stats,
+                )
+                updated += 1
+
             await self.db.vyrobotka_set_sync_state(
                 status="running",
-                total=len(weeks),
+                total=len(to_fetch),
                 done=idx + 1,
-                message=f"Лист {idx + 1}/{len(weeks)}: {title}",
+                message=f"Лист {idx + 1}/{len(to_fetch)}: {title}",
             )
 
-        await self.db.vyrobotka_replace_all(all_rows, sheet_stats)
+        # Подтянуть gid вкладок для ссылок (без перечитывания значений)
+        for title, meta in title_to_meta.items():
+            prev = known.get(title)
+            if not prev:
+                continue
+            sid_val = meta.get("sheet_id")
+            if sid_val is None or prev.get("sheet_id") == sid_val:
+                continue
+            st = dict(prev)
+            st["sheet_id"] = sid_val
+            st["spreadsheet_title"] = probe.get("title")
+            await self.db.vyrobotka_touch_sheet_meta(st)
+
+        # После первого полного прогона — зафиксировать слепок дебиторки по отчётам
+        if is_first:
+            all_rows = await self.db.vyrobotka_list_rows()
+            underpaid = collect_underpaid_tickets(all_rows)
+            await self.db.vyrobotka_set_debt_baseline(
+                day=date.today().isoformat(),
+                sheets_debt_sum=round(sum(float(t.get("debt") or 0) for t in underpaid), 2),
+                sheets_tickets=len(underpaid),
+                tickets=underpaid,
+                locked_at=_now(),
+            )
+        else:
+            await self.ensure_debt_baseline()
+
+        total_rows = len(await self.db.vyrobotka_list_rows())
         pages_note = ""
         try:
             exp = await self.export_pages_snapshot()
@@ -212,10 +502,13 @@ class VyrobotkaService:
             pages_note = ""
         await self.db.vyrobotka_set_sync_state(
             status="idle",
-            total=len(weeks),
-            done=len(weeks),
+            total=len(to_fetch),
+            done=len(to_fetch),
             message=(
-                f"Готово: {len(weeks)} листов, {len(all_rows)} квитанций. "
+                f"Готово: {'первый слепок' if is_first else 'инкремент'} — "
+                f"обновлено {updated} лист(ов), без изменений {skipped_same}; "
+                f"в кэше {len(await self.db.vyrobotka_list_sheet_stats())} листов, "
+                f"{total_rows} квитанций. "
                 f"Таблица: {probe.get('title') or sid}{pages_note}"
             ),
             finished_at=_now(),
@@ -457,11 +750,16 @@ class VyrobotkaService:
         crm_debt_sum: float | None = None,
         crm_orders: int | None = None,
     ) -> dict[str, Any] | None:
-        """Одна точка в день: CRM «ожидаемая оплата» + Σ недоплат из отчётов мастеров."""
-        all_rows = await self.db.vyrobotka_list_rows()
-        underpaid = collect_underpaid_tickets(all_rows)
-        sheets_debt_sum = round(sum(float(t.get("debt") or 0) for t in underpaid), 2)
-        sheets_tickets = len(underpaid)
+        """Одна точка в день: CRM обновляется; отчёты мастеров — только первый слепок."""
+        underpaid_all = collect_underpaid_tickets(await self.db.vyrobotka_list_rows())
+        baseline = await self.ensure_debt_baseline(underpaid_all)
+        if baseline and baseline.get("sheets_debt_sum") is not None:
+            sheets_debt_sum = float(baseline["sheets_debt_sum"])
+            sheets_tickets = int(baseline.get("sheets_tickets") or 0)
+        else:
+            underpaid = self._filter_underpaid_by_baseline(underpaid_all, baseline)
+            sheets_debt_sum = round(sum(float(t.get("debt") or 0) for t in underpaid), 2)
+            sheets_tickets = len(underpaid)
 
         if crm_debt_sum is None:
             try:
@@ -501,14 +799,20 @@ class VyrobotkaService:
         crm_orders: int | None = None,
     ) -> dict[str, Any]:
         """Закрепить точку динамики (без полного прогона сверки)."""
-        all_rows = await self.db.vyrobotka_list_rows()
-        underpaid = collect_underpaid_tickets(all_rows)
+        underpaid_all = collect_underpaid_tickets(await self.db.vyrobotka_list_rows())
+        baseline = await self.ensure_debt_baseline(underpaid_all)
+        if baseline and baseline.get("sheets_debt_sum") is not None:
+            sheets_debt_sum = float(baseline["sheets_debt_sum"])
+            sheets_tickets = int(baseline.get("sheets_tickets") or 0)
+        else:
+            sheets_debt_sum = round(sum(float(t.get("debt") or 0) for t in underpaid_all), 2)
+            sheets_tickets = len(underpaid_all)
         snap = {
             "day": (day or date.today()).isoformat(),
             "crm_debt_sum": float(crm_debt_sum),
-            "sheets_debt_sum": round(sum(float(t.get("debt") or 0) for t in underpaid), 2),
+            "sheets_debt_sum": sheets_debt_sum,
             "crm_orders": int(crm_orders or 0),
-            "sheets_tickets": len(underpaid),
+            "sheets_tickets": sheets_tickets,
             "source": source,
             "updated_at": _now(),
         }

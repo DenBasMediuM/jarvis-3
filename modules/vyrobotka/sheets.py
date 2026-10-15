@@ -98,6 +98,25 @@ class GoogleSheetsClient:
         title = (sheet_title or "").replace("'", "''")
         return f"'{title}'!{cells}"
 
+    @staticmethod
+    def sheet_tab_url(
+        spreadsheet_id: str | None,
+        sheet_id: int | None,
+        *,
+        row_index: int | None = None,
+    ) -> str | None:
+        """Ссылка на конкретную вкладку (+строка). Без gid Sheets открывает первый лист."""
+        sid = (spreadsheet_id or "").strip()
+        if not sid:
+            return None
+        if sheet_id is None:
+            return f"https://docs.google.com/spreadsheets/d/{sid}/edit"
+        gid = int(sheet_id)
+        url = f"https://docs.google.com/spreadsheets/d/{sid}/edit?gid={gid}#gid={gid}"
+        if row_index and int(row_index) > 0:
+            url += f"&range=A{int(row_index)}"
+        return url
+
     async def batch_get_values(
         self,
         spreadsheet_id: str,

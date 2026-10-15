@@ -3845,6 +3845,8 @@ let vyrobotkaDebtCache = {
   tickets_count: 0,
   verify: null,
   daily: [],
+  atypical: [],
+  baseline: null,
 };
 let vyrobotkaMoneyChart = null;
 let vyrobotkaVolumeChart = null;
@@ -4484,6 +4486,51 @@ function applyVyrobotkaVerifyUi(verify) {
   `;
 }
 
+function renderVyrobotkaAtypical(rows) {
+  const tbody = $("#vyrobotka-atypical-tbody");
+  if (!tbody) return;
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="quality-empty">Расхождений нет</td></tr>`;
+    return;
+  }
+  const sheetLink = (url, html, title) => {
+    if (!url) return html;
+    return `<a class="vyrobotka-sheet-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${escapeHtml(
+      title || "Открыть лист отчёта",
+    )}">${html}</a>`;
+  };
+  tbody.innerHTML = list
+    .map((r) => {
+      const ticketCell = r.crm_url
+        ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(r.crm_url)}" target="_blank" rel="noopener">${escapeHtml(
+            r.ticket,
+          )}</a>`
+        : escapeHtml(r.ticket || "—");
+      const totalCell = sheetLink(
+        r.sheet_url,
+        `<span class="vyrobotka-dual-cell"><strong>${fmtMoneyUa(r.sheet_total)}</strong><small>${fmtMoneyUa(
+          r.crm_total,
+        )}</small></span>`,
+        `${r.sheet_title || ""} · стоимость в отчёте`,
+      );
+      const reportCell = sheetLink(
+        r.sheet_url,
+        fmtMoneyUa(r.report_amount),
+        `${r.sheet_title || ""} · стоимость работ`,
+      );
+      return `<tr title="${escapeHtml(r.summary || "")}">
+        <td>${ticketCell}</td>
+        <td>${escapeHtml(r.master || "—")}</td>
+        <td>${totalCell}</td>
+        <td>${escapeHtml(r.crm_status || "—")}</td>
+        <td>${reportCell}</td>
+        <td>${fmtMoneyUa(r.crm_paid)}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
 function renderVyrobotkaDebt() {
   const body = $("#vyrobotka-debt-body");
   const meta = $("#vyrobotka-debt-meta");
@@ -4550,8 +4597,14 @@ function renderVyrobotkaDebt() {
   }
 
   if (meta) {
-    meta.textContent = `Недоплата = стоимость ремонта − оплачено клиентом · ${debtN} квитанций · Σ ${fmtMoneyUa(debtSum)}`;
+    const bl = vyrobotkaDebtCache.baseline;
+    const blNote = bl?.day
+      ? ` · отчёты мастеров зафиксированы слепком ${fmtQualityDate(bl.day)}`
+      : "";
+    meta.textContent = `Недоплата = стоимость ремонта − оплачено клиентом · ${debtN} квитанций · Σ ${fmtMoneyUa(debtSum)}${blNote}`;
   }
+
+  renderVyrobotkaAtypical(vyrobotkaDebtCache.atypical || []);
 
   if (tbody) {
     if (!tickets.length) {

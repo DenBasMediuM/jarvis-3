@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-13T05:46:37.302598+00:00",
+  "exported_at": "2026-10-15T06:18:15.403947+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
-    "finished_at": "2026-10-13T05:31:36.542354+00:00",
-    "message": "Готово: 55 листов, 3170 квитанций. Таблица: Рассчет прибыльности июнь, pages 546 долгов",
+    "finished_at": "2026-10-15T06:02:22.034333+00:00",
+    "message": "Готово: инкремент — обновлено 0 лист(ов), без изменений 1; в кэше 55 листов, 3170 квитанций. Таблица: Рассчет прибыльности июнь, pages 412 долгов",
     "status": "idle"
   },
   "upsell_sheets": [
@@ -1279,43 +1279,6 @@
   ],
   "debt_tickets": [
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Галанчук",
-      "ticket": "123261",
-      "total_repair": 20600.0,
-      "paid": 0.0,
-      "debt": 20600.0,
-      "status": "Принят в ремонт",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · стоимость: таблица 20600 ≠ CRM 0; в таблице долг, в CRM оплаты хватает; статус: «Принят в ремонт» ≠ «Выдан»",
-        "field_diffs": {
-          "total": {
-            "sheet": 20600.0,
-            "crm": 0.0,
-            "label": "стоимость"
-          },
-          "debt": {
-            "sheet": 20600.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Принят в ремонт",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 0.0,
-        "crm_paid": 0.01,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123261"
-      }
-    },
-    {
       "sheet_title": "202605(24-31)",
       "master": "Сатаулов",
       "ticket": "121059",
@@ -1422,48 +1385,6 @@
       }
     },
     {
-      "sheet_title": "202610(01-08)",
-      "master": "Галанчук",
-      "ticket": "124456",
-      "total_repair": 10250.0,
-      "paid": 0.0,
-      "debt": 10250.0,
-      "status": "В процессе ремонта",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 10250.0,
-        "crm_paid": 0.0,
-        "crm_debt": 10250.0,
-        "crm_status": "В процессе ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124456"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Галанчук",
-      "ticket": "123986",
-      "total_repair": 9500.0,
-      "paid": 0.0,
-      "debt": 9500.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 9500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 9500.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123986"
-      }
-    },
-    {
       "sheet_title": "202606(16-23)",
       "master": "Галанчук",
       "ticket": "120873",
@@ -1493,129 +1414,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/120873"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Андрусяк",
-      "ticket": "123094",
-      "total_repair": 7750.0,
-      "paid": 0.0,
-      "debt": 7750.0,
-      "status": "Готов",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 4750; долг: таблица 7750 ≠ CRM 3000",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 4750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 7750.0,
-            "crm": 3000.0,
-            "label": "долг"
-          }
-        },
-        "crm_total": 7750.0,
-        "crm_paid": 4750.0,
-        "crm_debt": 3000.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123094"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Дубовой",
-      "ticket": "123709",
-      "total_repair": 7450.0,
-      "paid": 0.0,
-      "debt": 7450.0,
-      "status": "Принят на доработку",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 7450; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 7450.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 7450.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 7450.0,
-        "crm_paid": 7450.0,
-        "crm_debt": null,
-        "crm_status": "Принят на доработку",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123709"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Галанчук",
-      "ticket": "123747",
-      "total_repair": 7100.0,
-      "paid": 0.0,
-      "debt": 7100.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 7100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 7100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 7100.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 7100.0,
-        "crm_paid": 7100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123747"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123849",
-      "total_repair": 6600.0,
-      "paid": 0.0,
-      "debt": 6600.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "У курьера ГОТОВ",
-            "label": "статус"
-          }
-        },
-        "crm_total": 6600.0,
-        "crm_paid": 0.0,
-        "crm_debt": 6600.0,
-        "crm_status": "У курьера ГОТОВ",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123849"
       }
     },
     {
@@ -1747,43 +1545,6 @@
       }
     },
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123159",
-      "total_repair": 6000.0,
-      "paid": 0.0,
-      "debt": 6000.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 6000; в таблице долг, в CRM оплаты хватает; статус: «Передан курьеру» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 6000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 6000.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 6000.0,
-        "crm_paid": 6000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123159"
-      }
-    },
-    {
       "sheet_title": "202608(01-08)",
       "master": "Руднев",
       "ticket": "122414",
@@ -1842,27 +1603,6 @@
       }
     },
     {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124193",
-      "total_repair": 5650.0,
-      "paid": 0.0,
-      "debt": 5650.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 5650.0,
-        "crm_paid": 0.0,
-        "crm_debt": 5650.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124193"
-      }
-    },
-    {
       "sheet_title": "202605(24-31)",
       "master": "Садоян",
       "ticket": "121280",
@@ -1892,43 +1632,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121280"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123711",
-      "total_repair": 5500.0,
-      "paid": 0.0,
-      "debt": 5500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 5500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 5500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 5500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 5500.0,
-        "crm_paid": 5500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123711"
       }
     },
     {
@@ -2186,80 +1889,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Тарасенко",
-      "ticket": "123006",
-      "total_repair": 4950.0,
-      "paid": 0.0,
-      "debt": 4950.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 4950; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 4950.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4950.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 4950.0,
-        "crm_paid": 4950.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123006"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123644",
-      "total_repair": 4850.0,
-      "paid": 0.0,
-      "debt": 4850.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 750; долг: таблица 4850 ≠ CRM 4100; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4850.0,
-            "crm": 4100.0,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        },
-        "crm_total": 4850.0,
-        "crm_paid": 750.0,
-        "crm_debt": 4100.0,
-        "crm_status": "Выдан без ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123644"
-      }
-    },
-    {
       "sheet_title": "202606(16-23)",
       "master": "Сатаулов",
       "ticket": "121619",
@@ -2289,38 +1918,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121619"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123624",
-      "total_repair": 4750.0,
-      "paid": 0.0,
-      "debt": 4750.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 4750; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 4750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4750.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 4750.0,
-        "crm_paid": 4750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123624"
       }
     },
     {
@@ -2573,48 +2170,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123083",
-      "total_repair": 4500.0,
-      "paid": 0.0,
-      "debt": 4500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · стоимость: таблица 4500 ≠ CRM 4100; оплачено: таблица 0 ≠ CRM 4500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "total": {
-            "sheet": 4500.0,
-            "crm": 4100.0,
-            "label": "стоимость"
-          },
-          "paid": {
-            "sheet": 0.0,
-            "crm": 4500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 4100.0,
-        "crm_paid": 4500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123083"
-      }
-    },
-    {
       "sheet_title": "202608(01-08)",
       "master": "Руднев",
       "ticket": "122595",
@@ -2684,38 +2239,6 @@
       }
     },
     {
-      "sheet_title": "202610(01-08)",
-      "master": "Галанчук",
-      "ticket": "123596",
-      "total_repair": 6500.0,
-      "paid": 2250.0,
-      "debt": 4250.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2250 ≠ CRM 6500; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 2250.0,
-            "crm": 6500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4250.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 6500.0,
-        "crm_paid": 6500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123596"
-      }
-    },
-    {
       "sheet_title": "202603(09-15)",
       "master": "Сатаулов",
       "ticket": "119811",
@@ -2745,43 +2268,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/119811"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Сатаулов",
-      "ticket": "122918",
-      "total_repair": 4100.0,
-      "paid": 0.0,
-      "debt": 4100.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 4100; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 4100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 4100.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 4100.0,
-        "crm_paid": 4100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122918"
       }
     },
     {
@@ -2927,35 +2413,8 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «Готов»",
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Готов",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3700.0,
-        "crm_paid": 0.0,
-        "crm_debt": 3700.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121986"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123387",
-      "total_repair": 3700.0,
-      "paid": 0.0,
-      "debt": 3700.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
         "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3700; в таблице долг, в CRM оплаты хватает; статус: «Передан курьеру» ≠ «Выдан»",
         "field_diffs": {
           "paid": {
             "sheet": 0.0,
@@ -2968,7 +2427,7 @@
             "label": "долг"
           },
           "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
+            "sheet": "Передан курьеру",
             "crm": "Выдан",
             "label": "статус"
           }
@@ -2977,76 +2436,7 @@
         "crm_paid": 3700.0,
         "crm_debt": null,
         "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123387"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Галанчук",
-      "ticket": "123903",
-      "total_repair": 3650.0,
-      "paid": 0.0,
-      "debt": 3650.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3650; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3650.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3650.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 3650.0,
-        "crm_paid": 3650.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123903"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Галанчук",
-      "ticket": "123903",
-      "total_repair": 3650.0,
-      "paid": 0.0,
-      "debt": 3650.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3650; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3650.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3650.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3650.0,
-        "crm_paid": 3650.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123903"
+        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121986"
       }
     },
     {
@@ -3389,80 +2779,6 @@
       }
     },
     {
-      "sheet_title": "202609(16-23)",
-      "master": "Садоян",
-      "ticket": "123784",
-      "total_repair": 3500.0,
-      "paid": 0.0,
-      "debt": 3500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "стоимость: таблица 3500 ≠ CRM 3900; оплачено: таблица 0 ≠ CRM 3500; долг: таблица 3500 ≠ CRM 400; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "total": {
-            "sheet": 3500.0,
-            "crm": 3900.0,
-            "label": "стоимость"
-          },
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3500.0,
-            "crm": 400.0,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3900.0,
-        "crm_paid": 3500.0,
-        "crm_debt": 400.0,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123784"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Андрусяк",
-      "ticket": "123724",
-      "total_repair": 9500.0,
-      "paid": 6000.0,
-      "debt": 3500.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 6000 ≠ CRM 9500; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 6000.0,
-            "crm": 9500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3500.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 9500.0,
-        "crm_paid": 9500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123724"
-      }
-    },
-    {
       "sheet_title": "202604(01-08)",
       "master": "Галанчук",
       "ticket": "119970",
@@ -3759,38 +3075,6 @@
       }
     },
     {
-      "sheet_title": "202609(09-15)",
-      "master": "Руднев",
-      "ticket": "123204",
-      "total_repair": 3200.0,
-      "paid": 0.0,
-      "debt": 3200.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3200; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3200.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 3200.0,
-        "crm_paid": 3200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123204"
-      }
-    },
-    {
       "sheet_title": "202605(01-08)",
       "master": "Галанчук",
       "ticket": "121009",
@@ -3825,43 +3109,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121009"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Тарасенко",
-      "ticket": "123790",
-      "total_repair": 3150.0,
-      "paid": 0.0,
-      "debt": 3150.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3150; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3150.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3150.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3150.0,
-        "crm_paid": 3150.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123790"
       }
     },
     {
@@ -4013,72 +3260,8 @@
       "control": "Лажа по статусу",
       "arith_check": "Норм",
       "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 3100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3100.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 3100.0,
-        "crm_paid": 3100.0,
-        "crm_debt": null,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122737"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Галанчук",
-      "ticket": "123674",
-      "total_repair": 3100.0,
-      "paid": 0.0,
-      "debt": 3100.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
         "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3100.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 3100.0,
-        "crm_paid": 3100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123674"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Плачковський",
-      "ticket": "123881",
-      "total_repair": 3100.0,
-      "paid": 0.0,
-      "debt": 3100.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3100; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
+        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3100; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
         "field_diffs": {
           "paid": {
             "sheet": 0.0,
@@ -4091,7 +3274,7 @@
             "label": "долг"
           },
           "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
+            "sheet": "Готов",
             "crm": "Выдан",
             "label": "статус"
           }
@@ -4100,28 +3283,7 @@
         "crm_paid": 3100.0,
         "crm_debt": null,
         "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123881"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124034",
-      "total_repair": 3100.0,
-      "paid": 0.0,
-      "debt": 3100.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 3100.0,
-        "crm_paid": 0.0,
-        "crm_debt": 3100.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124034"
+        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122737"
       }
     },
     {
@@ -4313,91 +3475,6 @@
         "crm_debt": 3000.0,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122392"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Андрусяк",
-      "ticket": "123094",
-      "total_repair": 7750.0,
-      "paid": 4750.0,
-      "debt": 3000.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «Готов»",
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Готов",
-            "label": "статус"
-          }
-        },
-        "crm_total": 7750.0,
-        "crm_paid": 4750.0,
-        "crm_debt": 3000.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123094"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Садоян",
-      "ticket": "123155",
-      "total_repair": 3000.0,
-      "paid": 0.0,
-      "debt": 3000.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 3000; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3000.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3000.0,
-        "crm_paid": 3000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123155"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "124027",
-      "total_repair": 3000.0,
-      "paid": 0.0,
-      "debt": 3000.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 3000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 3000.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124027"
       }
     },
     {
@@ -4751,38 +3828,6 @@
       }
     },
     {
-      "sheet_title": "202609(01-08)",
-      "master": "Вовчук",
-      "ticket": "123586",
-      "total_repair": 2800.0,
-      "paid": 0.0,
-      "debt": 2800.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2800; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2800.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2800.0,
-        "crm_paid": 2800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123586"
-      }
-    },
-    {
       "sheet_title": "202606(24-30)",
       "master": "Руднев",
       "ticket": "120980",
@@ -4968,75 +4013,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Галанчук",
-      "ticket": "123169",
-      "total_repair": 2700.0,
-      "paid": 0.0,
-      "debt": 2700.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2700.0,
-        "crm_paid": 2700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123169"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Садоян",
-      "ticket": "123545",
-      "total_repair": 2700.0,
-      "paid": 0.0,
-      "debt": 2700.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2700; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2700.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2700.0,
-        "crm_paid": 2700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123545"
-      }
-    },
-    {
       "sheet_title": "202607(24-31)",
       "master": "Сатаулов",
       "ticket": "122446",
@@ -5208,70 +4184,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122651"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Галанчук",
-      "ticket": "122489",
-      "total_repair": 5600.0,
-      "paid": 3000.0,
-      "debt": 2600.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 3000 ≠ CRM 5600; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 3000.0,
-            "crm": 5600.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2600.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 5600.0,
-        "crm_paid": 5600.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122489"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124168",
-      "total_repair": 5100.0,
-      "paid": 2500.0,
-      "debt": 2600.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2500 ≠ CRM 5100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 2500.0,
-            "crm": 5100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2600.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 5100.0,
-        "crm_paid": 5100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124168"
       }
     },
     {
@@ -5609,165 +4521,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Галанчук",
-      "ticket": "122990",
-      "total_repair": 2500.0,
-      "paid": 0.0,
-      "debt": 2500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2500.0,
-        "crm_paid": 2500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122990"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Садоян",
-      "ticket": "123805",
-      "total_repair": 2500.0,
-      "paid": 0.0,
-      "debt": 2500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2500.0,
-        "crm_paid": 2500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123805"
-      }
-    },
-    {
-      "sheet_title": "202609(24-30)",
-      "master": "Сатаулов",
-      "ticket": "123871",
-      "total_repair": 2500.0,
-      "paid": 0.0,
-      "debt": 2500.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 2500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2500.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123871"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "124065",
-      "total_repair": 2500.0,
-      "paid": 0.0,
-      "debt": 2500.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2500.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2500.0,
-        "crm_paid": 2500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124065"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124110",
-      "total_repair": 2500.0,
-      "paid": 0.0,
-      "debt": 2500.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2500; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2500.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2500.0,
-        "crm_paid": 2500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124110"
-      }
-    },
-    {
       "sheet_title": "202605(24-31)",
       "master": "Сатаулов",
       "ticket": "121353",
@@ -5869,70 +4622,6 @@
       }
     },
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Галанчук",
-      "ticket": "122049",
-      "total_repair": 2400.0,
-      "paid": 0.0,
-      "debt": 2400.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2400.0,
-        "crm_paid": 2400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122049"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Таресенко",
-      "ticket": "124251",
-      "total_repair": 4400.0,
-      "paid": 2000.0,
-      "debt": 2400.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 2000 ≠ CRM 4400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 2000.0,
-            "crm": 4400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 4400.0,
-        "crm_paid": 4400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124251"
-      }
-    },
-    {
       "sheet_title": "202512(24-31)",
       "master": "Сатаулов",
       "ticket": "117735",
@@ -5967,38 +4656,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/117735"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Вовчук",
-      "ticket": "124391",
-      "total_repair": 2365.0,
-      "paid": 0.0,
-      "debt": 2365.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 2365; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2365.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2365.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2365.0,
-        "crm_paid": 2365.0,
-        "crm_debt": null,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124391"
       }
     },
     {
@@ -6100,38 +4757,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122387"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Дубовой",
-      "ticket": "123185",
-      "total_repair": 2350.0,
-      "paid": 0.0,
-      "debt": 2350.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2350; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2350.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2350.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2350.0,
-        "crm_paid": 2350.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123185"
       }
     },
     {
@@ -6306,38 +4931,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122315"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123100",
-      "total_repair": 2257.0,
-      "paid": 0.0,
-      "debt": 2257.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2257; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2257.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2257.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2257.0,
-        "crm_paid": 2257.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123100"
       }
     },
     {
@@ -6516,186 +5109,6 @@
       }
     },
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Садоян",
-      "ticket": "123298",
-      "total_repair": 2200.0,
-      "paid": 0.0,
-      "debt": 2200.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2200.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2200.0,
-        "crm_paid": 2200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123298"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Свидерко",
-      "ticket": "123454",
-      "total_repair": 2200.0,
-      "paid": 0.0,
-      "debt": 2200.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2200.0,
-        "crm_paid": 2200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123454"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Вовчук",
-      "ticket": "117918",
-      "total_repair": 2200.0,
-      "paid": 0.0,
-      "debt": 2200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2200.0,
-        "crm_paid": 2200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/117918"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Сатаулов",
-      "ticket": "123577",
-      "total_repair": 2200.0,
-      "paid": 0.0,
-      "debt": 2200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2200.0,
-        "crm_paid": 2200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123577"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Вовчук",
-      "ticket": "123833",
-      "total_repair": 2200.0,
-      "paid": 0.0,
-      "debt": 2200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2200.0,
-        "crm_paid": 2200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123833"
-      }
-    },
-    {
       "sheet_title": "202606(16-23)",
       "master": "Галанчук",
       "ticket": "121675",
@@ -6804,107 +5217,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122587"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Плачковський",
-      "ticket": "123011",
-      "total_repair": 2100.0,
-      "paid": 0.0,
-      "debt": 2100.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2100; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2100.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2100.0,
-        "crm_paid": 2100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123011"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Плачковський",
-      "ticket": "123526",
-      "total_repair": 2100.0,
-      "paid": 0.0,
-      "debt": 2100.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2100.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2100.0,
-        "crm_paid": 2100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123526"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Вовчук",
-      "ticket": "123287",
-      "total_repair": 2100.0,
-      "paid": 0.0,
-      "debt": 2100.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2100; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2100.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2100.0,
-        "crm_paid": 2100.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123287"
       }
     },
     {
@@ -7400,208 +5712,6 @@
       }
     },
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123144",
-      "total_repair": 2000.0,
-      "paid": 0.0,
-      "debt": 2000.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Принят на доработку»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Принят на доработку",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2000.0,
-        "crm_paid": 2000.0,
-        "crm_debt": null,
-        "crm_status": "Принят на доработку",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123144"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Сатаулов",
-      "ticket": "123685",
-      "total_repair": 2000.0,
-      "paid": 0.0,
-      "debt": 2000.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
-        "field_diffs": {
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 2000.0,
-        "crm_status": "Выдан без ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123685"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124051",
-      "total_repair": 11000.0,
-      "paid": 9000.0,
-      "debt": 2000.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 9000 ≠ CRM 11000; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 9000.0,
-            "crm": 11000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 11000.0,
-        "crm_paid": 11000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124051"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "124247",
-      "total_repair": 2000.0,
-      "paid": 0.0,
-      "debt": 2000.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2000.0,
-        "crm_paid": 2000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124247"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Андрусяк",
-      "ticket": "124333",
-      "total_repair": 2000.0,
-      "paid": 0.0,
-      "debt": 2000.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1000; долг: таблица 2000 ≠ CRM 1000; статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": 1000.0,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "У курьера ГОТОВ",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2000.0,
-        "crm_paid": 1000.0,
-        "crm_debt": 1000.0,
-        "crm_status": "У курьера ГОТОВ",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124333"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124438",
-      "total_repair": 2000.0,
-      "paid": 0.0,
-      "debt": 2000.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 2000.0,
-        "crm_paid": 2000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124438"
-      }
-    },
-    {
       "sheet_title": "20251101(24-31)",
       "master": "Сатаулов",
       "ticket": "116691",
@@ -7998,75 +6108,6 @@
       }
     },
     {
-      "sheet_title": "202608(24-31)",
-      "master": "Плачковський",
-      "ticket": "122516",
-      "total_repair": 1900.0,
-      "paid": 0.0,
-      "debt": 1900.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1900; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1900.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1900.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1900.0,
-        "crm_paid": 1900.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122516"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Галанчук",
-      "ticket": "123364",
-      "total_repair": 1900.0,
-      "paid": 0.0,
-      "debt": 1900.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1900; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1900.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1900.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1900.0,
-        "crm_paid": 1900.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123364"
-      }
-    },
-    {
       "sheet_title": "20251109(01-08)",
       "master": "Галанчук",
       "ticket": "116844",
@@ -8384,43 +6425,6 @@
       }
     },
     {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "124293",
-      "total_repair": 1800.0,
-      "paid": 0.0,
-      "debt": 1800.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1800; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1800.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1800.0,
-        "crm_paid": 1800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124293"
-      }
-    },
-    {
       "sheet_title": "20250909(01-08)",
       "master": "Сатаулов",
       "ticket": "115262",
@@ -8513,43 +6517,6 @@
         "crm_debt": 1000.0,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121376"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Дубовой",
-      "ticket": "123374",
-      "total_repair": 1750.0,
-      "paid": 0.0,
-      "debt": 1750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 750; долг: таблица 1750 ≠ CRM 1000; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Готов»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1750.0,
-            "crm": 1000.0,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Готов",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1750.0,
-        "crm_paid": 750.0,
-        "crm_debt": 1000.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123374"
       }
     },
     {
@@ -9050,287 +7017,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Плачковський",
-      "ticket": "123017",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123017"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Ефимов",
-      "ticket": "123157",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123157"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Плачковський",
-      "ticket": "123355",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123355"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Плачковський",
-      "ticket": "123880",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Принят на доработку»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Принят на доработку",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Принят на доработку",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123880"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Плачковський",
-      "ticket": "123904",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123904"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Плачковський",
-      "ticket": "123976",
-      "total_repair": 4700.0,
-      "paid": 3000.0,
-      "debt": 1700.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 4700.0,
-        "crm_paid": 3000.0,
-        "crm_debt": 1700.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123976"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Плачковський",
-      "ticket": "124365",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1700.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 1700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124365"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Плачковський",
-      "ticket": "124373",
-      "total_repair": 1700.0,
-      "paid": 0.0,
-      "debt": 1700.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "У курьера ГОТОВ",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1700.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1700.0,
-        "crm_status": "У курьера ГОТОВ",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124373"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Андрусяк",
-      "ticket": "124256",
-      "total_repair": 3650.0,
-      "paid": 2000.0,
-      "debt": 1650.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 3650.0,
-        "crm_paid": 2000.0,
-        "crm_debt": 1650.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124256"
-      }
-    },
-    {
       "sheet_title": "202512(16-23)",
       "master": "Плачковский",
       "ticket": "117862",
@@ -9577,64 +7263,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122422"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "123426",
-      "total_repair": 8400.0,
-      "paid": 6800.0,
-      "debt": 1600.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 6800 ≠ CRM 8400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 6800.0,
-            "crm": 8400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1600.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 8400.0,
-        "crm_paid": 8400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123426"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Вовчук",
-      "ticket": "124342",
-      "total_repair": 1600.0,
-      "paid": 0.0,
-      "debt": 1600.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 1600.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1600.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124342"
       }
     },
     {
@@ -10193,149 +7821,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Тарасенко",
-      "ticket": "122929",
-      "total_repair": 1500.0,
-      "paid": 0.0,
-      "debt": 1500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Лажа",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1500.0,
-        "crm_paid": 1500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122929"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Садоян",
-      "ticket": "123275",
-      "total_repair": 3000.0,
-      "paid": 1500.0,
-      "debt": 1500.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1500 ≠ CRM 3000; в таблице долг, в CRM оплаты хватает; статус: «Передан курьеру» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 1500.0,
-            "crm": 3000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 3000.0,
-        "crm_paid": 3000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123275"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Галанчук",
-      "ticket": "123940",
-      "total_repair": 1500.0,
-      "paid": 0.0,
-      "debt": 1500.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1500; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1500.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1500.0,
-        "crm_paid": 1500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123940"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Садоян",
-      "ticket": "124263",
-      "total_repair": 1500.0,
-      "paid": 0.0,
-      "debt": 1500.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1500; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1500.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1500.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1500.0,
-        "crm_paid": 1500.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124263"
-      }
-    },
-    {
       "sheet_title": "20251024(16-23)",
       "master": "Дубовой",
       "ticket": "116356",
@@ -10624,75 +8109,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122579"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Галанчук",
-      "ticket": "123680",
-      "total_repair": 1400.0,
-      "paid": 0.0,
-      "debt": 1400.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1400.0,
-        "crm_paid": 1400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123680"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Плачковський",
-      "ticket": "123574",
-      "total_repair": 1350.0,
-      "paid": 0.0,
-      "debt": 1350.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1350; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1350.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1350.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1350.0,
-        "crm_paid": 1350.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123574"
       }
     },
     {
@@ -11037,75 +8453,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122503"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Дубовой",
-      "ticket": "123405",
-      "total_repair": 2300.0,
-      "paid": 1000.0,
-      "debt": 1300.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1000 ≠ CRM 2300; в таблице долг, в CRM оплаты хватает; статус: «Передан курьеру» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 1000.0,
-            "crm": 2300.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1300.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 2300.0,
-        "crm_paid": 2300.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123405"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Плачковський",
-      "ticket": "124253",
-      "total_repair": 1300.0,
-      "paid": 0.0,
-      "debt": 1300.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1300; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1300.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1300.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1300.0,
-        "crm_paid": 1300.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124253"
       }
     },
     {
@@ -11962,297 +9309,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Галанчук",
-      "ticket": "123172",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123172"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123200",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123200"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Дубовой",
-      "ticket": "123490",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "Передан курьеру",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «Передан курьеру» ≠ «Принят на доработку»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Принят на доработку",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Принят на доработку",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123490"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Вовчук",
-      "ticket": "123523",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123523"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Галанчук",
-      "ticket": "123537",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123537"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Вовчук",
-      "ticket": "123579",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123579"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "122282",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122282"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Вовчук",
-      "ticket": "123981",
-      "total_repair": 1200.0,
-      "paid": 0.0,
-      "debt": 1200.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1200.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1200.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1200.0,
-        "crm_paid": 1200.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123981"
-      }
-    },
-    {
       "sheet_title": "202605(24-31)",
       "master": "Плачковский",
       "ticket": "121406",
@@ -12814,7 +9870,7 @@
       "arith_check": "Норм",
       "verify": {
         "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1000; в таблице долг, в CRM оплаты хватает",
+        "summary": "оплачено: таблица 0 ≠ CRM 1000; в таблице долг, в CRM оплаты хватает; статус: «Собран на возврат» ≠ «Выдан без ремонта»",
         "field_diffs": {
           "paid": {
             "sheet": 0.0,
@@ -12825,12 +9881,17 @@
             "sheet": 1000.0,
             "crm": null,
             "label": "долг"
+          },
+          "status": {
+            "sheet": "Собран на возврат",
+            "crm": "Выдан без ремонта",
+            "label": "статус"
           }
         },
         "crm_total": 1000.0,
         "crm_paid": 1000.0,
         "crm_debt": null,
-        "crm_status": "Собран на возврат",
+        "crm_status": "Выдан без ремонта",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/120786"
       }
     },
@@ -12938,64 +9999,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122084"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Дубовой",
-      "ticket": "123561",
-      "total_repair": 1000.0,
-      "paid": 0.0,
-      "debt": 1000.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 1000; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 1000.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1000.0,
-        "crm_paid": 1000.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123561"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Таресенко",
-      "ticket": "124458",
-      "total_repair": 1000.0,
-      "paid": 0.0,
-      "debt": 1000.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 1000.0,
-        "crm_paid": 0.0,
-        "crm_debt": 1000.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124458"
       }
     },
     {
@@ -14222,117 +11225,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122789"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Тарасенко",
-      "ticket": "123422",
-      "total_repair": 800.0,
-      "paid": 0.0,
-      "debt": 800.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 800; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 800.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 800.0,
-        "crm_paid": 800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123422"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123695",
-      "total_repair": 800.0,
-      "paid": 0.0,
-      "debt": 800.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 800; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 800.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 800.0,
-        "crm_paid": 800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123695"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Тарасенко",
-      "ticket": "123846",
-      "total_repair": 800.0,
-      "paid": 0.0,
-      "debt": 800.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 800; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 800.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 800.0,
-        "crm_paid": 800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123846"
       }
     },
     {
@@ -16117,536 +13009,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Руднев",
-      "ticket": "123060",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123060"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Плачковський",
-      "ticket": "123074",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123074"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Дубовой",
-      "ticket": "123346",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан без ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123346"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Ефимов",
-      "ticket": "123406",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123406"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Плачковський",
-      "ticket": "123413",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123413"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Ефимов",
-      "ticket": "123479",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123479"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Вовчук",
-      "ticket": "123788",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123788"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Дубовой",
-      "ticket": "123807",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "стоимость: таблица 750 ≠ CRM 0; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Готов»",
-        "field_diffs": {
-          "total": {
-            "sheet": 750.0,
-            "crm": 0.0,
-            "label": "стоимость"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Готов",
-            "label": "статус"
-          }
-        },
-        "crm_total": 0.0,
-        "crm_paid": 0.0,
-        "crm_debt": 750.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123807"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Дубовой",
-      "ticket": "123809",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "стоимость: таблица 750 ≠ CRM 0; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
-        "field_diffs": {
-          "total": {
-            "sheet": 750.0,
-            "crm": 0.0,
-            "label": "стоимость"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        },
-        "crm_total": 0.0,
-        "crm_paid": 0.0,
-        "crm_debt": 750.0,
-        "crm_status": "Выдан без ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123809"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Плачковський",
-      "ticket": "123794",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123794"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Галанчук",
-      "ticket": "123838",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123838"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Садоян",
-      "ticket": "124063",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124063"
-      }
-    },
-    {
-      "sheet_title": "202609(24-30)",
-      "master": "Ефимов",
-      "ticket": "124060",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124060"
-      }
-    },
-    {
-      "sheet_title": "202609(24-30)",
-      "master": "Ефимов",
-      "ticket": "124061",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124061"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Плачковський",
-      "ticket": "124366",
-      "total_repair": 750.0,
-      "paid": 0.0,
-      "debt": 750.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 750; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 750.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 750.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 750.0,
-        "crm_paid": 750.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124366"
-      }
-    },
-    {
       "sheet_title": "202603(01-08)",
       "master": "Сатаулов",
       "ticket": "116375",
@@ -16869,43 +13231,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123306",
-      "total_repair": 700.0,
-      "paid": 0.0,
-      "debt": 700.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 700.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 700.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 700.0,
-        "crm_paid": 700.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123306"
-      }
-    },
-    {
       "sheet_title": "20251109(01-08)",
       "master": "Сатаулов",
       "ticket": "117054",
@@ -17062,38 +13387,6 @@
         "crm_debt": null,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121382"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Сатаулов",
-      "ticket": "123889",
-      "total_repair": 600.0,
-      "paid": 0.0,
-      "debt": 600.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 600; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 600.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 600.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 600.0,
-        "crm_paid": 600.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123889"
       }
     },
     {
@@ -17502,27 +13795,6 @@
         "crm_debt": 1500.0,
         "crm_status": "Выдан",
         "crm_url": "https://itserviceoutsourcing.gincore.net/orders/122526"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Тарасенко",
-      "ticket": "124054",
-      "total_repair": 500.0,
-      "paid": 0.0,
-      "debt": 500.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 500.0,
-        "crm_paid": 0.0,
-        "crm_debt": 500.0,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124054"
       }
     },
     {
@@ -18556,732 +14828,6 @@
       }
     },
     {
-      "sheet_title": "202608(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123244",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123244"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Свидерко",
-      "ticket": "123277",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123277"
-      }
-    },
-    {
-      "sheet_title": "202608(16-23)",
-      "master": "Свидерко",
-      "ticket": "123325",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123325"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123500",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123500"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123501",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123501"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123503",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123503"
-      }
-    },
-    {
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "ticket": "123573",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123573"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123568",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123568"
-      }
-    },
-    {
-      "sheet_title": "202609(01-08)",
-      "master": "Сатаулов",
-      "ticket": "123643",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123643"
-      }
-    },
-    {
-      "sheet_title": "202609(09-15)",
-      "master": "Свидерко",
-      "ticket": "123842",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123842"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "123906",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123906"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "124001",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124001"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Тарасенко",
-      "ticket": "124023",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124023"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Свидерко",
-      "ticket": "124074",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124074"
-      }
-    },
-    {
-      "sheet_title": "202609(16-23)",
-      "master": "Сатаулов",
-      "ticket": "124099",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 25).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124099"
-      }
-    },
-    {
-      "sheet_title": "202609(24-30)",
-      "master": "Сатаулов",
-      "ticket": "124211",
-      "total_repair": 800.0,
-      "paid": 400.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 400 ≠ CRM 800; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 400.0,
-            "crm": 800.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 800.0,
-        "crm_paid": 800.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124211"
-      }
-    },
-    {
-      "sheet_title": "202609(24-30)",
-      "master": "Сатаулов",
-      "ticket": "124241",
-      "total_repair": 1600.0,
-      "paid": 1200.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1200 ≠ CRM 1600; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Выдан»",
-        "field_diffs": {
-          "paid": {
-            "sheet": 1200.0,
-            "crm": 1600.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Готов",
-            "crm": "Выдан",
-            "label": "статус"
-          }
-        },
-        "crm_total": 1600.0,
-        "crm_paid": 1600.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124241"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124241",
-      "total_repair": 1600.0,
-      "paid": 1200.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 1200 ≠ CRM 1600; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 1200.0,
-            "crm": 1600.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 1600.0,
-        "crm_paid": 1600.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124241"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124421",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Готов",
-      "control": "Лажа по статусу",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "ok",
-        "summary": "Совпадает с CRM",
-        "field_diffs": {},
-        "crm_total": 400.0,
-        "crm_paid": 0.0,
-        "crm_debt": 400.0,
-        "crm_status": "Готов",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124421"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Сатаулов",
-      "ticket": "124457",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124457"
-      }
-    },
-    {
-      "sheet_title": "202610(01-08)",
-      "master": "Таресенко",
-      "ticket": "124512",
-      "total_repair": 400.0,
-      "paid": 0.0,
-      "debt": 400.0,
-      "status": "Выдан",
-      "control": "Лажа по оплате",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "norm",
-        "summary": "Норма: в CRM «Выдан», долга нет · оплачено: таблица 0 ≠ CRM 400; в таблице долг, в CRM оплаты хватает",
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 400.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 400.0,
-            "crm": null,
-            "label": "долг"
-          }
-        },
-        "crm_total": 400.0,
-        "crm_paid": 400.0,
-        "crm_debt": null,
-        "crm_status": "Выдан",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124512"
-      }
-    },
-    {
       "sheet_title": "!20250804(28-03)",
       "master": "Сатаулов",
       "ticket": "119643",
@@ -19473,33 +15019,6 @@
       }
     },
     {
-      "sheet_title": "202609(01-08)",
-      "master": "Тарасенко",
-      "ticket": "123764",
-      "total_repair": 250.0,
-      "paid": 0.0,
-      "debt": 250.0,
-      "status": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "control": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-      "arith_check": "Норм",
-      "verify": {
-        "verdict": "mismatch",
-        "summary": "статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
-        "field_diffs": {
-          "status": {
-            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        },
-        "crm_total": 250.0,
-        "crm_paid": 0.0,
-        "crm_debt": 250.0,
-        "crm_status": "Выдан без ремонта",
-        "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123764"
-      }
-    },
-    {
       "sheet_title": "202607(24-31)",
       "master": "Плачковський",
       "ticket": "121939",
@@ -19582,40 +15101,79 @@
     {
       "day": "2026-10-11",
       "crm_debt_sum": 200100.0,
-      "sheets_debt_sum": 697567.0,
+      "sheets_debt_sum": 693417.0,
       "crm_orders": 118,
-      "sheets_tickets": 415,
+      "sheets_tickets": 412,
       "source": "verify-all",
       "updated_at": "2026-10-11T07:19:37.217485+00:00"
     },
     {
       "day": "2026-10-12",
       "crm_debt_sum": 151350.0,
-      "sheets_debt_sum": 699567.0,
+      "sheets_debt_sum": 693417.0,
       "crm_orders": 89,
-      "sheets_tickets": 416,
+      "sheets_tickets": 412,
       "source": "verify-all",
       "updated_at": "2026-10-12T05:48:52.101173+00:00"
     },
     {
       "day": "2026-10-13",
       "crm_debt_sum": 153785.0,
-      "sheets_debt_sum": 1023048.0,
+      "sheets_debt_sum": 693417.0,
       "crm_orders": 97,
-      "sheets_tickets": 546,
+      "sheets_tickets": 412,
       "source": "verify-all",
       "updated_at": "2026-10-13T05:46:02.975110+00:00"
+    },
+    {
+      "day": "2026-10-15",
+      "crm_debt_sum": 142335.0,
+      "sheets_debt_sum": 693417.0,
+      "crm_orders": 86,
+      "sheets_tickets": 412,
+      "source": "verify-all",
+      "updated_at": "2026-10-15T06:14:23.634175+00:00"
     }
   ],
   "verify_report": {
     "total": 544,
-    "ok": 62,
-    "norm": 410,
-    "mismatch": 72,
+    "ok": 56,
+    "norm": 417,
+    "mismatch": 71,
     "missing": 0,
     "error": 0,
-    "bad_count": 72,
+    "bad_count": 71,
     "top_issues": [
+      {
+        "ticket": "124456",
+        "sheet_title": "202610(01-08)",
+        "verdict": "mismatch",
+        "summary": "статус: «В процессе ремонта» ≠ «Готов»",
+        "sheet_debt": 10250.0,
+        "crm_debt": 10250.0,
+        "field_diffs": {
+          "status": {
+            "sheet": "В процессе ремонта",
+            "crm": "Готов",
+            "label": "статус"
+          }
+        }
+      },
+      {
+        "ticket": "123986",
+        "sheet_title": "202610(01-08)",
+        "verdict": "mismatch",
+        "summary": "статус: «Готов» ≠ «Выдан»",
+        "sheet_debt": 9500.0,
+        "crm_debt": 9500.0,
+        "field_diffs": {
+          "status": {
+            "sheet": "Готов",
+            "crm": "Выдан",
+            "label": "статус"
+          }
+        }
+      },
       {
         "ticket": "123094",
         "sheet_title": "202609(09-15)",
@@ -19653,21 +15211,6 @@
             "sheet": 7450.0,
             "crm": null,
             "label": "долг"
-          }
-        }
-      },
-      {
-        "ticket": "123849",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
-        "sheet_debt": 6600.0,
-        "crm_debt": 6600.0,
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "У курьера ГОТОВ",
-            "label": "статус"
           }
         }
       },
@@ -19737,21 +15280,6 @@
         }
       },
       {
-        "ticket": "121986",
-        "sheet_title": "202607(16-23)",
-        "verdict": "mismatch",
-        "summary": "статус: «Передан курьеру» ≠ «Готов»",
-        "sheet_debt": 3700.0,
-        "crm_debt": 3700.0,
-        "field_diffs": {
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "Готов",
-            "label": "статус"
-          }
-        }
-      },
-      {
         "ticket": "123784",
         "sheet_title": "202609(16-23)",
         "verdict": "mismatch",
@@ -19803,26 +15331,6 @@
             "sheet": "Готов",
             "crm": "Не подлежит ремонту",
             "label": "статус"
-          }
-        }
-      },
-      {
-        "ticket": "122737",
-        "sheet_title": "202608(09-15)",
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 3100; в таблице долг, в CRM оплаты хватает",
-        "sheet_debt": 3100.0,
-        "crm_debt": null,
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 3100.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 3100.0,
-            "crm": null,
-            "label": "долг"
           }
         }
       },
@@ -20045,7 +15553,7 @@
         "ticket": "123880",
         "sheet_title": "202609(16-23)",
         "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Принят на доработку»",
+        "summary": "оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «На согласовании»",
         "sheet_debt": 1700.0,
         "crm_debt": null,
         "field_diffs": {
@@ -20061,7 +15569,7 @@
           },
           "status": {
             "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "Принят на доработку",
+            "crm": "На согласовании",
             "label": "статус"
           }
         }
@@ -20190,7 +15698,7 @@
         "ticket": "120786",
         "sheet_title": "202606(01-08)",
         "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1000; в таблице долг, в CRM оплаты хватает",
+        "summary": "оплачено: таблица 0 ≠ CRM 1000; в таблице долг, в CRM оплаты хватает; статус: «Собран на возврат» ≠ «Выдан без ремонта»",
         "sheet_debt": 1000.0,
         "crm_debt": null,
         "field_diffs": {
@@ -20203,6 +15711,11 @@
             "sheet": 1000.0,
             "crm": null,
             "label": "долг"
+          },
+          "status": {
+            "sheet": "Собран на возврат",
+            "crm": "Выдан без ремонта",
+            "label": "статус"
           }
         }
       },
@@ -20395,14 +15908,29 @@
             "label": "статус"
           }
         }
+      },
+      {
+        "ticket": "117890",
+        "sheet_title": "202512(09-15)",
+        "verdict": "mismatch",
+        "summary": "статус: «Выдан» ≠ «Выдан без ремонта»",
+        "sheet_debt": 800.0,
+        "crm_debt": 800.0,
+        "field_diffs": {
+          "status": {
+            "sheet": "Выдан",
+            "crm": "Выдан без ремонта",
+            "label": "статус"
+          }
+        }
       }
     ]
   },
   "counts": {
     "upsell_sheets": 55,
     "debt_sheets": 55,
-    "debt_tickets": 546,
+    "debt_tickets": 412,
     "verify_rows": 544,
-    "debt_daily": 4
+    "debt_daily": 5
   }
 }

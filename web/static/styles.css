@@ -1073,6 +1073,34 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   text-decoration-color: rgba(28, 36, 48, 0.25);
 }
 .vyrobotka-table a.vyrobotka-ticket-link:hover { color: var(--accent); }
+.vyrobotka-th-hint {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #5d6b7c;
+}
+.vyrobotka-dual-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+.vyrobotka-dual-cell small {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #5d6b7c;
+}
+.vyrobotka-table a.vyrobotka-sheet-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(26, 95, 138, 0.35);
+  cursor: pointer;
+}
+.vyrobotka-table a.vyrobotka-sheet-link:hover {
+  color: #1a5f8a;
+}
 .vyrobotka-stack-layout {
   display: flex;
   flex-direction: column;

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261012-masters-kpi4" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261013-debt-atypical4" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -378,6 +378,32 @@
               </div>
               <div class="vyrobotka-stack-table">
                 <div class="vyrobotka-side-head">
+                  <h3>Нетипичные случаи</h3>
+                  <p class="vyrobotka-chart-sub" style="margin:0">
+                    В CRM отказ / без ремонта / возврат и долг ещё не закрыт, а в отчёте мастера — долг клиента и сумма работ.
+                    Клик по данным из отчёта открывает нужный лист таблицы.
+                  </p>
+                </div>
+                <div class="vyrobotka-table-wrap">
+                  <table class="quality-table vyrobotka-table" id="vyrobotka-atypical-table">
+                    <thead>
+                      <tr>
+                        <th>Кв.</th>
+                        <th>Мастер</th>
+                        <th>Стоимость ремонта<br /><span class="vyrobotka-th-hint">отчёт / база</span></th>
+                        <th>Статус в базе</th>
+                        <th>Стоимость работ<br /><span class="vyrobotka-th-hint">в отчёте</span></th>
+                        <th>Оплачено клиентом<br /><span class="vyrobotka-th-hint">из базы</span></th>
+                      </tr>
+                    </thead>
+                    <tbody id="vyrobotka-atypical-tbody">
+                      <tr><td colspan="6" class="quality-empty">—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="vyrobotka-stack-table">
+                <div class="vyrobotka-side-head">
                   <h3>Недоплаченные квитанции</h3>
                 </div>
                 <div class="vyrobotka-table-wrap">
@@ -614,6 +640,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261012-masters-kpi4"></script>
+  <script src="/static/app.js?v=20261013-debt-atypical4"></script>
 </body>
 </html>

@@ -27,7 +27,61 @@ def _close(a: float | None, b: float | None, tol: float = MONEY_TOL) -> bool:
 
 
 def _norm_status(s: Any) -> str:
-    return " ".join(str(s or "").casefold().split())
+    t = " ".join(str(s or "").casefold().replace("ё", "е").split())
+    # В CRM бывает укорочено: «У курьера БЕЗ РЕМОНТ»
+    if t.startswith("у курьера без ремонт"):
+        return "у курьера без ремонта"
+    return t
+
+
+# Статусы CRM, при которых работы/долг в отчёте мастера выглядят подозрительно.
+ATYPICAL_CRM_STATUSES = frozenset(
+    {
+        "выдан без ремонта",
+        "не подлежит ремонту",
+        "клиент отказался",
+        "у курьера без ремонта",
+        "собираем на возврат",
+        "собран на возврат",
+    }
+)
+
+
+def is_atypical_debt_case(
+    *,
+    sheet_total: Any,
+    crm_total: Any,
+    sheet_debt: Any,
+    report_amount: Any,
+    crm_status: Any,
+    crm_debt: Any = None,
+    crm_paid: Any = None,
+) -> bool:
+    """Нетипичный случай: отказ/без ремонта в CRM, а в отчёте долг клиента и сумма работ.
+
+    Условия:
+    - статус CRM из списка отказов / без ремонта / возврат;
+    - в отчёте есть стоимость ремонта (> 0);
+    - в отчёте клиент должен денег (долг > 0);
+    - мастер вписал себе стоимость работ (> 0);
+    - в CRM долг ещё не закрыт (иначе это просто устаревшая таблица, как 121399).
+    """
+    if _norm_status(crm_status) not in ATYPICAL_CRM_STATUSES:
+        return False
+    # В базе уже оплачено / долга нет — не тащим в нетипичные
+    cd = _money(crm_debt)
+    if cd is None or cd <= MONEY_TOL:
+        return False
+    st = _money(sheet_total)
+    if st is None or st <= MONEY_TOL:
+        return False
+    debt = _money(sheet_debt)
+    if debt is None or debt <= MONEY_TOL:
+        return False
+    work = _money(report_amount)
+    if work is None or work <= MONEY_TOL:
+        return False
+    return True
 
 
 def _fmt_money(v: float | None) -> str:
