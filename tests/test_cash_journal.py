@@ -531,6 +531,46 @@ def test_amount_not_glued_to_quantity():
     assert cp["cash_match"] is True
 
 
+def test_plus_na_schet_is_not_parts():
+    """«124050 +2500 на счёт 08,10» — оплата на счёт, не ЗЧ."""
+    from modules.cash_journal.parser import is_parts_attach_line
+
+    out = reconcile_cash_journal(
+        "Касса: 1000\nКарта: 0\n124050 +2500 на счёт 08,10\n"
+    )
+    line = next(
+        l
+        for l in out["cash_journal"]["lines"]
+        if not l.get("is_checkpoint") and "124050" in (l.get("raw") or "")
+    )
+    assert line["amount"] == 2500
+    assert line["action"] != "cash_out"
+    assert is_parts_attach_line(line) is False
+    assert not line.get("is_breakdown")
+
+
+def test_parts_attach_space_format_without_dashes():
+    """«122084 енкодер глайди 700» / «122361 акб 700» — ЗЧ без дефисов."""
+    from modules.cash_journal.parser import is_parts_attach_line
+
+    out = reconcile_cash_journal(
+        "Касса: 5000\nКарта: 0\n"
+        "122084 енкодер глайди 700\n"
+        "122361 акб 700\n"
+        "122252 розєм 100\n"
+    )
+    lines = out["cash_journal"]["lines"]
+    akb = next(l for l in lines if "акб" in (l.get("raw") or "").lower())
+    assert akb["order_id"] == "122361"
+    assert akb["amount"] == 700
+    assert akb["action"] == "cash_out"
+    assert is_parts_attach_line(akb) is True
+    enc = next(l for l in lines if "енкодер" in (l.get("raw") or ""))
+    assert enc["action"] == "cash_out"
+    assert is_parts_attach_line(enc) is True
+    assert out["cash_journal"]["closing_cash"] == 5000 - 700 - 700 - 100
+
+
 def test_parts_attach_journal_line():
     from modules.cash_journal.parser import is_parts_attach_line
 

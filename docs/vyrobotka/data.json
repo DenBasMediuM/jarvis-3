@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-15T06:18:15.403947+00:00",
+  "exported_at": "2026-10-21T06:33:12.987679+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
-    "finished_at": "2026-10-15T06:02:22.034333+00:00",
-    "message": "Готово: инкремент — обновлено 0 лист(ов), без изменений 1; в кэше 55 листов, 3170 квитанций. Таблица: Рассчет прибыльности июнь, pages 412 долгов",
+    "finished_at": "2026-10-21T06:20:43.641476+00:00",
+    "message": "Готово: инкремент — обновлено 1 лист(ов), без изменений 0; в кэше 56 листов, 3224 квитанций. Таблица: Рассчет прибыльности июнь, pages 412 долгов",
     "status": "idle"
   },
   "upsell_sheets": [
@@ -668,6 +668,18 @@
       "upsell_count": 41,
       "avg_upsell": 668.0487804878048,
       "upsell_ratio": 0.47126436781609193
+    },
+    {
+      "sheet_title": "202610(09-15)",
+      "sort_ym": 20261009,
+      "sort_a": 9,
+      "sort_b": 15,
+      "tickets_count": 54,
+      "report_sum": 82130.0,
+      "upsell_sum": 12630.0,
+      "upsell_count": 23,
+      "avg_upsell": 549.1304347826087,
+      "upsell_ratio": 0.42592592592592593
     }
   ],
   "debt_sheets": [
@@ -1275,6 +1287,17 @@
       "debt_count": 33,
       "debt_ratio": 0.3793103448275862,
       "avg_debt": 2627.73
+    },
+    {
+      "sheet_title": "202610(09-15)",
+      "sort_ym": 20261009,
+      "sort_a": 9,
+      "sort_b": 15,
+      "tickets_count": 54,
+      "debt_sum": 48430.0,
+      "debt_count": 9,
+      "debt_ratio": 0.16666666666666666,
+      "avg_debt": 5381.11
     }
   ],
   "debt_tickets": [
@@ -15133,28 +15156,61 @@
       "sheets_tickets": 412,
       "source": "verify-all",
       "updated_at": "2026-10-15T06:14:23.634175+00:00"
+    },
+    {
+      "day": "2026-10-19",
+      "crm_debt_sum": 191400.0,
+      "sheets_debt_sum": 693417.0,
+      "crm_orders": 95,
+      "sheets_tickets": 412,
+      "source": "verify-all",
+      "updated_at": "2026-10-19T06:41:45.055790+00:00"
+    },
+    {
+      "day": "2026-10-21",
+      "crm_debt_sum": 186969.0,
+      "sheets_debt_sum": 693417.0,
+      "crm_orders": 97,
+      "sheets_tickets": 412,
+      "source": "verify-all",
+      "updated_at": "2026-10-21T06:33:07.286981+00:00"
     }
   ],
   "verify_report": {
-    "total": 544,
-    "ok": 56,
-    "norm": 417,
-    "mismatch": 71,
+    "total": 553,
+    "ok": 60,
+    "norm": 420,
+    "mismatch": 73,
     "missing": 0,
     "error": 0,
-    "bad_count": 71,
+    "bad_count": 73,
     "top_issues": [
+      {
+        "ticket": "123873",
+        "sheet_title": "202610(09-15)",
+        "verdict": "mismatch",
+        "summary": "стоимость: таблица 30000 ≠ CRM 0",
+        "sheet_debt": 30000.0,
+        "crm_debt": 30000.0,
+        "field_diffs": {
+          "total": {
+            "sheet": 30000.0,
+            "crm": 0.0,
+            "label": "стоимость"
+          }
+        }
+      },
       {
         "ticket": "124456",
         "sheet_title": "202610(01-08)",
         "verdict": "mismatch",
-        "summary": "статус: «В процессе ремонта» ≠ «Готов»",
+        "summary": "статус: «В процессе ремонта» ≠ «Выдан»",
         "sheet_debt": 10250.0,
         "crm_debt": 10250.0,
         "field_diffs": {
           "status": {
             "sheet": "В процессе ремонта",
-            "crm": "Готов",
+            "crm": "Выдан",
             "label": "статус"
           }
         }
@@ -15365,26 +15421,6 @@
         }
       },
       {
-        "ticket": "124391",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 2365; в таблице долг, в CRM оплаты хватает",
-        "sheet_debt": 2365.0,
-        "crm_debt": null,
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 2365.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2365.0,
-            "crm": null,
-            "label": "долг"
-          }
-        }
-      },
-      {
         "ticket": "121999",
         "sheet_title": "202606(16-23)",
         "verdict": "mismatch",
@@ -15410,13 +15446,43 @@
         }
       },
       {
+        "ticket": "123577",
+        "sheet_title": "202609(09-15)",
+        "verdict": "mismatch",
+        "summary": "оплачено: таблица 0 ≠ CRM 2200; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Принят на доработку»",
+        "sheet_debt": 2200.0,
+        "crm_debt": null,
+        "field_diffs": {
+          "paid": {
+            "sheet": 0.0,
+            "crm": 2200.0,
+            "label": "оплачено"
+          },
+          "debt": {
+            "sheet": 2200.0,
+            "crm": null,
+            "label": "долг"
+          },
+          "status": {
+            "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
+            "crm": "Принят на доработку",
+            "label": "статус"
+          }
+        }
+      },
+      {
         "ticket": "123144",
         "sheet_title": "202608(24-31)",
         "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 2000; в таблице долг, в CRM оплаты хватает; статус: «Готов» ≠ «Принят на доработку»",
+        "summary": "стоимость: таблица 2000 ≠ CRM 3000; оплачено: таблица 0 ≠ CRM 2000; долг: таблица 2000 ≠ CRM 1000; статус: «Готов» ≠ «Принят на доработку»",
         "sheet_debt": 2000.0,
-        "crm_debt": null,
+        "crm_debt": 1000.0,
         "field_diffs": {
+          "total": {
+            "sheet": 2000.0,
+            "crm": 3000.0,
+            "label": "стоимость"
+          },
           "paid": {
             "sheet": 0.0,
             "crm": 2000.0,
@@ -15424,7 +15490,7 @@
           },
           "debt": {
             "sheet": 2000.0,
-            "crm": null,
+            "crm": 1000.0,
             "label": "долг"
           },
           "status": {
@@ -15445,31 +15511,6 @@
           "status": {
             "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
             "crm": "Выдан без ремонта",
-            "label": "статус"
-          }
-        }
-      },
-      {
-        "ticket": "124333",
-        "sheet_title": "202610(01-08)",
-        "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1000; долг: таблица 2000 ≠ CRM 1000; статус: «Передан курьеру» ≠ «У курьера ГОТОВ»",
-        "sheet_debt": 2000.0,
-        "crm_debt": 1000.0,
-        "field_diffs": {
-          "paid": {
-            "sheet": 0.0,
-            "crm": 1000.0,
-            "label": "оплачено"
-          },
-          "debt": {
-            "sheet": 2000.0,
-            "crm": 1000.0,
-            "label": "долг"
-          },
-          "status": {
-            "sheet": "Передан курьеру",
-            "crm": "У курьера ГОТОВ",
             "label": "статус"
           }
         }
@@ -15553,7 +15594,7 @@
         "ticket": "123880",
         "sheet_title": "202609(16-23)",
         "verdict": "mismatch",
-        "summary": "оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «На согласовании»",
+        "summary": "оплачено: таблица 0 ≠ CRM 1700; в таблице долг, в CRM оплаты хватает; статус: «#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)» ≠ «Выдан без ремонта»",
         "sheet_debt": 1700.0,
         "crm_debt": null,
         "field_diffs": {
@@ -15569,7 +15610,7 @@
           },
           "status": {
             "sheet": "#ERROR! ( Exception: Service invoked too many times for one day: urlfetch. (line 4).)",
-            "crm": "На согласовании",
+            "crm": "Выдан без ремонта",
             "label": "статус"
           }
         }
@@ -15927,10 +15968,10 @@
     ]
   },
   "counts": {
-    "upsell_sheets": 55,
-    "debt_sheets": 55,
+    "upsell_sheets": 56,
+    "debt_sheets": 56,
     "debt_tickets": 412,
-    "verify_rows": 544,
-    "debt_daily": 5
+    "verify_rows": 553,
+    "debt_daily": 7
   }
 }

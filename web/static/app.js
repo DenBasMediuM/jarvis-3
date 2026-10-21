@@ -574,11 +574,19 @@ function pickPaymentCashbox(cashboxes, formSelected, { preferCard = false } = {}
   return list[0] ? String(list[0].id) : "";
 }
 
+function isPaymentLabel(label) {
+  return /(предоплат|доплат|\bоплат|\bаванс|\bпред\b|срочн|остаток|на\s*карт|на\s*сч[её]т|безнал|терминал)/i.test(
+    String(label || "").replace(/ё/g, "е"),
+  );
+}
+
 function isPartsAttachLine(line) {
   if (!line || line.action !== "cash_out" || !line.order_id) return false;
   if (line.is_breakdown_total) return false;
   const raw = String(line.raw || line.note || "").trim();
   const core = raw.replace(/^зч\.?\s+/i, "").trim();
+  // приход «+2500 …» / «… грн» — не ЗЧ
+  if (/[+]|\bгрн\b|\buah\b|₴/i.test(core)) return false;
   const oid = String(line.order_id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const n = core.toLowerCase().replace(/ё/g, "е");
   if (/(^|\s)(зп|зарплат\w*)(\s|$)/.test(n)) return false;
@@ -594,7 +602,44 @@ function isPartsAttachLine(line) {
   if (new RegExp(`^${oid}\\s*[-−–]\\s*.+,\\s*\\d+(?:[.,]\\d+)?\\s*$`).test(core)) {
     return true;
   }
-  return false;
+  // «122084 енкодер глайди 700» / «122361 акб 700»
+  const space = core.match(
+    new RegExp(`^${oid}\\s+(?![+\\-−–])(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*$`),
+  );
+  if (!space || isPaymentLabel(space[1])) return false;
+  const spaceAmt = Number(String(space[2]).replace(",", "."));
+  const lineAmt = Math.abs(Number(line.amount) || 0);
+  if (lineAmt > 0 && Math.abs(spaceAmt - lineAmt) > 0.01) return false;
+  return true;
+}
+
+/** Уже открытый журнал: «122361 акб 700» → из кассы / ЗЧ, без полного перепарса. */
+function reclassifyPartsLines(lines) {
+  let n = 0;
+  for (const line of lines || []) {
+    if (line.posted || line.is_checkpoint || line.is_breakdown_total) continue;
+    const oid = line.order_id ? String(line.order_id) : "";
+    if (!oid) continue;
+    const raw = String(line.raw || line.note || "").trim();
+    const core = raw.replace(/^зч\.?\s+/i, "").trim();
+    // не трогаем явные приходы и оплаты «на счёт/карту»
+    if (/[+]|\bгрн\b|\buah\b|₴/i.test(core)) continue;
+    if (isPaymentLabel(core)) continue;
+    const esc = oid.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const space = core.match(
+      new RegExp(`^${esc}\\s+(?![+\\-−–])(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*$`),
+    );
+    if (!space || isPaymentLabel(space[1])) continue;
+    if (/(^|\s)(зп|зарплат\w*)(\s|$)/i.test(core)) continue;
+    const spaceAmt = Number(String(space[2]).replace(",", "."));
+    const lineAmt = Math.abs(Number(line.amount) || 0);
+    // «+2500 … 08,10» ловит 08,10 — сумма должна совпасть с суммой строки
+    if (lineAmt > 0 && Math.abs(spaceAmt - lineAmt) > 0.01) continue;
+    line.action = "cash_out";
+    line.is_breakdown = true;
+    n += 1;
+  }
+  return n;
 }
 
 function importableCashJournalLines(lines) {
@@ -1253,6 +1298,8 @@ function renderCashJournal(journal) {
     opening_card: journal.opening_card,
     lines: (journal.lines || []).map((l) => ({ ...l })),
   };
+  // Текущий подход без перезапуска: строки вида «акб 700» → ЗЧ
+  reclassifyPartsLines(data.lines);
 
   const title = document.createElement("div");
   title.className = "cash-journal-title";
@@ -1273,9 +1320,12 @@ function renderCashJournal(journal) {
   importBtn.type = "button";
   importBtn.className = "cj-import-open";
   importBtn.textContent = "Внести в базу";
-  importBtn.addEventListener("click", () =>
-    openCashImportFlow(data.lines, { onUpdate: renderLines })
-  );
+  importBtn.addEventListener("click", () => {
+    reclassifyPartsLines(data.lines);
+    renderLines();
+    refreshSummary();
+    openCashImportFlow(data.lines, { onUpdate: renderLines });
+  });
   toolbar.appendChild(importBtn);
   root.appendChild(toolbar);
 

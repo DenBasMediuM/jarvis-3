@@ -483,7 +483,7 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
                 raise HTTPException(
                     400,
                     "Эта строка «из кассы» с номером — не привязка запчасти "
-                    "(нужен вид «123956 -256 …»)",
+                    "(нужен вид «123956 -256 …» или «122361 акб 700»)",
                 )
             preview = await client.preview_parts_attach(
                 body.order_id,

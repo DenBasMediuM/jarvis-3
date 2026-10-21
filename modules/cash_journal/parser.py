@@ -75,6 +75,19 @@ ZCH_LINE_PREFIX = re.compile(r"^зч\.?\s+", re.IGNORECASE)
 
 ZCH_HINT = re.compile(r"\bзч\b|запчаст", re.IGNORECASE)
 
+# «124417 срочная 750» / «124424 предоплата 500» — оплата клиента, не ЗЧ
+PAYMENT_LABEL_HINT = re.compile(
+    r"(предоплат|доплат|\bоплат|\bаванс|\bпред\b|срочн|остаток|"
+    r"на\s*карт|на\s*сч[её]т|безнал|терминал)",
+    re.IGNORECASE,
+)
+
+# «122084 енкодер глайди 700» — квитанция + описание + сумма в конце, без «-»
+BREAKDOWN_SPACE_AMT = re.compile(
+    rf"^(?P<order>\d{{4,}})\s+(?P<item>(?![+\-−–]).+?)\s+(?P<amount>{MONEY_NUM})\s*$",
+    re.UNICODE,
+)
+
 
 def parse_money(raw: str | None) -> float | None:
     if raw is None:
@@ -325,6 +338,11 @@ def _extract_order(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _is_payment_label(label: str) -> bool:
+    """Метка оплаты клиента (срочная/предоплата), а не название запчасти."""
+    return bool(PAYMENT_LABEL_HINT.search((label or "").replace("ё", "е")))
+
+
 def _is_breakdown_line(body: str) -> JournalOp | None:
     body = _norm_space(body)
     if re.search(r"[+]|\bгрн\b|\buah\b|₴", body, re.I):
@@ -335,6 +353,8 @@ def _is_breakdown_line(body: str) -> JournalOp | None:
     def _make(order: str, item: str, amount_raw: str) -> JournalOp | None:
         item = _norm_space(item)
         if not item:
+            return None
+        if _is_payment_label(item):
             return None
         val = parse_money(amount_raw)
         if val is None or abs(val) < 1e-9:
@@ -367,6 +387,13 @@ def _is_breakdown_line(body: str) -> JournalOp | None:
         item = _norm_space(m.group("item"))
         # описание текстом (не «123956 -256, что-то»)
         if item and not re.match(r"\d", item):
+            return _make(m.group("order"), item, m.group("amount"))
+
+    # «122084 енкодер глайди 700» / «122361 акб 700» — без дефисов
+    m = BREAKDOWN_SPACE_AMT.match(core)
+    if m:
+        item = _norm_space(m.group("item"))
+        if item and not re.fullmatch(rf"{MONEY_NUM}", item) and not re.match(r"\d", item):
             return _make(m.group("order"), item, m.group("amount"))
     return None
 
@@ -633,15 +660,28 @@ def _parse_operation_lines(body: str) -> list[JournalOp]:
         val = parse_money(m.group("amount"))
         label = _norm_space(m.group("label"))
         if val is not None and label and not re.fullmatch(rf"{MONEY_NUM}", label):
-            bucket = _bucket_for_amount(body, m.start("amount"), m.end("amount"))
-            amount = _cash_portion_amount(body, abs(val), bucket)
+            # Оплата клиента («срочная», «предоплата») — в кассу.
+            # Иначе это ЗЧ без дефисов: «122361 акб 700».
+            if _is_payment_label(label):
+                bucket = _bucket_for_amount(body, m.start("amount"), m.end("amount"))
+                amount = _cash_portion_amount(body, abs(val), bucket)
+                return [
+                    JournalOp(
+                        amount=amount,
+                        bucket=bucket,
+                        note=body,
+                        order_id=m.group("order"),
+                        raw=body,
+                    )
+                ]
             return [
                 JournalOp(
-                    amount=amount,
-                    bucket=bucket,
+                    amount=-abs(val),
+                    bucket="cash",
                     note=body,
                     order_id=m.group("order"),
                     raw=body,
+                    kind="spare_item",
                 )
             ]
 
@@ -965,7 +1005,7 @@ def _guess_action(op: JournalOp) -> str:
 
 
 def is_parts_attach_line(line: dict[str, Any]) -> bool:
-    """Привязка запчасти в CRM: «123956 -256 …», «123959 -427 зч», «121985 - Шлейфы…, 2000»."""
+    """Привязка запчасти в CRM: «123956 -256 …», «122361 акб 700», «121985 - Шлейфы…, 2000»."""
     if str(line.get("action") or "") != "cash_out":
         return False
     order_id = line.get("order_id")
@@ -990,6 +1030,13 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
     ):
         return True
     if re.match(rf"^{oid}\s*[-−–]\s*.+,\s*\d+(?:[.,]\d+)?\s*$", core):
+        return True
+    # «122084 енкодер глайди 700» / «122361 акб 700»
+    m = re.match(
+        rf"^{oid}\s+(?P<label>(?![+\-−–]).+?)\s+(?P<amt>\d+(?:[.,]\d+)?)\s*$",
+        core,
+    )
+    if m and not _is_payment_label(m.group("label")):
         return True
     return False
 
