@@ -48,7 +48,8 @@ const DEBT_PROGRESS_KEY = "jarvis.vyrobotka.debt.progress";
  */
 const debtPassSkipped = { work: new Set(), pending: new Set(), rework: new Set() };
 const debtDeferred = new Set();
-const debtDecided = new Set();
+/** ticket → ISO времени отправки решения (нужно, чтобы не сбрасывать при старом rework в снимке) */
+const debtDecidedAt = new Map();
 
 function debtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
@@ -59,10 +60,14 @@ function debtIsDeferred(ticket) {
   return debtDeferred.has(String(ticket));
 }
 
+function debtIsDecided(ticket) {
+  return debtDecidedAt.has(String(ticket));
+}
+
 function debtProgressLoad() {
   for (const k of Object.keys(debtPassSkipped)) debtPassSkipped[k].clear();
   debtDeferred.clear();
-  debtDecided.clear();
+  debtDecidedAt.clear();
   try {
     const raw = localStorage.getItem(DEBT_PROGRESS_KEY);
     if (!raw) return;
@@ -78,7 +83,14 @@ function debtProgressLoad() {
         for (const t of data.skipped || []) debtDeferred.add(String(t));
       }
     }
-    for (const t of data.decided || []) debtDecided.add(String(t));
+    if (data.decided_at && typeof data.decided_at === "object") {
+      for (const [t, at] of Object.entries(data.decided_at)) {
+        if (t) debtDecidedAt.set(String(t), String(at || new Date().toISOString()));
+      }
+    } else {
+      const fallbackAt = data.saved_at || new Date().toISOString();
+      for (const t of data.decided || []) debtDecidedAt.set(String(t), fallbackAt);
+    }
     if (data.queueMode === "pending" || data.queueMode === "rework" || data.queueMode === "work") {
       debtQueueMode = data.queueMode;
     }
@@ -92,10 +104,11 @@ function debtProgressSave() {
     localStorage.setItem(
       DEBT_PROGRESS_KEY,
       JSON.stringify({
-        v: 3,
+        v: 4,
         exported_at: DATA?.exported_at || null,
         deferred: [...debtDeferred],
-        decided: [...debtDecided],
+        decided: [...debtDecidedAt.keys()],
+        decided_at: Object.fromEntries(debtDecidedAt),
         queueMode: debtQueueMode,
         saved_at: new Date().toISOString(),
       }),
@@ -110,21 +123,30 @@ function debtProgressReconcile() {
   const byTicket = new Map(
     (DATA?.debt_table || []).map((r) => [String(r.ticket || ""), r]),
   );
+  const snapAt = Date.parse(DATA?.exported_at || "") || 0;
   for (const t of [...debtDeferred]) {
     if (!byTicket.has(t)) debtDeferred.delete(t);
   }
-  for (const t of [...debtDecided]) {
+  for (const t of [...debtDecidedAt.keys()]) {
     const row = byTicket.get(t);
     if (!row) {
-      debtDecided.delete(t);
+      debtDecidedAt.delete(t);
       continue;
     }
     const ds = String(row.decision_status || "");
     // снимок уже с pending из Jarvis — локальный маркер лишний
-    if (ds === "pending") debtDecided.delete(t);
+    if (ds === "pending") {
+      debtDecidedAt.delete(t);
+      continue;
+    }
+    // admin вернул на доработку только если снимок НОВЕЕ нашего решения
     if (ds === "rework") {
-      debtDecided.delete(t);
-      debtDeferred.delete(t);
+      const decidedMs = Date.parse(debtDecidedAt.get(t) || "") || 0;
+      if (snapAt && decidedMs && snapAt > decidedMs) {
+        debtDecidedAt.delete(t);
+        debtDeferred.delete(t);
+      }
+      // иначе: отправили с «доработать», data.json ещё старый — не трогаем
     }
   }
   debtProgressSave();
@@ -137,7 +159,7 @@ function debtPendingTicketIds() {
     const t = String(r.ticket || "");
     if (!t) continue;
     if (String(r.decision_status || "") === "pending") ids.add(t);
-    else if (debtDecided.has(t)) ids.add(t);
+    else if (debtIsDecided(t)) ids.add(t);
   }
   return ids;
 }
@@ -145,10 +167,10 @@ function debtPendingTicketIds() {
 function debtRowInMainTable(row) {
   const t = String(row?.ticket || "");
   if (!t) return false;
-  if (debtDecided.has(t)) return false;
+  if (debtIsDecided(t)) return false;
   const ds = String(row?.decision_status || "");
   if (ds === "closed") return false;
-  // отложенные показываем в таблице (бирюзовым внизу), даже если pending
+  // отложенные показываем в таблице (голубым внизу), даже если pending
   if (debtDeferred.has(t)) return true;
   if (ds === "pending") return false;
   return true;
@@ -164,9 +186,9 @@ function debtBrowseTicketList(mode = debtQueueMode) {
       if (passSkip.has(t)) return false;
       const ds = String(r.decision_status || "");
       if (mode === "pending") {
-        return ds === "pending" || debtDecided.has(t);
+        return ds === "pending" || debtIsDecided(t);
       }
-      if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
+      if (mode === "rework") return ds === "rework" && !debtIsDecided(t);
       return debtRowInMainTable(r);
     })
     .map((r) => String(r.ticket || ""));
@@ -174,7 +196,7 @@ function debtBrowseTicketList(mode = debtQueueMode) {
 
 function debtMarkDecided(ticket) {
   const t = String(ticket);
-  debtDecided.add(t);
+  debtDecidedAt.set(t, new Date().toISOString());
   debtDeferred.delete(t);
   for (const mode of Object.keys(debtPassSkipped)) debtPassSkipped[mode].delete(t);
   const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === t);
@@ -306,9 +328,7 @@ function openDebtModal(ticket) {
   const table = DATA?.debt_table || [];
   const row = table.find((r) => String(r.ticket) === String(ticket));
   if (!row) return;
-  const displayStatus = debtDecided.has(String(ticket))
-    ? "pending"
-    : row.decision_status;
+  const displayStatus = debtIsDecided(ticket) ? "pending" : row.decision_status;
   const flagMeta = debtFlagMeta(row.flag, displayStatus, row.ticket);
   const codes = debtDecisionCodes();
   const feed = Array.isArray(row.live_feed) ? row.live_feed : [];
@@ -713,7 +733,7 @@ function renderDebt() {
   const counts = DATA?.debt_table_counts || {};
   const pendingN = debtPendingTicketIds().size;
   const reworkN = allRows.filter(
-    (r) => String(r.decision_status || "") === "rework" && !debtDecided.has(String(r.ticket)),
+    (r) => String(r.decision_status || "") === "rework" && !debtIsDecided(r.ticket),
   ).length;
   const daily = DATA?.debt_daily || [];
   const hasData = allRows.length > 0 || daily.length > 0;
@@ -741,7 +761,7 @@ function renderDebt() {
     const blNote = bl?.day ? ` · отчёты мастеров с ${fmtDay(bl.day)}` : "";
     const progBits = [];
     if (debtDeferred.size) progBits.push(`отложено ${debtDeferred.size}`);
-    if (debtDecided.size) progBits.push(`решений ${debtDecided.size}`);
+    if (debtDecidedAt.size) progBits.push(`решений ${debtDecidedAt.size}`);
     const prog = progBits.length ? ` · прогресс: ${progBits.join(", ")}` : "";
     meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}${prog}`;
   }
