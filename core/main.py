@@ -451,6 +451,17 @@ async def vyrobotka_export_pages() -> dict[str, Any]:
         raise HTTPException(500, str(exc)) from exc
 
 
+@app.post("/api/vyrobotka/publish-pages")
+async def vyrobotka_publish_pages() -> dict[str, Any]:
+    """Экспорт docs/vyrobotka/data.json + git commit/push на GitHub Pages."""
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.publish_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
 @app.get("/api/branch-kpi/stats")
 async def branch_kpi_stats() -> dict[str, Any]:
     if not branch_kpi_service:

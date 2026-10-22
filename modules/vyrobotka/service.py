@@ -771,6 +771,21 @@ class VyrobotkaService:
             "exported_at": payload["exported_at"],
         }
 
+    async def publish_pages_snapshot(self) -> dict[str, Any]:
+        """Пересобрать data.json и git push в origin (GitHub Pages)."""
+        import asyncio
+
+        from core.pages_publish import publish_docs_files
+
+        exported = await self.export_pages_snapshot()
+        rel = "docs/vyrobotka/data.json"
+        published = await asyncio.to_thread(
+            publish_docs_files,
+            [rel],
+            message="chore(vyrobotka): обновить снимок витрины дебиторки",
+        )
+        return {"ok": True, "export": exported, "publish": published}
+
     async def get_debt_verify(self) -> dict[str, Any]:
         state = await self.db.vyrobotka_get_debt_verify_state()
         # Только для ответа API: mismatch→norm при «Выдан»+без долга. БД не трогаем.

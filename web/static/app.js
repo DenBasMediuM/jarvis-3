@@ -5314,6 +5314,38 @@ $("#vyrobotka-debt-ingest-btn")?.addEventListener("click", async () => {
   }
 });
 
+async function publishVyrobotkaPages() {
+  const btn = $("#vyrobotka-debt-publish-btn");
+  const statusEl = $("#vyrobotka-debt-verify-status");
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.textContent = "Публикация витрины (export + git push)…";
+  try {
+    const res = await fetch("/api/vyrobotka/publish-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    const pub = data.publish || {};
+    const exp = data.export || {};
+    let msg;
+    if (pub.skipped && pub.reason === "no_changes") {
+      msg = `Витрина уже актуальна (долгов ${exp.debt_table ?? "—"}, push не нужен)`;
+    } else if (pub.pushed) {
+      msg = `Витрина опубликована: ${exp.debt_table ?? "—"} долгов → GitHub Pages`;
+    } else {
+      msg = `Экспорт готов (${exp.debt_table ?? "—"} долгов)`;
+    }
+    if (statusEl) statusEl.textContent = msg;
+    alert(msg);
+  } catch (err) {
+    const text = `Публикация: ${err.message || err}`;
+    if (statusEl) statusEl.textContent = text;
+    alert(text);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+$("#vyrobotka-debt-publish-btn")?.addEventListener("click", () => publishVyrobotkaPages());
+
 /* —— Пользователи витрины —— */
 let vitrineAccessOptions = [];
 let vitrineUsersCache = [];
