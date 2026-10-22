@@ -120,12 +120,26 @@ function debtProgressReconcile() {
       continue;
     }
     const ds = String(row.decision_status || "");
+    // снимок уже с pending из Jarvis — локальный маркер лишний
+    if (ds === "pending") debtDecided.delete(t);
     if (ds === "rework") {
       debtDecided.delete(t);
       debtDeferred.delete(t);
     }
   }
   debtProgressSave();
+}
+
+/** Pending из снимка + локально отправленные (пока data.json не обновили). */
+function debtPendingTicketIds() {
+  const ids = new Set();
+  for (const r of DATA?.debt_table || []) {
+    const t = String(r.ticket || "");
+    if (!t) continue;
+    if (String(r.decision_status || "") === "pending") ids.add(t);
+    else if (debtDecided.has(t)) ids.add(t);
+  }
+  return ids;
 }
 
 function debtRowInMainTable(row) {
@@ -149,7 +163,9 @@ function debtBrowseTicketList(mode = debtQueueMode) {
       if (debtDeferred.has(t)) return false;
       if (passSkip.has(t)) return false;
       const ds = String(r.decision_status || "");
-      if (mode === "pending") return ds === "pending";
+      if (mode === "pending") {
+        return ds === "pending" || debtDecided.has(t);
+      }
       if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
       return debtRowInMainTable(r);
     })
@@ -290,7 +306,10 @@ function openDebtModal(ticket) {
   const table = DATA?.debt_table || [];
   const row = table.find((r) => String(r.ticket) === String(ticket));
   if (!row) return;
-  const flagMeta = debtFlagMeta(row.flag, row.decision_status, row.ticket);
+  const displayStatus = debtDecided.has(String(ticket))
+    ? "pending"
+    : row.decision_status;
+  const flagMeta = debtFlagMeta(row.flag, displayStatus, row.ticket);
   const codes = debtDecisionCodes();
   const feed = Array.isArray(row.live_feed) ? row.live_feed : [];
   const feedAt = row.crm_feed_at
@@ -368,8 +387,8 @@ function openDebtModal(ticket) {
     <section class="debt-order-decision">
       <h3>Решение</h3>
       ${
-        row.decision_status
-          ? `<p class="debt-order-decision-hint">Сейчас: <strong>${escapeHtml(row.decision_status)}</strong>
+        displayStatus
+          ? `<p class="debt-order-decision-hint">Сейчас: <strong>${escapeHtml(displayStatus)}</strong>
              ${row.decision_code ? ` · ${escapeHtml(codes[row.decision_code] || row.decision_code)}` : ""}</p>`
           : ""
       }
@@ -692,8 +711,7 @@ function renderDebt() {
   const allRows = DATA?.debt_table || [];
   const table = allRows.filter(debtRowInMainTable);
   const counts = DATA?.debt_table_counts || {};
-  // Счётчик = факт из снимка (как в админке), не «остаток после моего прогресса»
-  const pendingN = allRows.filter((r) => String(r.decision_status || "") === "pending").length;
+  const pendingN = debtPendingTicketIds().size;
   const reworkN = allRows.filter(
     (r) => String(r.decision_status || "") === "rework" && !debtDecided.has(String(r.ticket)),
   ).length;
