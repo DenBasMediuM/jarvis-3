@@ -46,34 +46,35 @@
   color: var(--muted);
   text-align: right;
 }
-/* Без зебры — иначе перебивает цвета статусов (фиолетовый/красный выглядят белыми) */
-.debt-ledger-table tbody tr:nth-child(even) td {
-  background: transparent;
-}
-.debt-ledger-table tbody tr td {
+/*
+ * shared .vtable tbody tr:nth-child(even) td сильнее по specificity, чем
+ * .debt-ledger-table tr.is-debt-* td — из‑за этого зебра съедала цвета статусов.
+ */
+.debt-ledger-table.vtable tbody tr:nth-child(odd) td,
+.debt-ledger-table.vtable tbody tr:nth-child(even) td {
   background: transparent;
   border-bottom: 1px solid rgba(28, 36, 48, 0.1);
   padding-top: 11px;
   padding-bottom: 11px;
 }
-.debt-ledger-table tbody tr:last-child td {
+.debt-ledger-table.vtable tbody tr:last-child td {
   border-bottom: none;
 }
-.debt-ledger-table tr.is-debt-red td { background: rgba(161, 40, 40, 0.14); }
-.debt-ledger-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.24); }
-.debt-ledger-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.14); }
-.debt-ledger-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.2); }
-.debt-ledger-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.22); }
-.debt-ledger-table tr.is-debt-deferred td { background: rgba(20, 140, 150, 0.22); }
-.debt-ledger-table tr.is-debt-open td { background: transparent; }
+.debt-ledger-table.vtable tbody tr.is-debt-red td { background: rgba(161, 40, 40, 0.16); }
+.debt-ledger-table.vtable tbody tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.28); }
+.debt-ledger-table.vtable tbody tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.16); }
+.debt-ledger-table.vtable tbody tr.is-debt-pending td { background: rgba(34, 140, 80, 0.22); }
+.debt-ledger-table.vtable tbody tr.is-debt-rework td { background: rgba(110, 70, 180, 0.24); }
+.debt-ledger-table.vtable tbody tr.is-debt-deferred td { background: rgba(70, 150, 220, 0.28); }
+.debt-ledger-table.vtable tbody tr.is-debt-open td { background: transparent; }
 .debt-queue-actions {
   margin-top: 8px;
 }
 .debt-return-deferred-btn,
 .debt-defer-btn {
-  border: 1px solid #148c96;
-  background: rgba(20, 140, 150, 0.12);
-  color: #0b5c63;
+  border: 1px solid #3a7fc4;
+  background: rgba(70, 150, 220, 0.14);
+  color: #1a4f86;
   border-radius: 10px;
   padding: 6px 12px;
   cursor: pointer;
@@ -82,11 +83,11 @@
 }
 .debt-return-deferred-btn:hover,
 .debt-defer-btn:hover {
-  background: rgba(20, 140, 150, 0.22);
+  background: rgba(70, 150, 220, 0.24);
 }
 .chip.is-deferred {
-  background: rgba(20, 140, 150, 0.2);
-  color: #0b5c63;
+  background: rgba(70, 150, 220, 0.22);
+  color: #1a4f86;
 }
 .debt-decision-row {
   display: flex;
