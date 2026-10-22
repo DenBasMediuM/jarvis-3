@@ -46,12 +46,26 @@
   color: var(--muted);
   text-align: right;
 }
-.debt-ledger-table tr.is-debt-red td { background: rgba(161, 40, 40, 0.12); }
-.debt-ledger-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.22); }
-.debt-ledger-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.12); }
-.debt-ledger-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.18); }
-.debt-ledger-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.18); }
-.debt-ledger-table tr.is-debt-deferred td { background: rgba(20, 140, 150, 0.2); }
+/* Без зебры — иначе перебивает цвета статусов (фиолетовый/красный выглядят белыми) */
+.debt-ledger-table tbody tr:nth-child(even) td {
+  background: transparent;
+}
+.debt-ledger-table tbody tr td {
+  background: transparent;
+  border-bottom: 1px solid rgba(28, 36, 48, 0.1);
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+.debt-ledger-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.debt-ledger-table tr.is-debt-red td { background: rgba(161, 40, 40, 0.14); }
+.debt-ledger-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.24); }
+.debt-ledger-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.14); }
+.debt-ledger-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.2); }
+.debt-ledger-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.22); }
+.debt-ledger-table tr.is-debt-deferred td { background: rgba(20, 140, 150, 0.22); }
+.debt-ledger-table tr.is-debt-open td { background: transparent; }
 .debt-queue-actions {
   margin-top: 8px;
 }
