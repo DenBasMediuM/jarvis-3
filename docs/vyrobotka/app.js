@@ -42,45 +42,43 @@ let debtSort = { key: "flag", dir: 1 };
 /** work | pending | rework — какой блок сейчас листаем */
 let debtQueueMode = "work";
 const DEBT_PROGRESS_KEY = "jarvis.vyrobotka.debt.progress";
-/** Пропуски раздельно по блокам — иначе «работа» затирает очереди модерации/доработки */
-const debtSkippedByMode = { work: new Set(), pending: new Set(), rework: new Set() };
+/**
+ * Пропуск — только на текущий проход очереди (сбрасывается при новом открытии блока).
+ * Отложить — в localStorage, не в очереди, в таблице бирюзовым внизу.
+ */
+const debtPassSkipped = { work: new Set(), pending: new Set(), rework: new Set() };
+const debtDeferred = new Set();
 const debtDecided = new Set();
-/** Последняя открытая квитанция в блоке — продолжить после F5 */
-const debtQueueCursor = { work: null, pending: null, rework: null };
 
 function debtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
   return order[flag] ?? 9;
 }
 
-function debtSkippedSet(mode = debtQueueMode) {
-  if (!debtSkippedByMode[mode]) debtSkippedByMode[mode] = new Set();
-  return debtSkippedByMode[mode];
+function debtIsDeferred(ticket) {
+  return debtDeferred.has(String(ticket));
 }
 
 function debtProgressLoad() {
-  for (const k of Object.keys(debtSkippedByMode)) debtSkippedByMode[k].clear();
+  for (const k of Object.keys(debtPassSkipped)) debtPassSkipped[k].clear();
+  debtDeferred.clear();
   debtDecided.clear();
-  debtQueueCursor.work = debtQueueCursor.pending = debtQueueCursor.rework = null;
   try {
     const raw = localStorage.getItem(DEBT_PROGRESS_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
-    // новый формат: skipped: { work: [], pending: [], rework: [] }
-    if (data.skipped && typeof data.skipped === "object" && !Array.isArray(data.skipped)) {
-      for (const mode of ["work", "pending", "rework"]) {
-        for (const t of data.skipped[mode] || []) debtSkippedByMode[mode].add(String(t));
+    for (const t of data.deferred || []) debtDeferred.add(String(t));
+    // миграция: старые persistent skipped → отложенные
+    if (!data.deferred && data.skipped) {
+      if (typeof data.skipped === "object" && !Array.isArray(data.skipped)) {
+        for (const mode of ["work", "pending", "rework"]) {
+          for (const t of data.skipped[mode] || []) debtDeferred.add(String(t));
+        }
+      } else {
+        for (const t of data.skipped || []) debtDeferred.add(String(t));
       }
-    } else {
-      // старый формат — всё в work
-      for (const t of data.skipped || []) debtSkippedByMode.work.add(String(t));
     }
     for (const t of data.decided || []) debtDecided.add(String(t));
-    if (data.cursor && typeof data.cursor === "object") {
-      for (const mode of ["work", "pending", "rework"]) {
-        if (data.cursor[mode]) debtQueueCursor[mode] = String(data.cursor[mode]);
-      }
-    }
     if (data.queueMode === "pending" || data.queueMode === "rework" || data.queueMode === "work") {
       debtQueueMode = data.queueMode;
     }
@@ -94,15 +92,10 @@ function debtProgressSave() {
     localStorage.setItem(
       DEBT_PROGRESS_KEY,
       JSON.stringify({
-        v: 2,
+        v: 3,
         exported_at: DATA?.exported_at || null,
-        skipped: {
-          work: [...debtSkippedByMode.work],
-          pending: [...debtSkippedByMode.pending],
-          rework: [...debtSkippedByMode.rework],
-        },
+        deferred: [...debtDeferred],
         decided: [...debtDecided],
-        cursor: { ...debtQueueCursor },
         queueMode: debtQueueMode,
         saved_at: new Date().toISOString(),
       }),
@@ -117,22 +110,8 @@ function debtProgressReconcile() {
   const byTicket = new Map(
     (DATA?.debt_table || []).map((r) => [String(r.ticket || ""), r]),
   );
-  for (const mode of Object.keys(debtSkippedByMode)) {
-    for (const t of [...debtSkippedByMode[mode]]) {
-      const row = byTicket.get(t);
-      if (!row) {
-        debtSkippedByMode[mode].delete(t);
-        continue;
-      }
-      const ds = String(row.decision_status || "");
-      // снова на доработку — блок rework открываем заново
-      if (mode === "rework" && ds === "rework") {
-        /* оставляем skip только если юзер сам пропустил в этом блоке */
-      }
-      if (mode === "pending" && ds !== "pending") debtSkippedByMode.pending.delete(t);
-      if (mode === "rework" && ds !== "rework") debtSkippedByMode.rework.delete(t);
-      if (mode === "work" && (ds === "pending" || ds === "closed")) debtSkippedByMode.work.delete(t);
-    }
+  for (const t of [...debtDeferred]) {
+    if (!byTicket.has(t)) debtDeferred.delete(t);
   }
   for (const t of [...debtDecided]) {
     const row = byTicket.get(t);
@@ -141,16 +120,10 @@ function debtProgressReconcile() {
       continue;
     }
     const ds = String(row.decision_status || "");
-    // снова в работе (доработать) — можно брать заново
     if (ds === "rework") {
       debtDecided.delete(t);
-      debtSkippedByMode.rework.delete(t);
-      debtSkippedByMode.work.delete(t);
+      debtDeferred.delete(t);
     }
-  }
-  for (const mode of Object.keys(debtQueueCursor)) {
-    const cur = debtQueueCursor[mode];
-    if (cur && !byTicket.has(cur)) debtQueueCursor[mode] = null;
   }
   debtProgressSave();
 }
@@ -160,17 +133,21 @@ function debtRowInMainTable(row) {
   if (!t) return false;
   if (debtDecided.has(t)) return false;
   const ds = String(row?.decision_status || "");
-  if (ds === "closed" || ds === "pending") return false;
+  if (ds === "closed") return false;
+  // отложенные показываем в таблице (бирюзовым внизу), даже если pending
+  if (debtDeferred.has(t)) return true;
+  if (ds === "pending") return false;
   return true;
 }
 
 function debtBrowseTicketList(mode = debtQueueMode) {
-  const skipped = debtSkippedSet(mode);
+  const passSkip = debtPassSkipped[mode] || new Set();
   return (DATA?.debt_table || [])
     .filter((r) => {
       const t = String(r.ticket || "");
       if (!t) return false;
-      if (skipped.has(t)) return false;
+      if (debtDeferred.has(t)) return false;
+      if (passSkip.has(t)) return false;
       const ds = String(r.decision_status || "");
       if (mode === "pending") return ds === "pending";
       if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
@@ -182,17 +159,32 @@ function debtBrowseTicketList(mode = debtQueueMode) {
 function debtMarkDecided(ticket) {
   const t = String(ticket);
   debtDecided.add(t);
-  for (const mode of Object.keys(debtSkippedByMode)) debtSkippedByMode[mode].delete(t);
+  debtDeferred.delete(t);
+  for (const mode of Object.keys(debtPassSkipped)) debtPassSkipped[mode].delete(t);
   const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === t);
   if (row) row.decision_status = "pending";
-  debtQueueCursor[debtQueueMode] = t;
   debtProgressSave();
 }
 
-function debtMarkSkipped(ticket) {
-  debtSkippedSet(debtQueueMode).add(String(ticket));
-  debtQueueCursor[debtQueueMode] = String(ticket);
+/** Пропуск только до конца текущего прохода очереди. */
+function debtMarkPassSkipped(ticket) {
+  const mode = debtQueueMode;
+  if (!debtPassSkipped[mode]) debtPassSkipped[mode] = new Set();
+  debtPassSkipped[mode].add(String(ticket));
+}
+
+/** Отложить — переживает F5 и новое открытие блока. */
+function debtMarkDeferred(ticket) {
+  const t = String(ticket);
+  debtDeferred.add(t);
+  for (const mode of Object.keys(debtPassSkipped)) debtPassSkipped[mode].delete(t);
   debtProgressSave();
+}
+
+function debtClearDeferred() {
+  debtDeferred.clear();
+  debtProgressSave();
+  renderDebt();
 }
 
 /** Следующая квитанция после current в текущем блоке. */
@@ -216,20 +208,33 @@ function debtNextBrowseTicket(current, mode = debtQueueMode) {
 
 function startDebtQueue(mode) {
   debtQueueMode = mode || "work";
+  // «Пропустить» сбрасывается при каждом новом открытии блока
+  debtPassSkipped[debtQueueMode] = new Set();
   debtProgressSave();
   const list = debtBrowseTicketList(debtQueueMode);
   if (!list.length) {
     const labels = { pending: "на модерации", rework: "на доработке", work: "к обработке" };
-    alert(`Нет квитанций «${labels[debtQueueMode] || debtQueueMode}».`);
+    const deferredHere = (DATA?.debt_table || []).filter((r) => {
+      const t = String(r.ticket || "");
+      if (!debtDeferred.has(t)) return false;
+      const ds = String(r.decision_status || "");
+      if (debtQueueMode === "pending") return ds === "pending";
+      if (debtQueueMode === "rework") return ds === "rework";
+      return debtRowInMainTable(r);
+    }).length;
+    const hint = deferredHere
+      ? `\n(${deferredHere} отложено — нажмите «Вернуть отложенные»)`
+      : "";
+    alert(`Нет квитанций «${labels[debtQueueMode] || debtQueueMode}».${hint}`);
     return;
   }
-  const cur = debtQueueCursor[debtQueueMode];
-  const nextAfter = cur ? debtNextBrowseTicket(cur, debtQueueMode) : null;
-  openDebtModal(nextAfter && list.includes(nextAfter) ? nextAfter : list[0]);
+  openDebtModal(list[0]);
 }
 
-
-function debtFlagMeta(flag, decisionStatus) {
+function debtFlagMeta(flag, decisionStatus, ticket) {
+  if (ticket && debtIsDeferred(ticket)) {
+    return { label: "отложено", cls: "is-debt-deferred", chip: "is-deferred" };
+  }
   const ds = String(decisionStatus || "");
   if (ds === "pending") return { label: "решение", cls: "is-debt-pending", chip: "is-ok" };
   if (ds === "rework") return { label: "доработать", cls: "is-debt-rework", chip: "is-miss" };
@@ -285,7 +290,7 @@ function openDebtModal(ticket) {
   const table = DATA?.debt_table || [];
   const row = table.find((r) => String(r.ticket) === String(ticket));
   if (!row) return;
-  const flagMeta = debtFlagMeta(row.flag, row.decision_status);
+  const flagMeta = debtFlagMeta(row.flag, row.decision_status, row.ticket);
   const codes = debtDecisionCodes();
   const feed = Array.isArray(row.live_feed) ? row.live_feed : [];
   const feedAt = row.crm_feed_at
@@ -369,7 +374,8 @@ function openDebtModal(ticket) {
           : ""
       }
       <div class="debt-decision-row">
-        <button type="button" class="debt-close-btn" data-skip>Пропустить</button>
+        <button type="button" class="debt-close-btn" data-skip title="Только до конца этого прохода; при новом открытии блока снова в очереди">Пропустить</button>
+        <button type="button" class="debt-defer-btn" data-defer title="Убрать из очереди до «Вернуть отложенные»">Отложить</button>
         <select data-decision-select>
           <option value="">— выбрать решение —</option>
           ${opts}
@@ -390,15 +396,24 @@ function openDebtModal(ticket) {
     debtProgressSave();
     closeDebtModal();
   });
-  overlay.querySelector("[data-skip]")?.addEventListener("click", () => {
-    debtMarkSkipped(ticket);
+  const goNextInQueue = () => {
     const next = debtNextBrowseTicket(ticket);
     if (next) openDebtModal(next);
     else {
       debtQueueMode = "work";
       debtProgressSave();
       closeDebtModal();
+      renderDebt();
     }
+  };
+  overlay.querySelector("[data-skip]")?.addEventListener("click", () => {
+    debtMarkPassSkipped(ticket);
+    goNextInQueue();
+  });
+  overlay.querySelector("[data-defer]")?.addEventListener("click", () => {
+    debtMarkDeferred(ticket);
+    renderDebt();
+    goNextInQueue();
   });
   overlay.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
     const code = ev.target.value;
@@ -682,8 +697,6 @@ function renderDebt() {
   const reworkN = allRows.filter(
     (r) => String(r.decision_status || "") === "rework" && !debtDecided.has(String(r.ticket)),
   ).length;
-  const skipTotal =
-    debtSkippedByMode.work.size + debtSkippedByMode.pending.size + debtSkippedByMode.rework.size;
   const daily = DATA?.debt_daily || [];
   const hasData = allRows.length > 0 || daily.length > 0;
   if (!hasData) {
@@ -708,15 +721,27 @@ function renderDebt() {
   if (meta) {
     const bl = DATA?.debt_baseline;
     const blNote = bl?.day ? ` · отчёты мастеров с ${fmtDay(bl.day)}` : "";
-    const prog =
-      skipTotal || debtDecided.size
-        ? ` · прогресс: пропуск ${skipTotal}, решений ${debtDecided.size}`
-        : "";
+    const progBits = [];
+    if (debtDeferred.size) progBits.push(`отложено ${debtDeferred.size}`);
+    if (debtDecided.size) progBits.push(`решений ${debtDecided.size}`);
+    const prog = progBits.length ? ` · прогресс: ${progBits.join(", ")}` : "";
     meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}${prog}`;
   }
   const verifyStatus = $("#debt-verify-status");
   if (verifyStatus) {
     verifyStatus.textContent = DATA?.debt_verify_message || "";
+  }
+
+  const actions = $("#debt-queue-actions");
+  if (actions) {
+    actions.innerHTML = debtDeferred.size
+      ? `<button type="button" class="debt-return-deferred-btn" data-return-deferred>
+           Вернуть отложенные (${debtDeferred.size})
+         </button>`
+      : "";
+    actions.querySelector("[data-return-deferred]")?.addEventListener("click", () => {
+      debtClearDeferred();
+    });
   }
 
   const kpis = $("#debt-kpis");
@@ -763,6 +788,9 @@ function renderDebt() {
       const key = debtSort.key || "flag";
       const dir = debtSort.dir || 1;
       const ordered = [...table].sort((a, b) => {
+        const aDef = debtIsDeferred(a.ticket) ? 1 : 0;
+        const bDef = debtIsDeferred(b.ticket) ? 1 : 0;
+        if (aDef !== bDef) return aDef - bDef; // отложенные в самый низ
         const av = debtSortValue(a, key);
         const bv = debtSortValue(b, key);
         let cmp = 0;
@@ -780,7 +808,7 @@ function renderDebt() {
       });
       tbody.innerHTML = ordered
         .map((r) => {
-          const metaF = debtFlagMeta(r.flag, r.decision_status);
+          const metaF = debtFlagMeta(r.flag, r.decision_status, r.ticket);
           const sheetDebtHtml = r.sheet_url
             ? `<a class="ticket-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener"><strong>${fmtMoney(r.sheet_debt)}</strong></a>`
             : `<strong>${fmtMoney(r.sheet_debt)}</strong>`;

@@ -51,6 +51,29 @@
 .debt-ledger-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.12); }
 .debt-ledger-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.18); }
 .debt-ledger-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.18); }
+.debt-ledger-table tr.is-debt-deferred td { background: rgba(20, 140, 150, 0.2); }
+.debt-queue-actions {
+  margin-top: 8px;
+}
+.debt-return-deferred-btn,
+.debt-defer-btn {
+  border: 1px solid #148c96;
+  background: rgba(20, 140, 150, 0.12);
+  color: #0b5c63;
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+.debt-return-deferred-btn:hover,
+.debt-defer-btn:hover {
+  background: rgba(20, 140, 150, 0.22);
+}
+.chip.is-deferred {
+  background: rgba(20, 140, 150, 0.2);
+  color: #0b5c63;
+}
 .debt-decision-row {
   display: flex;
   flex-wrap: wrap;
