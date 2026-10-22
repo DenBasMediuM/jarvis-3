@@ -42,23 +42,45 @@ let debtSort = { key: "flag", dir: 1 };
 /** work | pending | rework — какой блок сейчас листаем */
 let debtQueueMode = "work";
 const DEBT_PROGRESS_KEY = "jarvis.vyrobotka.debt.progress";
-const debtSkipped = new Set();
+/** Пропуски раздельно по блокам — иначе «работа» затирает очереди модерации/доработки */
+const debtSkippedByMode = { work: new Set(), pending: new Set(), rework: new Set() };
 const debtDecided = new Set();
+/** Последняя открытая квитанция в блоке — продолжить после F5 */
+const debtQueueCursor = { work: null, pending: null, rework: null };
 
 function debtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
   return order[flag] ?? 9;
 }
 
+function debtSkippedSet(mode = debtQueueMode) {
+  if (!debtSkippedByMode[mode]) debtSkippedByMode[mode] = new Set();
+  return debtSkippedByMode[mode];
+}
+
 function debtProgressLoad() {
-  debtSkipped.clear();
+  for (const k of Object.keys(debtSkippedByMode)) debtSkippedByMode[k].clear();
   debtDecided.clear();
+  debtQueueCursor.work = debtQueueCursor.pending = debtQueueCursor.rework = null;
   try {
     const raw = localStorage.getItem(DEBT_PROGRESS_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
-    for (const t of data.skipped || []) debtSkipped.add(String(t));
+    // новый формат: skipped: { work: [], pending: [], rework: [] }
+    if (data.skipped && typeof data.skipped === "object" && !Array.isArray(data.skipped)) {
+      for (const mode of ["work", "pending", "rework"]) {
+        for (const t of data.skipped[mode] || []) debtSkippedByMode[mode].add(String(t));
+      }
+    } else {
+      // старый формат — всё в work
+      for (const t of data.skipped || []) debtSkippedByMode.work.add(String(t));
+    }
     for (const t of data.decided || []) debtDecided.add(String(t));
+    if (data.cursor && typeof data.cursor === "object") {
+      for (const mode of ["work", "pending", "rework"]) {
+        if (data.cursor[mode]) debtQueueCursor[mode] = String(data.cursor[mode]);
+      }
+    }
     if (data.queueMode === "pending" || data.queueMode === "rework" || data.queueMode === "work") {
       debtQueueMode = data.queueMode;
     }
@@ -72,9 +94,15 @@ function debtProgressSave() {
     localStorage.setItem(
       DEBT_PROGRESS_KEY,
       JSON.stringify({
+        v: 2,
         exported_at: DATA?.exported_at || null,
-        skipped: [...debtSkipped],
+        skipped: {
+          work: [...debtSkippedByMode.work],
+          pending: [...debtSkippedByMode.pending],
+          rework: [...debtSkippedByMode.rework],
+        },
         decided: [...debtDecided],
+        cursor: { ...debtQueueCursor },
         queueMode: debtQueueMode,
         saved_at: new Date().toISOString(),
       }),
@@ -89,8 +117,22 @@ function debtProgressReconcile() {
   const byTicket = new Map(
     (DATA?.debt_table || []).map((r) => [String(r.ticket || ""), r]),
   );
-  for (const t of [...debtSkipped]) {
-    if (!byTicket.has(t)) debtSkipped.delete(t);
+  for (const mode of Object.keys(debtSkippedByMode)) {
+    for (const t of [...debtSkippedByMode[mode]]) {
+      const row = byTicket.get(t);
+      if (!row) {
+        debtSkippedByMode[mode].delete(t);
+        continue;
+      }
+      const ds = String(row.decision_status || "");
+      // снова на доработку — блок rework открываем заново
+      if (mode === "rework" && ds === "rework") {
+        /* оставляем skip только если юзер сам пропустил в этом блоке */
+      }
+      if (mode === "pending" && ds !== "pending") debtSkippedByMode.pending.delete(t);
+      if (mode === "rework" && ds !== "rework") debtSkippedByMode.rework.delete(t);
+      if (mode === "work" && (ds === "pending" || ds === "closed")) debtSkippedByMode.work.delete(t);
+    }
   }
   for (const t of [...debtDecided]) {
     const row = byTicket.get(t);
@@ -100,7 +142,15 @@ function debtProgressReconcile() {
     }
     const ds = String(row.decision_status || "");
     // снова в работе (доработать) — можно брать заново
-    if (ds === "rework") debtDecided.delete(t);
+    if (ds === "rework") {
+      debtDecided.delete(t);
+      debtSkippedByMode.rework.delete(t);
+      debtSkippedByMode.work.delete(t);
+    }
+  }
+  for (const mode of Object.keys(debtQueueCursor)) {
+    const cur = debtQueueCursor[mode];
+    if (cur && !byTicket.has(cur)) debtQueueCursor[mode] = null;
   }
   debtProgressSave();
 }
@@ -115,15 +165,19 @@ function debtRowInMainTable(row) {
 }
 
 function debtBrowseTicketList(mode = debtQueueMode) {
+  const skipped = debtSkippedSet(mode);
   return (DATA?.debt_table || [])
     .filter((r) => {
       const t = String(r.ticket || "");
       if (!t) return false;
-      if (debtSkipped.has(t)) return false;
+      if (skipped.has(t)) return false;
       const ds = String(r.decision_status || "");
-      if (mode === "pending") return ds === "pending";
+      if (mode === "pending") {
+        // уже отправленные/просмотренные как done в этом блоке
+        if (debtDecided.has(t)) return false;
+        return ds === "pending";
+      }
       if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
-      // основная обработка
       return debtRowInMainTable(r);
     })
     .map((r) => String(r.ticket || ""));
@@ -132,14 +186,16 @@ function debtBrowseTicketList(mode = debtQueueMode) {
 function debtMarkDecided(ticket) {
   const t = String(ticket);
   debtDecided.add(t);
-  debtSkipped.delete(t);
+  for (const mode of Object.keys(debtSkippedByMode)) debtSkippedByMode[mode].delete(t);
   const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === t);
   if (row) row.decision_status = "pending";
+  debtQueueCursor[debtQueueMode] = t;
   debtProgressSave();
 }
 
 function debtMarkSkipped(ticket) {
-  debtSkipped.add(String(ticket));
+  debtSkippedSet(debtQueueMode).add(String(ticket));
+  debtQueueCursor[debtQueueMode] = String(ticket);
   debtProgressSave();
 }
 
@@ -171,7 +227,9 @@ function startDebtQueue(mode) {
     alert(`Нет квитанций «${labels[debtQueueMode] || debtQueueMode}».`);
     return;
   }
-  openDebtModal(list[0]);
+  const cur = debtQueueCursor[debtQueueMode];
+  const nextAfter = cur ? debtNextBrowseTicket(cur, debtQueueMode) : null;
+  openDebtModal(nextAfter && list.includes(nextAfter) ? nextAfter : list[0]);
 }
 
 
@@ -623,8 +681,10 @@ function renderDebt() {
   const allRows = DATA?.debt_table || [];
   const table = allRows.filter(debtRowInMainTable);
   const counts = DATA?.debt_table_counts || {};
-  const pendingN = allRows.filter((r) => r.decision_status === "pending").length;
-  const reworkN = allRows.filter((r) => r.decision_status === "rework" && !debtDecided.has(String(r.ticket))).length;
+  const pendingN = debtBrowseTicketList("pending").length;
+  const reworkN = debtBrowseTicketList("rework").length;
+  const skipTotal =
+    debtSkippedByMode.work.size + debtSkippedByMode.pending.size + debtSkippedByMode.rework.size;
   const daily = DATA?.debt_daily || [];
   const hasData = allRows.length > 0 || daily.length > 0;
   if (!hasData) {
@@ -650,8 +710,8 @@ function renderDebt() {
     const bl = DATA?.debt_baseline;
     const blNote = bl?.day ? ` · отчёты мастеров с ${fmtDay(bl.day)}` : "";
     const prog =
-      debtSkipped.size || debtDecided.size
-        ? ` · прогресс: пропуск ${debtSkipped.size}, решений ${debtDecided.size}`
+      skipTotal || debtDecided.size
+        ? ` · прогресс: пропуск ${skipTotal}, решений ${debtDecided.size}`
         : "";
     meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}${prog}`;
   }
@@ -669,8 +729,8 @@ function renderDebt() {
       ["Жёлтых", String(flags.yellow || 0), "совпадает", null],
       ["Только CRM", String(flags.open || 0), "без отчёта", null],
       ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM", null],
-      ["На модерации", String(pendingN || counts.pending || 0), "клик — открыть очередь", "pending"],
-      ["Доработать", String(reworkN || counts.rework || 0), "клик — открыть очередь", "rework"],
+      ["На модерации", String(pendingN), pendingN ? "клик — открыть очередь" : "очередь пуста", "pending"],
+      ["Доработать", String(reworkN), reworkN ? "клик — открыть очередь" : "очередь пуста", "rework"],
     ]
       .map(([l, v, h, queue]) => {
         if (queue) {
