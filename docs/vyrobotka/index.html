@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261012-masters-kpi-vitrine1" />
-  <link rel="stylesheet" href="./styles.css?v=20261012-masters-kpi-vitrine1" />
-  <script src="../shared/auth.js?v=20261012-masters-kpi-vitrine1"></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261022-debt-ledger2" />
+  <link rel="stylesheet" href="./styles.css?v=20261022-debt-ledger2" />
+  <script src="../shared/auth.js?v=20261022-debt-ledger2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261012-masters-kpi-vitrine1" defer></script>
+  <script src="./app.js?v=20261022-debt-ledger2" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -106,32 +106,41 @@
       <section id="panel-debt" class="panel" hidden>
         <div id="debt-empty" class="empty" hidden>Нет данных дебиторки в снимке.</div>
         <div id="debt-body" class="stack" hidden>
+          <header class="debt-head">
+            <div>
+              <h2 class="debt-title">Дебиторка / ошибки</h2>
+              <p class="card-sub" id="debt-meta">Таблица дебиторки из сверки Jarvis.</p>
+            </div>
+            <p class="debt-verify-status" id="debt-verify-status"></p>
+          </header>
           <div class="kpis" id="debt-kpis"></div>
-          <div id="debt-report" class="card" hidden></div>
           <article class="card">
             <h3>Динамика общей дебиторки</h3>
             <p class="card-sub">
-              CRM «Ожидаемая сумма оплаты» и Σ недоплат по отчётам мастеров · точка при сверке, ≤1× в день.
+              CRM — «Ожидаемая сумма оплаты» по фильтру недоплат.
+              Точка при сверке в Jarvis (не чаще 1× в день).
             </p>
             <div class="chart-box"><canvas id="chart-debt"></canvas></div>
             <p class="card-sub" id="debt-daily-meta"></p>
           </article>
           <article class="card">
-            <h3>Недоплаченные квитанции</h3>
-            <p class="card-sub">Жёлтое «норма» — в CRM уже «Выдан» и долга нет; красное — реальное расхождение.</p>
+            <h3>Таблица дебиторки</h3>
+            <p class="card-sub">
+              Жёлтый — долг совпадает в отчёте и CRM.
+              Красный — подозрение на скрытие дебиторки.
+              Без цвета (open) — долг только в CRM.
+            </p>
             <div class="table-wrap">
-              <table class="vtable" id="table-debt">
+              <table class="vtable debt-ledger-table" id="table-debt">
                 <thead>
                   <tr>
-                    <th>Лист</th>
-                    <th>Мастер</th>
-                    <th>Кв.</th>
-                    <th>Стоимость</th>
-                    <th>Оплачено</th>
-                    <th>Долг</th>
-                    <th>CRM долг</th>
-                    <th>Статус</th>
-                    <th>Сверка</th>
+                    <th class="debt-th-sort" data-debt-sort="ticket"><button type="button" class="debt-th-btn">Кв.</button></th>
+                    <th class="debt-th-sort" data-debt-sort="sheet_debt"><button type="button" class="debt-th-btn">Долг отчёт</button></th>
+                    <th class="debt-th-sort" data-debt-sort="crm_debt"><button type="button" class="debt-th-btn">Долг CRM</button></th>
+                    <th class="debt-th-sort" data-debt-sort="crm_paid"><button type="button" class="debt-th-btn">Оплачено</button></th>
+                    <th class="debt-th-sort" data-debt-sort="report_amount"><button type="button" class="debt-th-btn">ЗП мастеру</button></th>
+                    <th class="debt-th-sort" data-debt-sort="crm_status"><button type="button" class="debt-th-btn">Статус CRM</button></th>
+                    <th class="debt-th-sort" data-debt-sort="flag"><button type="button" class="debt-th-btn">Причина</button></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-debt"></tbody>

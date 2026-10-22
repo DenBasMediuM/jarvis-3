@@ -38,55 +38,139 @@ function shortLabel(title) {
   return `${head.slice(4, 6)}/${head.slice(2, 4)} · ${range}`;
 }
 
-function resolveVerdict(verify) {
-  if (!verify) return null;
-  const raw = verify.verdict || null;
-  if (raw === "norm" || raw === "ok" || raw === "missing" || raw === "error") return raw;
-  if (raw !== "mismatch") return raw;
-  const st = String(verify.crm_status || verify.field_diffs?.status?.crm || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-  if (st !== "выдан") return raw;
-  const debt = verify.crm_debt;
-  if (debt == null || debt === "" || Number(debt) <= 1) return "norm";
-  return raw;
+let debtSort = { key: "flag", dir: 1 };
+
+function debtFlagRank(flag) {
+  const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
+  return order[flag] ?? 9;
 }
 
-function verdictMeta(v) {
-  if (v === "ok") return { row: "tr-ok", chip: "is-ok", label: "ок" };
-  if (v === "norm") return { row: "tr-norm", chip: "is-norm", label: "норма" };
-  if (v === "mismatch") return { row: "tr-bad", chip: "is-bad", label: "расхождение" };
-  if (v === "missing") return { row: "tr-miss", chip: "is-miss", label: "нет в CRM" };
-  if (v === "error") return { row: "", chip: "is-error", label: "ошибка" };
-  return { row: "", chip: "", label: "—" };
+function debtFlagMeta(flag) {
+  const f = String(flag || "");
+  if (f === "red") return { label: "красный", cls: "is-debt-red", chip: "is-bad" };
+  if (f === "yellow") return { label: "жёлтый", cls: "is-debt-yellow", chip: "is-ok" };
+  if (f === "mismatch") return { label: "разница", cls: "is-debt-mismatch", chip: "is-bad" };
+  if (f === "open") return { label: "CRM", cls: "is-debt-open", chip: "" };
+  return { label: "—", cls: "", chip: "" };
 }
 
-function cellTip(diff) {
-  if (!diff) return "";
-  const label = diff.label || "поле";
-  const sheetV = typeof diff.sheet === "number" ? fmtMoney(diff.sheet) : String(diff.sheet ?? "—");
-  const crmV =
-    typeof diff.crm === "number"
-      ? fmtMoney(diff.crm)
-      : diff.crm == null || diff.crm === ""
-        ? "—"
-        : String(diff.crm);
-  return `${label}: в таблице ${sheetV} · в Gincore ${crmV}`;
+function debtSortValue(row, key) {
+  if (key === "ticket") return String(row.ticket || "");
+  if (key === "crm_status") return String(row.crm_status || "");
+  if (key === "flag" || key === "flag_reason") return debtFlagRank(row.flag);
+  if (key === "sheet_debt") return Number(row.sheet_debt) || 0;
+  if (key === "crm_debt") return Number(row.crm_debt) || 0;
+  if (key === "crm_paid") return Number(row.crm_paid) || 0;
+  if (key === "report_amount") return Number(row.report_amount) || 0;
+  return Number(row.crm_debt || row.sheet_debt) || 0;
 }
 
-function tdMoney(value, field, verify) {
-  const diff = verify?.field_diffs?.[field];
-  const html = fmtMoney(value);
-  if (!diff) return `<td>${html}</td>`;
-  return `<td class="cell-mismatch" title="${escapeHtml(cellTip(diff))}">${html}</td>`;
+function fmtDay(day) {
+  const m = String(day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : String(day || "—");
 }
 
-function tdText(value, field, verify) {
-  const diff = verify?.field_diffs?.[field];
-  const html = escapeHtml(value || "—");
-  if (!diff) return `<td>${html}</td>`;
-  return `<td class="cell-mismatch" title="${escapeHtml(cellTip(diff))}">${html}</td>`;
+function closeDebtModal() {
+  document.getElementById("debt-order-modal")?.remove();
+}
+
+function openDebtModal(ticket) {
+  if (!ticket) return;
+  closeDebtModal();
+  const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === String(ticket));
+  if (!row) return;
+  const flagMeta = debtFlagMeta(row.flag);
+  const feed = Array.isArray(row.live_feed) ? row.live_feed : [];
+  const feedAt = row.crm_feed_at
+    ? `<span class="debt-feed-cached">кэш ${escapeHtml(String(row.crm_feed_at).slice(0, 19).replace("T", " "))}</span>`
+    : `<span class="debt-feed-cached">лента не в снимке</span>`;
+  const feedHtml = feed.length
+    ? feed
+        .map(
+          (f) => `<article class="debt-feed-item">
+            <header><time>${escapeHtml(f.date || "")}</time><span>${escapeHtml(f.author || "")}</span></header>
+            <p>${escapeHtml(f.text || "")}</p>
+          </article>`,
+        )
+        .join("")
+    : `<p class="debt-feed-empty">${row.crm_feed_at ? "Комментариев в CRM нет" : "Лента ещё не сохранена при сверке"}</p>`;
+  const crmLink = row.crm_url
+    ? `<a class="debt-order-crm-link" href="${escapeHtml(row.crm_url)}" target="_blank" rel="noopener">Открыть в CRM ↗</a>`
+    : "";
+  const overlay = document.createElement("div");
+  overlay.id = "debt-order-modal";
+  overlay.className = "debt-order-overlay";
+  overlay.innerHTML = `<div class="debt-order-card">
+    <div class="debt-order-head">
+      <div>
+        <p class="debt-order-kicker">Дебиторка · карточка</p>
+        <h2>№${escapeHtml(row.ticket)}</h2>
+        <p class="debt-order-status-line">
+          <span class="debt-order-status">${escapeHtml(row.crm_status || "—")}</span>
+          ${row.flag ? `<span class="chip ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>` : ""}
+        </p>
+      </div>
+      <div class="debt-order-head-actions">
+        ${crmLink}
+        <button type="button" class="debt-close-btn" data-close>Закрыть</button>
+      </div>
+    </div>
+    ${
+      row.flag_reason
+        ? `<div class="debt-order-reason ${flagMeta.cls}">${escapeHtml(row.flag_reason)}</div>`
+        : ""
+    }
+    <div class="debt-order-grid">
+      <section class="debt-order-panel">
+        <h3>CRM</h3>
+        <dl>
+          <div><dt>Стоимость</dt><dd>${fmtMoney(row.crm_total)}</dd></div>
+          <div><dt>Оплачено</dt><dd>${fmtMoney(row.crm_paid)}</dd></div>
+          <div><dt>Долг</dt><dd class="is-emphasis">${fmtMoney(row.crm_debt)}</dd></div>
+        </dl>
+      </section>
+      <section class="debt-order-panel">
+        <h3>Отчёт мастера</h3>
+        <dl>
+          <div><dt>Мастер</dt><dd>${escapeHtml(row.master || "—")}</dd></div>
+          <div><dt>Лист</dt><dd>${escapeHtml(row.sheet_title || "—")}</dd></div>
+          <div><dt>Долг в отчёте</dt><dd class="is-emphasis">${fmtMoney(row.sheet_debt)}</dd></div>
+          <div><dt>ЗП мастеру</dt><dd>${fmtMoney(row.report_amount)}</dd></div>
+        </dl>
+      </section>
+    </div>
+    <section class="debt-order-decision">
+      <h3>Решение</h3>
+      <p class="debt-order-decision-hint">Здесь позже появится блок закрытия вопроса по квитанции.</p>
+    </section>
+    <section class="debt-order-feed">
+      <h3>Комментарии CRM <span>${feed.length}</span> ${feedAt}</h3>
+      <div class="debt-feed-list">${feedHtml}</div>
+    </section>
+  </div>`;
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeDebtModal();
+  });
+  overlay.querySelector("[data-close]")?.addEventListener("click", closeDebtModal);
+  document.body.appendChild(overlay);
+}
+
+function initDebtSort() {
+  const table = $("#table-debt");
+  if (!table || table.dataset.sortReady) return;
+  table.dataset.sortReady = "1";
+  table.querySelectorAll("th[data-debt-sort]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.getAttribute("data-debt-sort");
+      if (!key) return;
+      if (debtSort.key === key) debtSort.dir *= -1;
+      else {
+        debtSort.key = key;
+        debtSort.dir = 1;
+      }
+      renderDebt();
+    });
+  });
 }
 
 function destroyCharts() {
@@ -300,120 +384,111 @@ function renderUpsell(sheets) {
   }
 }
 
-function renderDebt(sheets, tickets, report) {
+function renderDebt() {
   const empty = $("#debt-empty");
   const body = $("#debt-body");
+  const table = DATA?.debt_table || [];
+  const counts = DATA?.debt_table_counts || {};
   const daily = DATA?.debt_daily || [];
-  if (!sheets?.length && !tickets?.length && !daily.length) {
+  const hasData = table.length > 0 || daily.length > 0;
+  if (!hasData) {
     if (empty) empty.hidden = false;
     if (body) body.hidden = true;
     return;
   }
   if (empty) empty.hidden = true;
   if (body) body.hidden = false;
+  initDebtSort();
 
-  const last = sheets[sheets.length - 1];
-  const debtSum = tickets.reduce((a, t) => a + (Number(t.debt) || 0), 0);
   const lastDaily = daily.length ? daily[daily.length - 1] : null;
-  const byV = { mismatch: 0, norm: 0, ok: 0, missing: 0, error: 0 };
-  for (const t of tickets) {
-    const v = resolveVerdict(t.verify);
-    if (v && byV[v] != null) byV[v] += 1;
+  const flags = {
+    red: counts.red ?? 0,
+    yellow: counts.yellow ?? 0,
+    open: counts.open ?? 0,
+    mismatch: counts.mismatch ?? 0,
+  };
+  const tableCrmDebt = table.reduce((s, r) => s + (Number(r.crm_debt) || 0), 0);
+
+  const meta = $("#debt-meta");
+  if (meta) {
+    const bl = DATA?.debt_baseline;
+    const blNote = bl?.day ? ` · отчёты мастеров с ${fmtDay(bl.day)}` : "";
+    meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}`;
+  }
+  const verifyStatus = $("#debt-verify-status");
+  if (verifyStatus) {
+    verifyStatus.textContent = DATA?.debt_verify_message || "";
   }
 
   const kpis = $("#debt-kpis");
   if (kpis) {
-    const rows = [
-      ["Σ недоплат", fmtMoney(debtSum), `${tickets.length} квитанций`],
+    kpis.innerHTML = [
       [
-        "CRM дебиторка",
+        "CRM (фильтр)",
         fmtMoney(lastDaily?.crm_debt_sum),
-        lastDaily
-          ? String(lastDaily.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1")
-          : "—",
+        lastDaily ? `other=pay · ${fmtDay(lastDaily.day)}` : "после сверки",
       ],
-      ["Посл. Σ", fmtMoney(last?.debt_sum), last?.sheet_title || ""],
-      ["Посл. шт.", fmtMoney(last?.debt_count), fmtPct(last?.debt_ratio)],
-    ];
-    if (report?.total) {
-      rows.push(["Расхождения", fmtMoney(report.mismatch ?? byV.mismatch), `из ${report.total}`]);
-      rows.push(["Норма", fmtMoney(report.norm ?? byV.norm), "выдан, оплачено"]);
-    }
-    kpis.innerHTML = rows
+      ["Σ в таблице", fmtMoney(tableCrmDebt), `${table.length} активных`],
+      ["Красных", String(flags.red || 0), "подозрение"],
+      ["Жёлтых", String(flags.yellow || 0), "совпадает"],
+      ["Только CRM", String(flags.open || 0), "без отчёта"],
+      ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
+    ]
       .map(
         ([l, v, h]) => `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
         <span class="kpi-value">${escapeHtml(v)}</span>
-        <span class="kpi-hint">${escapeHtml(h)}</span></div>`
+        <span class="kpi-hint">${escapeHtml(h)}</span></div>`,
       )
       .join("");
   }
 
-  const reportEl = $("#debt-report");
-  if (reportEl) {
-    if (report?.total) {
-      reportEl.hidden = false;
-      reportEl.innerHTML = `
-        <h3>Отчёт сверки с Gincore</h3>
-        <div class="chip-row">
-          <span class="chip">всего ${report.total}</span>
-          <span class="chip is-ok">ок ${report.ok ?? 0}</span>
-          <span class="chip is-norm">норма ${report.norm ?? 0}</span>
-          <span class="chip is-bad">расхождения ${report.mismatch ?? 0}</span>
-          <span class="chip is-miss">нет в CRM ${report.missing ?? 0}</span>
-        </div>`;
-    } else {
-      reportEl.hidden = true;
-      reportEl.innerHTML = "";
-    }
-  }
-
   const tbody = $("#tbody-debt");
   if (tbody) {
-    const rank = (t) => {
-      const v = resolveVerdict(t.verify);
-      if (v === "mismatch") return 0;
-      if (v === "missing") return 1;
-      if (v === "error") return 2;
-      if (!v) return 3;
-      if (v === "norm") return 4;
-      return 5;
-    };
-    const ordered = [...tickets].sort((a, b) => {
-      const dr = rank(a) - rank(b);
-      if (dr) return dr;
-      return (Number(b.debt) || 0) - (Number(a.debt) || 0);
-    });
-    tbody.innerHTML = ordered
-      .map((t) => {
-        const v = resolveVerdict(t.verify);
-        const meta = verdictMeta(v);
-        const tip =
-          v === "norm" && t.verify?.summary && !String(t.verify.summary).toLowerCase().startsWith("норма")
-            ? `Норма: в CRM «Выдан», долга нет · ${t.verify.summary}`
-            : t.verify?.summary || "";
-        const ticketCell = t.verify?.crm_url
-          ? `<a class="ticket-link" href="${escapeHtml(t.verify.crm_url)}" target="_blank" rel="noopener">${escapeHtml(t.ticket)}</a>`
-          : escapeHtml(t.ticket);
-        const crmDebt = t.verify
-          ? t.verify.field_diffs?.debt
-            ? `<td class="cell-mismatch" title="${escapeHtml(cellTip(t.verify.field_diffs.debt))}">${fmtMoney(t.verify.crm_debt)}</td>`
-            : `<td>${fmtMoney(t.verify.crm_debt)}</td>`
-          : "<td>—</td>";
-        return `<tr class="${meta.row}">
-          <td>${escapeHtml(t.sheet_title)}</td>
-          <td>${escapeHtml(t.master || "—")}</td>
-          <td>${ticketCell}</td>
-          ${tdMoney(t.total_repair, "total", t.verify)}
-          ${tdMoney(t.paid, "paid", t.verify)}
-          ${tdMoney(t.debt, "debt", t.verify)}
-          ${crmDebt}
-          ${tdText(t.status || "—", "status", t.verify)}
-          <td title="${escapeHtml(tip)}">${
-            v ? `<span class="verdict ${meta.chip}">${escapeHtml(meta.label)}</span>` : "—"
-          }</td>
-        </tr>`;
-      })
-      .join("");
+    if (!table.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Таблица пуста</td></tr>`;
+    } else {
+      const key = debtSort.key || "flag";
+      const dir = debtSort.dir || 1;
+      const ordered = [...table].sort((a, b) => {
+        const av = debtSortValue(a, key);
+        const bv = debtSortValue(b, key);
+        let cmp = 0;
+        if (typeof av === "string" || typeof bv === "string") {
+          cmp = String(av).localeCompare(String(bv), "ru", { numeric: true });
+        } else {
+          cmp = Number(av) - Number(bv);
+        }
+        if (cmp) return dir * cmp;
+        const fr = debtFlagRank(a.flag) - debtFlagRank(b.flag);
+        if (fr) return fr;
+        const da = (Number(b.crm_debt) || 0) - (Number(a.crm_debt) || 0);
+        if (da) return da;
+        return String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
+      });
+      tbody.innerHTML = ordered
+        .map((r) => {
+          const metaF = debtFlagMeta(r.flag);
+          const sheetDebtHtml = r.sheet_url
+            ? `<a class="ticket-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener"><strong>${fmtMoney(r.sheet_debt)}</strong></a>`
+            : `<strong>${fmtMoney(r.sheet_debt)}</strong>`;
+          const crmDebtHtml = r.crm_url
+            ? `<a class="ticket-link" href="${escapeHtml(r.crm_url)}" target="_blank" rel="noopener"><strong>${fmtMoney(r.crm_debt)}</strong></a>`
+            : `<strong>${fmtMoney(r.crm_debt)}</strong>`;
+          return `<tr class="${metaF.cls}" title="${escapeHtml(r.flag_reason || "")}">
+            <td><button type="button" class="debt-ticket-btn" data-debt-ticket="${escapeHtml(r.ticket || "")}">${escapeHtml(r.ticket || "—")}</button></td>
+            <td>${sheetDebtHtml}</td>
+            <td>${crmDebtHtml}</td>
+            <td>${fmtMoney(r.crm_paid)}</td>
+            <td>${fmtMoney(r.report_amount)}</td>
+            <td>${escapeHtml(r.crm_status || "—")}</td>
+            <td class="debt-flag-reason">${escapeHtml(r.flag_reason || "—")}</td>
+          </tr>`;
+        })
+        .join("");
+      tbody.querySelectorAll("[data-debt-ticket]").forEach((btn) => {
+        btn.addEventListener("click", () => openDebtModal(btn.getAttribute("data-debt-ticket")));
+      });
+    }
   }
 
   const dailyMeta = $("#debt-daily-meta");
@@ -422,64 +497,56 @@ function renderDebt(sheets, tickets, report) {
       dailyMeta.textContent = "Точек динамики пока нет в снимке.";
     } else {
       const tip = daily[daily.length - 1];
-      const dayLabel = String(tip.day || "").replace(/^(\d{4})-(\d{2})-(\d{2}).*/, "$3.$2.$1");
-      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${dayLabel} · CRM ${fmtMoney(
-        tip.crm_debt_sum,
-      )} · отчёты ${fmtMoney(tip.sheets_debt_sum)}`;
+      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${fmtDay(tip.day)} · CRM ${fmtMoney(tip.crm_debt_sum)}`;
     }
   }
 
   const canvas = $("#chart-debt");
-  if (canvas && typeof Chart !== "undefined" && daily.length) {
-    debtChart?.destroy();
-    const labels = daily.map((d) => {
-      const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
-      return m ? `${m[3]}.${m[2]}` : d.day;
-    });
-    const base = lineDefaults();
-    const n = daily.length;
-    const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
-    const line = {
-      tension: 0.3,
-      spanGaps: true,
-      pointRadius: radii,
-      borderWidth: 2.25,
-      backgroundColor: "transparent",
-    };
-    debtChart = new Chart(canvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            ...line,
-            label: "CRM (ожидаемая оплата)",
-            data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
-            borderColor: "#a12828",
-          },
-          {
-            ...line,
-            label: "Отчёты мастеров",
-            data: daily.map((d) => (d.sheets_debt_sum == null ? null : Number(d.sheets_debt_sum))),
-            borderColor: "#1a5f8a",
-            borderDash: [5, 4],
-          },
-        ],
-      },
-      options: {
-        ...base,
-        scales: {
-          ...base.scales,
-          x: { ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } } },
-          y: {
-            beginAtZero: true,
-            ticks: { callback: (v) => fmtMoney(v), color: "#5d6b7c", font: { size: 10 } },
-            grid: { color: "rgba(28,36,48,0.07)" },
-          },
+  if (!canvas || typeof Chart === "undefined") return;
+  debtChart?.destroy();
+  debtChart = null;
+  if (!daily.length) return;
+  const labels = daily.map((d) => {
+    const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}` : d.day;
+  });
+  const base = lineDefaults();
+  const n = daily.length;
+  const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
+  const line = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: radii,
+    pointHoverRadius: 6,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+  debtChart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          ...line,
+          label: "CRM (ожидаемая оплата)",
+          data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
+          borderColor: "#a12828",
+        },
+      ],
+    },
+    options: {
+      ...base,
+      scales: {
+        ...base.scales,
+        x: { ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } } },
+        y: {
+          beginAtZero: true,
+          ticks: { callback: (v) => fmtMoney(v), color: "#5d6b7c", font: { size: 10 } },
+          grid: { color: "rgba(28,36,48,0.07)" },
         },
       },
-    });
-  }
+    },
+  });
 }
 
 function destroyBkCharts() {
@@ -784,7 +851,7 @@ function renderAll() {
       meta.textContent = line;
     }
     renderUpsell(DATA.upsell_sheets || []);
-    renderDebt(DATA.debt_sheets || [], DATA.debt_tickets || [], DATA.verify_report || null);
+    renderDebt();
   }
   renderBranchKpi(BRANCH_KPI);
   renderMastersKpi(MASTERS_KPI);

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 from core.config import ROOT
-from modules.vyrobotka.verify import apply_display_verdicts, build_verify_report
 
 _SHEET_KEYS = (
     "sheet_title",
@@ -23,55 +22,26 @@ _SHEET_KEYS = (
     "upsell_ratio",
 )
 
-_DEBT_SHEET_KEYS = (
-    "sheet_title",
-    "sort_ym",
-    "sort_a",
-    "sort_b",
-    "tickets_count",
-    "debt_sum",
-    "debt_count",
-    "debt_ratio",
-    "avg_debt",
-)
-
-_TICKET_KEYS = (
+_DEBT_TABLE_KEYS = (
+    "ticket",
     "sheet_title",
     "master",
-    "ticket",
-    "total_repair",
-    "paid",
-    "debt",
-    "status",
-    "control",
-    "arith_check",
+    "sheet_debt",
+    "sheet_total",
+    "sheet_paid",
+    "crm_debt",
+    "crm_paid",
+    "crm_total",
+    "crm_status",
+    "crm_url",
+    "report_amount",
+    "salary",
+    "flag",
+    "flag_reason",
+    "sheet_url",
+    "crm_feed_at",
+    "on_pay_list",
 )
-
-
-def default_pages_json_path() -> Path:
-    return ROOT / "docs" / "vyrobotka" / "data.json"
-
-
-def _pick(row: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
-    return {k: row.get(k) for k in keys if k in row or row.get(k) is not None}
-
-
-def sanitize_ticket_for_pages(row: dict[str, Any]) -> dict[str, Any]:
-    out = _pick(row, _TICKET_KEYS)
-    verify = row.get("verify")
-    if isinstance(verify, dict):
-        out["verify"] = {
-            "verdict": verify.get("verdict"),
-            "summary": verify.get("summary"),
-            "field_diffs": verify.get("field_diffs") or {},
-            "crm_total": verify.get("crm_total"),
-            "crm_paid": verify.get("crm_paid"),
-            "crm_debt": verify.get("crm_debt"),
-            "crm_status": verify.get("crm_status"),
-            "crm_url": verify.get("crm_url"),
-        }
-    return out
-
 
 _DEBT_DAILY_KEYS = (
     "day",
@@ -84,21 +54,94 @@ _DEBT_DAILY_KEYS = (
 )
 
 
+def default_pages_json_path() -> Path:
+    return ROOT / "docs" / "vyrobotka" / "data.json"
+
+
+def _pick(row: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
+    return {k: row.get(k) for k in keys if k in row or row.get(k) is not None}
+
+
+def _parse_feed(row: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = row.get("live_feed")
+    if isinstance(raw, list):
+        return [
+            {
+                "date": str(x.get("date") or ""),
+                "author": str(x.get("author") or ""),
+                "text": str(x.get("text") or ""),
+            }
+            for x in raw
+            if isinstance(x, dict)
+        ]
+    blob = row.get("crm_feed_json")
+    if not blob:
+        return []
+    try:
+        parsed = json.loads(blob) if isinstance(blob, str) else blob
+    except (TypeError, json.JSONDecodeError):
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [
+        {
+            "date": str(x.get("date") or ""),
+            "author": str(x.get("author") or ""),
+            "text": str(x.get("text") or ""),
+        }
+        for x in parsed
+        if isinstance(x, dict)
+    ]
+
+
+def sanitize_debt_table_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Строка ledger для витрины (как в админке + кэш ленты CRM)."""
+    out = _pick(row, _DEBT_TABLE_KEYS)
+    out["live_feed"] = _parse_feed(row)
+    return out
+
+
+def debt_table_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"total": len(rows), "red": 0, "yellow": 0, "open": 0, "mismatch": 0}
+    for r in rows:
+        f = str(r.get("flag") or "")
+        if f in counts:
+            counts[f] += 1
+    return counts
+
+
 def build_vyrobotka_pages_payload(
     *,
     upsell_sheets: list[dict[str, Any]],
-    debt_sheets: list[dict[str, Any]],
-    debt_tickets: list[dict[str, Any]],
+    debt_table: list[dict[str, Any]] | None = None,
+    debt_daily: list[dict[str, Any]] | None = None,
+    debt_baseline: dict[str, Any] | None = None,
+    debt_verify_message: str | None = None,
     sync: dict[str, Any] | None = None,
     spreadsheet_title: str | None = None,
+    # legacy kwargs — игнорируем, чтобы не ломать старые вызовы
+    debt_sheets: list[dict[str, Any]] | None = None,
+    debt_tickets: list[dict[str, Any]] | None = None,
     verify_rows: list[dict[str, Any]] | None = None,
-    debt_daily: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    display_rows = apply_display_verdicts(verify_rows or [])
-    report = build_verify_report(display_rows) if display_rows else None
+    del debt_sheets, debt_tickets, verify_rows  # unused legacy
+    table = [sanitize_debt_table_row(r) for r in (debt_table or [])]
+    counts = debt_table_counts(table)
     daily = [_pick(d, _DEBT_DAILY_KEYS) for d in (debt_daily or [])]
+    baseline = None
+    if debt_baseline:
+        baseline = {
+            "day": debt_baseline.get("day"),
+            "sheets_debt_sum": debt_baseline.get("sheets_debt_sum"),
+            "sheets_tickets": debt_baseline.get("sheets_tickets"),
+        }
+    live_msg = (
+        f"В таблице {counts['total']} "
+        f"(жёлтых {counts['yellow']}, красных {counts['red']}, "
+        f"open {counts['open']}, mismatch {counts['mismatch']})"
+    )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "source": "jarvis-vyrobotka",
         "spreadsheet_title": spreadsheet_title,
@@ -108,15 +151,14 @@ def build_vyrobotka_pages_payload(
             "status": (sync or {}).get("status"),
         },
         "upsell_sheets": [_pick(s, _SHEET_KEYS) for s in upsell_sheets],
-        "debt_sheets": [_pick(s, _DEBT_SHEET_KEYS) for s in debt_sheets],
-        "debt_tickets": [sanitize_ticket_for_pages(t) for t in debt_tickets],
+        "debt_table": table,
+        "debt_table_counts": counts,
         "debt_daily": daily,
-        "verify_report": report,
+        "debt_baseline": baseline,
+        "debt_verify_message": live_msg or debt_verify_message,
         "counts": {
             "upsell_sheets": len(upsell_sheets),
-            "debt_sheets": len(debt_sheets),
-            "debt_tickets": len(debt_tickets),
-            "verify_rows": len(display_rows),
+            "debt_table": len(table),
             "debt_daily": len(daily),
         },
     }

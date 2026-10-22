@@ -5046,7 +5046,7 @@ async function exportVyrobotkaPages() {
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     if (statusEl) {
       statusEl.textContent = `Pages: ${data.upsell_sheets ?? "—"} листов, ${
-        data.debt_tickets ?? "—"
+        data.debt_table ?? data.debt_tickets ?? "—"
       } долгов → docs/vyrobotka/data.json (сделайте git push)`;
     }
   } catch (err) {

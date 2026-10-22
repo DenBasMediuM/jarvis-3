@@ -631,7 +631,7 @@ class VyrobotkaService:
         pages_note = ""
         try:
             exp = await self.export_pages_snapshot()
-            pages_note = f", pages {exp.get('debt_tickets', 0)} долгов"
+            pages_note = f", pages {exp.get('debt_table', exp.get('debt_tickets', 0))} долгов"
         except Exception:  # noqa: BLE001
             pages_note = ""
         await self.db.vyrobotka_set_sync_state(
@@ -664,22 +664,22 @@ class VyrobotkaService:
         title = None
         if sheets:
             title = sheets[-1].get("spreadsheet_title")
-        verify_rows = (debt.get("verify") or {}).get("rows") or []
+        verify = debt.get("verify") or {}
         payload = build_vyrobotka_pages_payload(
             upsell_sheets=sheets,
-            debt_sheets=debt.get("sheets") or [],
-            debt_tickets=debt.get("tickets") or [],
+            debt_table=debt.get("table") or [],
+            debt_daily=debt.get("daily") or [],
+            debt_baseline=debt.get("baseline"),
+            debt_verify_message=verify.get("message"),
             sync=sync,
             spreadsheet_title=title,
-            verify_rows=verify_rows,
-            debt_daily=debt.get("daily") or [],
         )
         out = write_vyrobotka_pages_json(payload, Path(path) if path else None)
         return {
             "ok": True,
             "path": str(out),
             "upsell_sheets": payload["counts"]["upsell_sheets"],
-            "debt_tickets": payload["counts"]["debt_tickets"],
+            "debt_table": payload["counts"]["debt_table"],
             "debt_daily": payload["counts"].get("debt_daily", 0),
             "exported_at": payload["exported_at"],
         }
