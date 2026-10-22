@@ -198,21 +198,106 @@ class VyrobotkaService:
         row_by_key = {
             f"{r.get('sheet_title')}::{r.get('ticket')}": r for r in all_rows
         }
+        row_by_ticket: dict[str, dict[str, Any]] = {}
+        for r in all_rows:
+            tid = str(r.get("ticket") or "")
+            if tid and tid not in row_by_ticket:
+                row_by_ticket[tid] = r
         out: list[dict[str, Any]] = []
         for item in ledger:
             row = dict(item)
             title = str(row.get("sheet_title") or "")
             ticket = str(row.get("ticket") or "")
             st = stats_by_title.get(title) or {}
-            src = row_by_key.get(f"{title}::{ticket}") or {}
+            src = row_by_key.get(f"{title}::{ticket}") or row_by_ticket.get(ticket) or {}
+            if not title and src.get("sheet_title"):
+                title = str(src.get("sheet_title") or "")
+                st = stats_by_title.get(title) or st
             sid = src.get("spreadsheet_id") or st.get("spreadsheet_id")
             row["sheet_url"] = GoogleSheetsClient.sheet_tab_url(
                 sid,
                 st.get("sheet_id"),
                 row_index=src.get("row_index"),
             )
+            if row.get("salary") is None and src.get("salary") is not None:
+                row["salary"] = src.get("salary")
+            if row.get("report_amount") is None and src.get("report_amount") is not None:
+                row["report_amount"] = src.get("report_amount")
+            if not row.get("master") and src.get("master"):
+                row["master"] = src.get("master")
+            if not row.get("sheet_title") and src.get("sheet_title"):
+                row["sheet_title"] = src.get("sheet_title")
             out.append(row)
         return out
+
+    async def get_debt_order_preview(self, ticket: str) -> dict[str, Any]:
+        """Карточка квитанции CRM + лента комментариев для модалки дебиторки."""
+        from bs4 import BeautifulSoup
+
+        oid = str(ticket or "").strip()
+        if not oid:
+            raise SheetsError("Не указан номер квитанции")
+        if not self._gincore_client_factory:
+            raise SheetsError("Gincore не подключён")
+        client = await self._gincore_client_factory()
+        await client.ensure_login()
+        html = await client.fetch_order_html(oid)
+        payment = client.parse_order_payment(html)
+        feed = client.parse_order_live_feed(html)
+        status = client.parse_order_status(html)
+        title_el = BeautifulSoup(html, "lxml").title
+        ledger = await self.db.vyrobotka_get_debt_ledger_ticket(oid) or {}
+        salary = ledger.get("salary")
+        report_amount = ledger.get("report_amount")
+        master = ledger.get("master")
+        sheet_title = ledger.get("sheet_title")
+        if (
+            salary is None
+            or report_amount is None
+            or not master
+            or not sheet_title
+        ):
+            cur = await self.db.conn.execute(
+                """
+                SELECT salary, report_amount, master, sheet_title
+                FROM vyrobotka_rows
+                WHERE ticket = ?
+                ORDER BY row_index ASC
+                LIMIT 1
+                """,
+                (oid,),
+            )
+            src = await cur.fetchone()
+            if src:
+                if salary is None:
+                    salary = src["salary"]
+                if report_amount is None:
+                    report_amount = src["report_amount"]
+                if not master:
+                    master = src["master"]
+                if not sheet_title:
+                    sheet_title = src["sheet_title"]
+        return {
+            "ok": True,
+            "order_id": oid,
+            "url": f"{client.base_url}/orders/{oid}",
+            "title": title_el.get_text(strip=True) if title_el else None,
+            "payment": payment or {},
+            "live_feed": feed or [],
+            "crm_status": (status or {}).get("status_name") or ledger.get("crm_status"),
+            "ledger": {
+                "sheet_debt": ledger.get("sheet_debt"),
+                "crm_debt": ledger.get("crm_debt"),
+                "crm_total": ledger.get("crm_total"),
+                "crm_paid": ledger.get("crm_paid"),
+                "salary": salary,
+                "report_amount": report_amount,
+                "master": master,
+                "flag": ledger.get("flag"),
+                "flag_reason": ledger.get("flag_reason"),
+                "sheet_title": sheet_title,
+            },
+        }
 
     async def ensure_debt_baseline(
         self, underpaid: list[dict[str, Any]] | None = None

@@ -1078,6 +1078,20 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   color: #5d6b7c;
   white-space: normal;
 }
+.vyrobotka-ticket-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(28, 36, 48, 0.25);
+  cursor: pointer;
+}
+.vyrobotka-ticket-btn:hover { color: var(--accent); }
 .vyrobotka-table a.vyrobotka-ticket-link {
   color: inherit;
   text-decoration: underline;

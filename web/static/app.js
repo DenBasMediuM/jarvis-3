@@ -4552,6 +4552,78 @@ function applyVyrobotkaVerifyUi(verify) {
   `;
 }
 
+function closeDebtOrderModal() {
+  document.getElementById("debt-order-modal")?.remove();
+}
+
+async function openDebtOrderModal(orderId) {
+  if (!orderId) return;
+  closeDebtOrderModal();
+  const overlay = document.createElement("div");
+  overlay.id = "debt-order-modal";
+  overlay.className = "cj-import-overlay quality-feed-overlay";
+  const card = document.createElement("div");
+  card.className = "cj-import-card";
+  card.innerHTML = `<div class="cj-import-loading">Загрузка квитанции №${escapeHtml(orderId)}…</div>`;
+  overlay.appendChild(card);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeDebtOrderModal();
+  });
+  document.body.appendChild(overlay);
+  try {
+    const res = await fetch(`/api/vyrobotka/debt-order/${encodeURIComponent(orderId)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    const pay = data.payment || {};
+    const ledger = data.ledger || {};
+    const total = pay.total_with_discount ?? pay.repair_cost ?? ledger.crm_total;
+    const paid = pay.paid ?? ledger.crm_paid;
+    let due = pay.due ?? ledger.crm_debt;
+    if (due == null && total != null && paid != null) {
+      due = Math.max(0, Number(total) - Number(paid));
+    }
+    const feed = Array.isArray(data.live_feed) ? data.live_feed : [];
+    const feedHtml = feed.length
+      ? feed
+          .map(
+            (f) => `<div class="cj-feed-row">
+              <span class="cj-feed-date">${escapeHtml(f.date || "")}</span>
+              <span class="cj-feed-author">${escapeHtml(f.author || "")}</span>
+              <span class="cj-feed-text">${escapeHtml(f.text || "")}</span>
+            </div>`,
+          )
+          .join("")
+      : "<em>Комментариев нет</em>";
+    const crm = data.url
+      ? `<a href="${escapeHtml(data.url)}" target="_blank" rel="noopener">открыть в CRM</a>`
+      : "";
+    card.innerHTML = `
+      <div class="cj-import-head">
+        <strong>Квитанция №${escapeHtml(data.order_id || orderId)}</strong>
+        <button type="button" class="quality-back-btn" data-close>Закрыть</button>
+      </div>
+      <div class="quality-feed-meta">
+        <span>Статус: <strong>${escapeHtml(data.crm_status || "—")}</strong></span>
+        <span>Мастер (отчёт): <strong>${escapeHtml(ledger.master || "—")}</strong></span>
+        <span>Стоимость: <strong>${fmtMoneyUa(total)}</strong></span>
+        <span>Оплачено: <strong>${fmtMoneyUa(paid)}</strong></span>
+        <span>Долг CRM: <strong>${fmtMoneyUa(due)}</strong></span>
+        <span>Долг отчёт: <strong>${fmtMoneyUa(ledger.sheet_debt)}</strong></span>
+        <span>В отчёте: <strong>${fmtMoneyUa(ledger.report_amount)}</strong></span>
+        <span>Лист: <strong>${escapeHtml(ledger.sheet_title || "—")}</strong></span>
+        ${crm}
+      </div>
+      <div class="quality-feed-body"><div class="cj-feed">${feedHtml}</div></div>
+    `;
+    card.querySelector("[data-close]")?.addEventListener("click", closeDebtOrderModal);
+  } catch (err) {
+    card.innerHTML = `<div class="cj-import-error">Ошибка: ${escapeHtml(err.message || err)}</div>
+      <div class="cj-import-actions"></div>`;
+    const actions = card.querySelector(".cj-import-actions");
+    addImportBtn(actions, "Закрыть", "is-muted", closeDebtOrderModal);
+  }
+}
+
 function renderVyrobotkaDebt() {
   const body = $("#vyrobotka-debt-body");
   const meta = $("#vyrobotka-debt-meta");
@@ -4619,19 +4691,16 @@ function renderVyrobotkaDebt() {
 
   if (tbody) {
     if (!table.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
     } else {
       const ordered = [...table].sort((a, b) => {
-        const dir = vyrobotkaDebtSort.dir;
-        if (vyrobotkaDebtSort.key === "flag") {
-          const dr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
-          if (dr) return dir * dr;
-        }
-        const da = Number(b.crm_debt || b.sheet_debt || 0) - Number(a.crm_debt || a.sheet_debt || 0);
+        const dr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
+        if (dr) return dr;
+        const da =
+          Number(b.crm_debt || b.sheet_debt || 0) - Number(a.crm_debt || a.sheet_debt || 0);
         if (da) return da;
-        return dir * String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
+        return String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
       });
-      updateVyrobotkaSortHeaders("vyrobotka-debt-table", vyrobotkaDebtSort, "data-debt-sort");
       const btnNew = $("#vyrobotka-debt-verify-new-btn");
       if (btnNew && verify?.status !== "running") {
         btnNew.textContent = "Сверить новые";
@@ -4640,27 +4709,33 @@ function renderVyrobotkaDebt() {
       tbody.innerHTML = ordered
         .map((r) => {
           const metaF = vyrobotkaDebtFlagMeta(r.flag);
-          const ticketCell = r.crm_url
-            ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(
-                r.crm_url,
-              )}" target="_blank" rel="noopener">${escapeHtml(r.ticket)}</a>`
-            : escapeHtml(r.ticket || "—");
-          const masterCell = r.sheet_url
+          const sheetDebtHtml = r.sheet_url
             ? `<a class="vyrobotka-sheet-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener" title="${escapeHtml(
-                r.sheet_title || "",
-              )}">${escapeHtml(r.master || "—")}</a>`
-            : escapeHtml(r.master || "—");
+                `${r.sheet_title || ""} · ${r.master || ""}`.trim(),
+              )}"><strong>${fmtMoneyUa(r.sheet_debt)}</strong></a>`
+            : `<strong>${fmtMoneyUa(r.sheet_debt)}</strong>`;
+          const crmDebtHtml = r.crm_url
+            ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(r.crm_url)}" target="_blank" rel="noopener"><strong>${fmtMoneyUa(
+                r.crm_debt,
+              )}</strong></a>`
+            : `<strong>${fmtMoneyUa(r.crm_debt)}</strong>`;
           return `<tr class="${metaF.cls}" title="${escapeHtml(r.flag_reason || "")}">
-            <td><span class="vyrobotka-verdict ${metaF.chip}">${escapeHtml(metaF.label)}</span></td>
-            <td>${ticketCell}</td>
-            <td>${masterCell}</td>
-            <td><strong>${fmtMoneyUa(r.sheet_debt)}</strong></td>
-            <td><strong>${fmtMoneyUa(r.crm_debt)}</strong></td>
+            <td><button type="button" class="vyrobotka-ticket-btn" data-debt-ticket="${escapeHtml(
+              r.ticket || "",
+            )}">${escapeHtml(r.ticket || "—")}</button></td>
+            <td>${sheetDebtHtml}</td>
+            <td>${fmtMoneyUa(r.report_amount)}</td>
+            <td>${crmDebtHtml}</td>
             <td>${escapeHtml(r.crm_status || "—")}</td>
             <td class="vyrobotka-flag-reason">${escapeHtml(r.flag_reason || "—")}</td>
           </tr>`;
         })
         .join("");
+      tbody.querySelectorAll("[data-debt-ticket]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          openDebtOrderModal(btn.getAttribute("data-debt-ticket"));
+        });
+      });
     }
   }
 

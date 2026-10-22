@@ -251,6 +251,8 @@ def collect_underpaid_tickets(rows: list[dict[str, Any]]) -> list[dict[str, Any]
                 "total_repair": total,
                 "paid": paid,
                 "debt": d,
+                "salary": r.get("salary"),
+                "report_amount": r.get("report_amount"),
                 "status": r.get("status"),
                 "control": r.get("control"),
                 "arith_check": r.get("arith_check"),

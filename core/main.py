@@ -357,6 +357,21 @@ async def vyrobotka_debt_verify_cancel() -> dict[str, Any]:
     return {"ok": True, "verify": await vyrobotka_service.cancel_debt_verify()}
 
 
+@app.get("/api/vyrobotka/debt-order/{ticket}")
+async def vyrobotka_debt_order_preview(ticket: str) -> dict[str, Any]:
+    """Модалка дебиторки: оплата + комментарии квитанции из Gincore."""
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.get_debt_order_preview(ticket)
+    except Exception as exc:  # noqa: BLE001
+        from modules.vyrobotka.sheets import SheetsError
+
+        if isinstance(exc, SheetsError):
+            raise HTTPException(400, str(exc)) from exc
+        raise HTTPException(500, str(exc)) from exc
+
+
 @app.post("/api/vyrobotka/export-pages")
 async def vyrobotka_export_pages() -> dict[str, Any]:
     """Записать docs/vyrobotka/data.json для GitHub Pages (без push)."""
