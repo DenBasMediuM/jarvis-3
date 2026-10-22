@@ -11,7 +11,9 @@ from modules.vyrobotka.parse import (
 from modules.vyrobotka.sheets import GoogleSheetsClient
 from modules.vyrobotka.verify import (
     apply_display_verdicts,
+    classify_debt_row,
     compare_ticket_with_crm,
+    crm_totals_from_payment,
     display_verdict,
     is_atypical_debt_case,
     unpack_issues_payload,
@@ -225,3 +227,153 @@ def test_sheet_tab_url_includes_gid():
     assert GoogleSheetsClient.sheet_tab_url("abc", None) == (
         "https://docs.google.com/spreadsheets/d/abc/edit"
     )
+
+
+def test_classify_yellow_match():
+    r = classify_debt_row(
+        {
+            "sheet_debt": 1000,
+            "crm_debt": 1000,
+            "crm_total": 3000,
+            "crm_paid": 2000,
+            "crm_status": "Готов",
+            "on_pay_list": 1,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["active"] == 1 and r["flag"] == "yellow"
+
+
+def test_classify_remove_when_crm_settled():
+    r = classify_debt_row(
+        {
+            "sheet_debt": 1000,
+            "crm_debt": 0,
+            "crm_status": "Выдан",
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["active"] == 0
+
+
+def test_classify_red_write_off():
+    r = classify_debt_row(
+        {
+            "first_crm_debt": 1000,
+            "first_crm_total": 1000,
+            "first_crm_status": "Готов",
+            "crm_debt": 1000,
+            "crm_paid": 0,
+            "crm_total": 1000,
+            "crm_status": "Не подлежит ремонту",
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] == "red"
+
+
+def test_classify_red_zero_total():
+    r = classify_debt_row(
+        {
+            "first_crm_total": 1000,
+            "first_crm_debt": 1000,
+            "first_crm_status": "Готов",
+            "crm_total": 0,
+            "crm_paid": 0,
+            "crm_debt": 0,
+            "crm_status": "Готов",
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["active"] == 1 and r["flag"] == "red"
+    assert "обнулена" in (r["flag_reason"] or "").casefold()
+
+
+def test_classify_red_demote_from_ready():
+    r = classify_debt_row(
+        {
+            "first_crm_status": "Готов",
+            "first_crm_debt": 1000,
+            "sheet_debt": 1000,
+            "crm_status": "В процессе ремонта",
+            "crm_debt": 1000,
+            "crm_paid": 0,
+            "crm_total": 1000,
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] == "red"
+
+
+def test_classify_red_left_pay_list():
+    r = classify_debt_row(
+        {
+            "first_on_pay_list": 1,
+            "first_crm_debt": 800,
+            "crm_debt": 800,
+            "crm_status": "Диагностика",
+            "crm_total": 800,
+            "crm_paid": 0,
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] == "red"
+
+
+def test_classify_open_crm_only():
+    r = classify_debt_row(
+        {
+            "sheet_debt": 0,
+            "crm_debt": 500,
+            "crm_status": "Готов",
+            "crm_total": 500,
+            "crm_paid": 0,
+            "on_pay_list": 1,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] == "open"
+
+
+def test_classify_mismatch_amounts():
+    r = classify_debt_row(
+        {
+            "sheet_debt": 1000,
+            "crm_debt": 400,
+            "crm_status": "Готов",
+            "crm_total": 1000,
+            "crm_paid": 600,
+            "on_pay_list": 1,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] == "mismatch"
+
+
+def test_crm_totals_full_pay_debt_is_zero_not_none():
+    total, paid, debt = crm_totals_from_payment(
+        {"total_with_discount": 11500, "paid": 11500}
+    )
+    assert total == 11500 and paid == 11500 and debt == 0.0
+
+
+def test_classify_121059_style_paid_in_full_null_debt():
+    """paid=total, crm_debt=None (баг underpayment) → убрать, не «CRM не проверен»."""
+    r = classify_debt_row(
+        {
+            "sheet_debt": 11500,
+            "crm_total": 11500,
+            "crm_paid": 11500,
+            "crm_debt": None,
+            "crm_status": "Выдан",
+            "on_pay_list": 0,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["active"] == 0
+    assert "закрыт" in (r["flag_reason"] or "").casefold()

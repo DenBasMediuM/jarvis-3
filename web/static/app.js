@@ -3897,6 +3897,8 @@ let vyrobotkaDebtCache = {
   daily: [],
   atypical: [],
   baseline: null,
+  table: [],
+  table_counts: null,
 };
 let vyrobotkaMoneyChart = null;
 let vyrobotkaVolumeChart = null;
@@ -3986,7 +3988,21 @@ function resolveVyrobotkaDisplayVerdict(verify) {
   return raw;
 }
 
-let vyrobotkaDebtSort = { key: "verdict", dir: 1 };
+let vyrobotkaDebtSort = { key: "flag", dir: 1 };
+
+function vyrobotkaDebtFlagRank(flag) {
+  const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
+  return order[String(flag || "")] ?? 9;
+}
+
+function vyrobotkaDebtFlagMeta(flag) {
+  const f = String(flag || "");
+  if (f === "red") return { label: "красный", cls: "is-debt-red", chip: "is-bad" };
+  if (f === "yellow") return { label: "жёлтый", cls: "is-debt-yellow", chip: "is-ok" };
+  if (f === "mismatch") return { label: "разница", cls: "is-debt-mismatch", chip: "is-warn" };
+  if (f === "open") return { label: "CRM", cls: "is-debt-open", chip: "" };
+  return { label: f || "—", cls: "", chip: "" };
+}
 let vyrobotkaUpsellSort = { key: "sheet", dir: 1 };
 
 function vyrobotkaSheetOrder(title) {
@@ -4536,51 +4552,6 @@ function applyVyrobotkaVerifyUi(verify) {
   `;
 }
 
-function renderVyrobotkaAtypical(rows) {
-  const tbody = $("#vyrobotka-atypical-tbody");
-  if (!tbody) return;
-  const list = Array.isArray(rows) ? rows : [];
-  if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="quality-empty">Расхождений нет</td></tr>`;
-    return;
-  }
-  const sheetLink = (url, html, title) => {
-    if (!url) return html;
-    return `<a class="vyrobotka-sheet-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${escapeHtml(
-      title || "Открыть лист отчёта",
-    )}">${html}</a>`;
-  };
-  tbody.innerHTML = list
-    .map((r) => {
-      const ticketCell = r.crm_url
-        ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(r.crm_url)}" target="_blank" rel="noopener">${escapeHtml(
-            r.ticket,
-          )}</a>`
-        : escapeHtml(r.ticket || "—");
-      const totalCell = sheetLink(
-        r.sheet_url,
-        `<span class="vyrobotka-dual-cell"><strong>${fmtMoneyUa(r.sheet_total)}</strong><small>${fmtMoneyUa(
-          r.crm_total,
-        )}</small></span>`,
-        `${r.sheet_title || ""} · стоимость в отчёте`,
-      );
-      const reportCell = sheetLink(
-        r.sheet_url,
-        fmtMoneyUa(r.report_amount),
-        `${r.sheet_title || ""} · стоимость работ`,
-      );
-      return `<tr title="${escapeHtml(r.summary || "")}">
-        <td>${ticketCell}</td>
-        <td>${escapeHtml(r.master || "—")}</td>
-        <td>${totalCell}</td>
-        <td>${escapeHtml(r.crm_status || "—")}</td>
-        <td>${reportCell}</td>
-        <td>${fmtMoneyUa(r.crm_paid)}</td>
-      </tr>`;
-    })
-    .join("");
-}
-
 function renderVyrobotkaDebt() {
   const body = $("#vyrobotka-debt-body");
   const meta = $("#vyrobotka-debt-meta");
@@ -4588,9 +4559,10 @@ function renderVyrobotkaDebt() {
   const tbody = $("#vyrobotka-debt-tbody");
   const canvas = $("#vyrobotka-chart-debt");
   const sheets = vyrobotkaDebtCache.sheets || [];
-  const tickets = vyrobotkaDebtCache.tickets || [];
+  const table = vyrobotkaDebtCache.table || [];
+  const counts = vyrobotkaDebtCache.table_counts || {};
   const verify = vyrobotkaDebtCache.verify || null;
-  const hasData = (vyrobotkaSheetsCache || []).length > 0;
+  const hasData = (vyrobotkaSheetsCache || []).length > 0 || table.length > 0;
 
   if (!hasData) {
     if (vyrobotkaDebtChart) {
@@ -4605,35 +4577,26 @@ function renderVyrobotkaDebt() {
 
   const last = sheets[sheets.length - 1];
   const debtSum = Number(vyrobotkaDebtCache.debt_sum) || 0;
-  const debtN = Number(vyrobotkaDebtCache.tickets_count) || tickets.length;
+  const debtN = Number(vyrobotkaDebtCache.tickets_count) || 0;
   const daily = vyrobotkaDebtCache.daily || [];
   const lastDaily = daily.length ? daily[daily.length - 1] : null;
-  const badN = Number(verify?.report?.bad_count);
-  const normN = Number(verify?.report?.norm);
-  const checkedN = Number(verify?.report?.total);
+  const flags = verify?.report?.flags || counts;
 
   if (kpis) {
     const kpiRows = [
-      ["Σ недоплат", fmtMoneyUa(debtSum), `${debtN} квитанций`],
-      ["Квитанций с долгом", fmtMoneyUa(debtN), "все недели"],
+      ["Σ недоплат (слепок)", fmtMoneyUa(debtSum), `${debtN} квитанций`],
       [
         "CRM дебиторка",
         fmtMoneyUa(lastDaily?.crm_debt_sum),
         lastDaily ? `снимок ${fmtQualityDate(lastDaily.day)}` : "после сверки",
       ],
-      ["Посл. Σ недоплат", fmtMoneyUa(last?.debt_sum), last?.sheet_title || "—"],
-      ["Посл. шт. долгов", fmtMoneyUa(last?.debt_count), fmtPct(last?.debt_ratio)],
-      ["Ср. долг (посл.)", fmtMoneyUa(last?.avg_debt), "на квитанцию"],
+      ["В таблице", fmtMoneyUa(table.length), "активных строк"],
+      ["Красных", fmtMoneyUa(flags.red || 0), "подозрение"],
+      ["Жёлтых", fmtMoneyUa(flags.yellow || 0), "совпадает"],
+      ["Только CRM", fmtMoneyUa(flags.open || 0), "без отчёта"],
     ];
-    if (checkedN) {
-      kpiRows.push([
-        "Расхождения CRM",
-        fmtMoneyUa(Number.isFinite(badN) ? badN : 0),
-        `из ${checkedN} проверенных`,
-      ]);
-      if (Number.isFinite(normN) && normN > 0) {
-        kpiRows.push(["Норма (выдан)", fmtMoneyUa(normN), "долга в CRM нет"]);
-      }
+    if (last) {
+      kpiRows.push(["Посл. лист Σ", fmtMoneyUa(last?.debt_sum), last?.sheet_title || "—"]);
     }
     kpis.innerHTML = kpiRows
       .map(
@@ -4651,83 +4614,50 @@ function renderVyrobotkaDebt() {
     const blNote = bl?.day
       ? ` · отчёты мастеров зафиксированы слепком ${fmtQualityDate(bl.day)}`
       : "";
-    meta.textContent = `Недоплата = стоимость ремонта − оплачено клиентом · ${debtN} квитанций · Σ ${fmtMoneyUa(debtSum)}${blNote}`;
+    meta.textContent = `Таблица дебиторки · ${table.length} активных · слепок отчётов Σ ${fmtMoneyUa(debtSum)}${blNote}`;
   }
 
-  renderVyrobotkaAtypical(vyrobotkaDebtCache.atypical || []);
-
   if (tbody) {
-    if (!tickets.length) {
-      tbody.innerHTML = `<tr><td colspan="10" class="quality-empty">Недоплаченных квитанций нет</td></tr>`;
+    if (!table.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
     } else {
-      const ordered = [...tickets].sort((a, b) => {
+      const ordered = [...table].sort((a, b) => {
         const dir = vyrobotkaDebtSort.dir;
-        if (vyrobotkaDebtSort.key === "sheet") {
-          const ds = vyrobotkaSheetOrder(a.sheet_title) - vyrobotkaSheetOrder(b.sheet_title);
-          if (ds) return dir * ds;
-          return dir * String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
+        if (vyrobotkaDebtSort.key === "flag") {
+          const dr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
+          if (dr) return dir * dr;
         }
-        // сверка
-        const dr =
-          vyrobotkaVerdictRank(resolveVyrobotkaDisplayVerdict(a.verify)) -
-          vyrobotkaVerdictRank(resolveVyrobotkaDisplayVerdict(b.verify));
-        if (dr) return dir * dr;
-        return (Number(b.debt) || 0) - (Number(a.debt) || 0);
+        const da = Number(b.crm_debt || b.sheet_debt || 0) - Number(a.crm_debt || a.sheet_debt || 0);
+        if (da) return da;
+        return dir * String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
       });
       updateVyrobotkaSortHeaders("vyrobotka-debt-table", vyrobotkaDebtSort, "data-debt-sort");
-      const unchecked = ordered.filter((t) => !resolveVyrobotkaDisplayVerdict(t.verify)).length;
       const btnNew = $("#vyrobotka-debt-verify-new-btn");
       if (btnNew && verify?.status !== "running") {
-        btnNew.textContent = unchecked
-          ? `Сверить новые (${unchecked})`
-          : "Сверить новые";
+        btnNew.textContent = "Сверить новые";
       }
 
       tbody.innerHTML = ordered
-        .map((t) => {
-          const v = resolveVyrobotkaDisplayVerdict(t.verify);
-          const metaV = vyrobotkaVerdictMeta(v);
-          const tipSummary =
-            v === "norm" && t.verify?.summary && !String(t.verify.summary).toLowerCase().startsWith("норма")
-              ? `Норма: в CRM «Выдан», долга нет · ${t.verify.summary}`
-              : t.verify?.summary || "";
-          const ticketCell = t.verify?.crm_url
+        .map((r) => {
+          const metaF = vyrobotkaDebtFlagMeta(r.flag);
+          const ticketCell = r.crm_url
             ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(
-                t.verify.crm_url
-              )}" target="_blank" rel="noopener">${escapeHtml(t.ticket)}</a>`
-            : escapeHtml(t.ticket);
-          const mark =
-            v === "mismatch" || v === "missing" || v === "error"
-              ? "●"
-              : v === "norm"
-                ? "◆"
-                : v === "ok"
-                  ? "○"
-                  : "";
-          const crmDebtCell = t.verify
-            ? t.verify.field_diffs?.debt
-              ? `<td class="is-cell-mismatch" title="${escapeHtml(
-                  fmtVyrobotkaCellTip(t.verify.field_diffs.debt)
-                )}">${fmtMoneyUa(t.verify.crm_debt)}</td>`
-              : `<td>${fmtMoneyUa(t.verify.crm_debt)}</td>`
-            : "<td>—</td>";
-          return `<tr class="${metaV.cls}">
-            <td title="${escapeHtml(tipSummary)}">${mark}</td>
-            <td>${escapeHtml(t.sheet_title)}</td>
-            <td>${escapeHtml(t.master || "—")}</td>
+                r.crm_url,
+              )}" target="_blank" rel="noopener">${escapeHtml(r.ticket)}</a>`
+            : escapeHtml(r.ticket || "—");
+          const masterCell = r.sheet_url
+            ? `<a class="vyrobotka-sheet-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener" title="${escapeHtml(
+                r.sheet_title || "",
+              )}">${escapeHtml(r.master || "—")}</a>`
+            : escapeHtml(r.master || "—");
+          return `<tr class="${metaF.cls}" title="${escapeHtml(r.flag_reason || "")}">
+            <td><span class="vyrobotka-verdict ${metaF.chip}">${escapeHtml(metaF.label)}</span></td>
             <td>${ticketCell}</td>
-            ${vyrobotkaDebtTd(fmtMoneyUa(t.total_repair), "total", t.verify)}
-            ${vyrobotkaDebtTd(fmtMoneyUa(t.paid), "paid", t.verify)}
-            ${vyrobotkaDebtTd(fmtMoneyUa(t.debt), "debt", t.verify, { strong: true })}
-            ${crmDebtCell}
-            ${vyrobotkaDebtTd(escapeHtml(t.status || "—"), "status", t.verify)}
-            <td title="${escapeHtml(tipSummary)}">${
-              v
-                ? `<span class="vyrobotka-verdict ${metaV.chip}">${escapeHtml(
-                    metaV.label
-                  )}</span>`
-                : "—"
-            }</td>
+            <td>${masterCell}</td>
+            <td><strong>${fmtMoneyUa(r.sheet_debt)}</strong></td>
+            <td><strong>${fmtMoneyUa(r.crm_debt)}</strong></td>
+            <td>${escapeHtml(r.crm_status || "—")}</td>
+            <td class="vyrobotka-flag-reason">${escapeHtml(r.flag_reason || "—")}</td>
           </tr>`;
         })
         .join("");
@@ -4861,8 +4791,11 @@ async function loadVyrobotkaStats() {
       tickets_count: 0,
       verify: null,
       daily: [],
+      table: [],
+      table_counts: null,
     };
     if (!Array.isArray(vyrobotkaDebtCache.daily)) vyrobotkaDebtCache.daily = [];
+    if (!Array.isArray(vyrobotkaDebtCache.table)) vyrobotkaDebtCache.table = [];
     if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
     renderVyrobotkaAll();
     if (vyrobotkaDebtCache.verify?.status === "running") startVyrobotkaVerifyPoll();
@@ -4870,7 +4803,14 @@ async function loadVyrobotkaStats() {
   } catch (err) {
     if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
     vyrobotkaSheetsCache = [];
-    vyrobotkaDebtCache = { sheets: [], tickets: [], debt_sum: 0, tickets_count: 0, verify: null };
+    vyrobotkaDebtCache = {
+      sheets: [],
+      tickets: [],
+      debt_sum: 0,
+      tickets_count: 0,
+      verify: null,
+      table: [],
+    };
     renderVyrobotkaAll();
     return null;
   }
@@ -4889,26 +4829,6 @@ function startVyrobotkaVerifyPoll() {
         stopVyrobotkaVerifyPoll();
         await loadVyrobotkaStats();
       } else {
-        // частичное обновление строк во время прогона
-        const map = new Map(
-          (verify.rows || []).map((r) => [`${r.sheet_title}::${r.ticket}`, r])
-        );
-        for (const t of vyrobotkaDebtCache.tickets || []) {
-          const vr = map.get(`${t.sheet_title}::${t.ticket}`);
-          if (vr) {
-            t.verify = {
-              verdict: vr.verdict,
-              summary: vr.summary,
-              issues: vr.issues || [],
-              field_diffs: vr.field_diffs || {},
-              crm_total: vr.crm_total,
-              crm_paid: vr.crm_paid,
-              crm_debt: vr.crm_debt,
-              crm_status: vr.crm_status,
-              crm_url: vr.crm_url,
-            };
-          }
-        }
         renderVyrobotkaDebt();
       }
     } catch {

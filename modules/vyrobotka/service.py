@@ -21,6 +21,7 @@ from modules.vyrobotka.sheets import GoogleSheetsClient, SheetsError
 from modules.vyrobotka.verify import (
     apply_display_verdicts,
     build_verify_report,
+    classify_debt_row,
     compare_ticket_with_crm,
     crm_totals_from_payment,
     is_atypical_debt_case,
@@ -38,6 +39,7 @@ _verify_task: asyncio.Task | None = None
 VERIFY_PAUSE_S = 0.75
 VERIFY_BATCH_EVERY = 20
 VERIFY_BATCH_PAUSE_S = 4.0
+CRM_LIST_PAGE_PAUSE_S = 0.4
 
 # Фильтр списка ремонтов = «Ожидаемая сумма оплаты» в колонке «Оплачено».
 # https://itserviceoutsourcing.gincore.net/orders?other=pay&dep=…#show_repair_orders
@@ -153,6 +155,8 @@ class VyrobotkaService:
             all_rows=all_rows,
             sheet_stats=sheets,
         )
+        ledger = await self.db.vyrobotka_list_debt_ledger(active_only=True)
+        table = self._enrich_debt_table(ledger, sheets, all_rows)
 
         return {
             "ok": True,
@@ -168,8 +172,47 @@ class VyrobotkaService:
                 "daily": debt_daily,
                 "baseline": baseline,
                 "atypical": atypical,
+                "table": table,
+                "table_counts": self._debt_table_counts(table),
             },
         }
+
+    @staticmethod
+    def _debt_table_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+        counts = {"total": len(rows), "red": 0, "yellow": 0, "open": 0, "mismatch": 0}
+        for r in rows:
+            f = str(r.get("flag") or "")
+            if f in counts:
+                counts[f] += 1
+        return counts
+
+    def _enrich_debt_table(
+        self,
+        ledger: list[dict[str, Any]],
+        sheet_stats: list[dict[str, Any]],
+        all_rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        stats_by_title = {
+            str(s.get("sheet_title") or ""): s for s in sheet_stats
+        }
+        row_by_key = {
+            f"{r.get('sheet_title')}::{r.get('ticket')}": r for r in all_rows
+        }
+        out: list[dict[str, Any]] = []
+        for item in ledger:
+            row = dict(item)
+            title = str(row.get("sheet_title") or "")
+            ticket = str(row.get("ticket") or "")
+            st = stats_by_title.get(title) or {}
+            src = row_by_key.get(f"{title}::{ticket}") or {}
+            sid = src.get("spreadsheet_id") or st.get("spreadsheet_id")
+            row["sheet_url"] = GoogleSheetsClient.sheet_tab_url(
+                sid,
+                st.get("sheet_id"),
+                row_index=src.get("row_index"),
+            )
+            out.append(row)
+        return out
 
     async def ensure_debt_baseline(
         self, underpaid: list[dict[str, Any]] | None = None
@@ -554,7 +597,14 @@ class VyrobotkaService:
         state = await self.db.vyrobotka_get_debt_verify_state()
         # Только для ответа API: mismatch→norm при «Выдан»+без долга. БД не трогаем.
         rows = apply_display_verdicts(await self.db.vyrobotka_list_debt_verify_rows())
-        report = build_verify_report(rows) if rows else state.get("report")
+        # Предпочитаем отчёт сверки ledger (flags); иначе legacy verify_rows
+        report = state.get("report")
+        if not (isinstance(report, dict) and report.get("flags") is not None):
+            table = await self.db.vyrobotka_list_debt_ledger(active_only=True)
+            if table:
+                report = self._ledger_verify_report(table)
+            elif rows:
+                report = build_verify_report(rows)
         return {
             "status": state.get("status") or "idle",
             "total": int(state.get("total") or 0),
@@ -601,31 +651,93 @@ class VyrobotkaService:
         await asyncio.sleep(0.05)
         return {"ok": True, "started": True, "verify": await self.get_debt_verify()}
 
-    async def _run_debt_verify(self, mode: str = "all") -> None:
-        all_rows = await self.db.vyrobotka_list_rows()
-        underpaid = collect_underpaid_tickets(all_rows)
-        existing = await self.db.vyrobotka_list_debt_verify_rows()
-        existing_keys = {
-            f"{r.get('sheet_title')}::{r.get('ticket')}" for r in existing
-        }
+    async def _apply_ledger_classify(self, ticket: str) -> dict[str, Any]:
+        row = await self.db.vyrobotka_get_debt_ledger_ticket(ticket)
+        if not row:
+            return {}
+        result = classify_debt_row(row)
+        await self.db.vyrobotka_upsert_debt_ledger(
+            {
+                "ticket": ticket,
+                "active": result["active"],
+                "flag": result.get("flag"),
+                "flag_reason": result.get("flag_reason"),
+            }
+        )
+        return {**row, **result}
 
-        if mode == "new":
-            tickets = [
-                t
-                for t in underpaid
-                if f"{t.get('sheet_title')}::{t.get('ticket')}" not in existing_keys
-            ]
-            label = "новых"
-        else:
-            await self.db.vyrobotka_clear_debt_verify_rows()
-            tickets = underpaid
-            label = "квитанций"
+    async def _merge_sheet_into_ledger(
+        self, underpaid: list[dict[str, Any]]
+    ) -> int:
+        """Обновить sheet-поля ledger из недоплат отчётов (новые + baseline)."""
+        n = 0
+        for t in underpaid:
+            oid = str(t.get("ticket") or "").strip()
+            if not oid:
+                continue
+            debt = float(t.get("debt") or 0)
+            payload: dict[str, Any] = {
+                "ticket": oid,
+                "active": 1,
+                "sheet_title": t.get("sheet_title"),
+                "master": t.get("master"),
+                "sheet_total": t.get("total_repair"),
+                "sheet_paid": t.get("paid"),
+                "sheet_debt": debt,
+                "report_amount": t.get("report_amount"),
+                "first_sheet_total": t.get("total_repair"),
+                "first_sheet_paid": t.get("paid"),
+                "first_sheet_debt": debt,
+            }
+            await self.db.vyrobotka_upsert_debt_ledger(payload)
+            n += 1
+        return n
+
+    async def _merge_crm_pay_list_into_ledger(
+        self,
+        pay_rows: list[dict[str, Any]],
+        *,
+        base_url: str,
+    ) -> set[str]:
+        """Upsert все квитанции с other=pay. Возвращает set ticket на списке."""
+        on_list: set[str] = set()
+        checked = _now()
+        for r in pay_rows:
+            oid = str(r.get("ticket") or "").strip()
+            if not oid:
+                continue
+            on_list.add(oid)
+            await self.db.vyrobotka_upsert_debt_ledger(
+                {
+                    "ticket": oid,
+                    "active": 1,
+                    "crm_total": r.get("cost"),
+                    "crm_paid": r.get("paid"),
+                    "crm_debt": r.get("debt"),
+                    "crm_status": r.get("status"),
+                    "on_pay_list": 1,
+                    "crm_url": f"{base_url}/orders/{oid}",
+                    "crm_checked_at": checked,
+                    "first_crm_total": r.get("cost"),
+                    "first_crm_paid": r.get("paid"),
+                    "first_crm_debt": r.get("debt"),
+                    "first_crm_status": r.get("status"),
+                    "first_on_pay_list": 1,
+                }
+            )
+        return on_list
+
+    async def _run_debt_verify(self, mode: str = "all") -> None:
+        """Сводка дебиторки: CRM other=pay + отчёты → ledger → classify."""
+        all_rows = await self.db.vyrobotka_list_rows()
+        underpaid_all = collect_underpaid_tickets(all_rows)
+        await self.ensure_debt_baseline(underpaid_all)
 
         await self.db.vyrobotka_set_debt_verify_state(
             status="running",
-            total=len(tickets),
+            total=0,
             done=0,
-            message=f"Старт сверки {len(tickets)} {label} с Gincore…",
+            message="Тяну список CRM other=pay…",
             report=None,
             report_json=None,
             cancel_requested=0,
@@ -636,68 +748,119 @@ class VyrobotkaService:
         client = await self._gincore_client_factory()
         await client.ensure_login()
 
-        if not tickets:
-            # для mode=new сохраняем прошлый отчёт по всем уже проверенным
-            all_checked = await self.db.vyrobotka_list_debt_verify_rows() if mode == "new" else []
-            report = build_verify_report(all_checked)
-            snap = await self._snapshot_debt_daily(client, source=f"verify-{mode}")
-            snap_msg = (
-                f" · дебиторка CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
-                if snap
-                else ""
-            )
-            msg = (
-                "Нет новых недоплаченных квитанций — всё уже сверено"
-                if mode == "new"
-                else "Нет недоплаченных квитанций для сверки"
-            )
-            await self.db.vyrobotka_set_debt_verify_state(
-                status="idle",
-                done=0,
-                total=0 if mode != "new" else len(all_checked),
-                message=f"{msg}{snap_msg}",
-                report=report,
-                finished_at=_now(),
-            )
-            await self._safe_export_pages()
-            return
+        # 1) Актуальный список CRM
+        pay = await client.fetch_orders_expected_payment_list(
+            crm_params=CRM_DEBT_LIST_PARAMS,
+            page_pause_s=CRM_LIST_PAGE_PAUSE_S,
+        )
+        pay_rows = list(pay.get("rows") or [])
+        on_list = await self._merge_crm_pay_list_into_ledger(
+            pay_rows, base_url=str(getattr(client, "base_url", "") or "")
+        )
 
-        batch_results: list[dict[str, Any]] = []
-        for i, ticket in enumerate(tickets):
+        # 2) Отчёты мастеров → ledger (все текущие недоплаты / baseline уже в underpaid_all)
+        await self.db.vyrobotka_set_debt_verify_state(
+            message=f"CRM: {len(on_list)} квитанций · обновляю отчёты мастеров…",
+        )
+        sheet_merged = await self._merge_sheet_into_ledger(underpaid_all)
+
+        # Квитанции, которые были на pay-list, а сейчас нет — сбросить on_pay_list
+        existing = await self.db.vyrobotka_list_debt_ledger(active_only=False)
+        flipped_off: set[str] = set()
+        for row in existing:
+            oid = str(row.get("ticket") or "")
+            if not oid or oid in on_list:
+                continue
+            if int(row.get("on_pay_list") or 0):
+                flipped_off.add(oid)
+                await self.db.vyrobotka_upsert_debt_ledger(
+                    {"ticket": oid, "on_pay_list": 0}
+                )
+
+        # 3) Кандидаты на HTML: active, не на pay-list, был ожидаемый долг
+        ledger = await self.db.vyrobotka_list_debt_ledger(active_only=True)
+        candidates: list[dict[str, Any]] = []
+        for row in ledger:
+            oid = str(row.get("ticket") or "")
+            if not oid or oid in on_list:
+                continue
+            expected = max(
+                float(row.get("first_sheet_debt") or 0),
+                float(row.get("first_crm_debt") or 0),
+                float(row.get("sheet_debt") or 0),
+            )
+            if expected <= 1.0 and not int(row.get("first_on_pay_list") or 0):
+                continue
+            if mode == "new":
+                # только пропавшие с фильтра в этом запуске или ещё ни разу не смотрели HTML
+                if oid not in flipped_off and row.get("crm_checked_at"):
+                    continue
+            candidates.append(row)
+
+        await self.db.vyrobotka_set_debt_verify_state(
+            status="running",
+            total=len(candidates),
+            done=0,
+            message=(
+                f"Pay-list {len(on_list)}, отчёты +{sheet_merged}. "
+                f"Точечно проверяю {len(candidates)} пропавших с фильтра…"
+            ),
+        )
+
+        checked_n = 0
+        for i, row in enumerate(candidates):
             state = await self.db.vyrobotka_get_debt_verify_state()
             if int(state.get("cancel_requested") or 0):
-                all_checked = await self.db.vyrobotka_list_debt_verify_rows()
-                report = build_verify_report(all_checked)
+                table = await self.db.vyrobotka_list_debt_ledger(active_only=True)
+                report = self._ledger_verify_report(table)
                 await self.db.vyrobotka_set_debt_verify_state(
                     status="idle",
                     done=i,
-                    message=f"Остановлено: проверено {i}/{len(tickets)} в этом запуске",
+                    message=f"Остановлено: HTML {i}/{len(candidates)}",
                     report=report,
                     cancel_requested=0,
                     finished_at=_now(),
                 )
                 return
 
-            oid = str(ticket.get("ticket") or "").strip()
+            oid = str(row.get("ticket") or "")
             await self.db.vyrobotka_set_debt_verify_state(
                 status="running",
-                total=len(tickets),
+                total=len(candidates),
                 done=i,
-                message=f"Gincore {i + 1}/{len(tickets)} · №{oid}",
+                message=f"Gincore HTML {i + 1}/{len(candidates)} · №{oid}",
             )
-            compared = await self._verify_one(client, ticket)
+            sheet_stub = {
+                "ticket": oid,
+                "sheet_title": row.get("sheet_title"),
+                "master": row.get("master"),
+                "total_repair": row.get("sheet_total"),
+                "paid": row.get("sheet_paid"),
+                "debt": row.get("sheet_debt"),
+            }
+            compared = await self._verify_one(client, sheet_stub)
+            await self.db.vyrobotka_upsert_debt_ledger(
+                {
+                    "ticket": oid,
+                    "crm_total": compared.get("crm_total"),
+                    "crm_paid": compared.get("crm_paid"),
+                    "crm_debt": compared.get("crm_debt"),
+                    "crm_status": compared.get("crm_status"),
+                    "crm_url": compared.get("crm_url"),
+                    "on_pay_list": 0,
+                    "crm_checked_at": _now(),
+                    "first_crm_total": compared.get("crm_total"),
+                    "first_crm_paid": compared.get("crm_paid"),
+                    "first_crm_debt": compared.get("crm_debt"),
+                    "first_crm_status": compared.get("crm_status"),
+                }
+            )
+            # legacy verify row (для atypical/export совместимости)
             await self.db.vyrobotka_upsert_debt_verify_row(compared)
-            batch_results.append(compared)
+            await self._apply_ledger_classify(oid)
+            checked_n += 1
 
-            await self.db.vyrobotka_set_debt_verify_state(
-                status="running",
-                total=len(tickets),
-                done=i + 1,
-                message=f"Gincore {i + 1}/{len(tickets)} · №{oid} · {compared.get('verdict')}",
-            )
-
-            # пауза между запросами; каждые N — длиннее
-            if i + 1 < len(tickets):
+            if i + 1 < len(candidates):
                 pause = VERIFY_PAUSE_S
                 if (i + 1) % VERIFY_BATCH_EVERY == 0:
                     pause = VERIFY_BATCH_PAUSE_S
@@ -709,37 +872,106 @@ class VyrobotkaService:
                     )
                 await asyncio.sleep(pause)
 
-        all_checked = await self.db.vyrobotka_list_debt_verify_rows()
-        report = build_verify_report(all_checked)
-        prefix = "Новые сверены" if mode == "new" else "Сверка готова"
+        # 4) Классифицировать всех на pay-list / обновлённых
+        await self.db.vyrobotka_set_debt_verify_state(
+            message="Классифицирую таблицу дебиторки…",
+        )
+        for row in await self.db.vyrobotka_list_debt_ledger(active_only=False):
+            oid = str(row.get("ticket") or "")
+            if not oid:
+                continue
+            # в mode=new не трогаем inactive уже снятые, кроме тех на pay-list
+            if mode == "new" and not int(row.get("active") or 0) and oid not in on_list:
+                continue
+            await self._apply_ledger_classify(oid)
+
+        table = await self.db.vyrobotka_list_debt_ledger(active_only=True)
+        report = self._ledger_verify_report(table)
+        counts = self._debt_table_counts(table)
+
         await self.db.vyrobotka_set_debt_verify_state(
             status="running",
-            total=len(all_checked),
-            done=len(all_checked),
-            message="Считаю общую дебиторку CRM (ожидаемая оплата)…",
+            total=max(len(candidates), 1),
+            done=len(candidates),
+            message="Считаю общую дебиторку CRM…",
         )
-        snap = await self._snapshot_debt_daily(client, source=f"verify-{mode}")
+        snap = await self._snapshot_debt_daily(
+            client,
+            source=f"verify-{mode}",
+            crm_debt_sum=float(pay.get("expected_payment_sum") or 0),
+            crm_orders=int(pay.get("orders") or pay.get("listed_total") or 0),
+        )
         snap_msg = (
-            f" · дебиторка CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
+            f" · CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
             if snap
             else ""
         )
+        prefix = "Сверка (новые)" if mode == "new" else "Сверка"
         await self.db.vyrobotka_set_debt_verify_state(
             status="idle",
-            total=len(all_checked),
-            done=len(all_checked),
+            total=len(table),
+            done=len(table),
             message=(
-                f"{prefix}: в этом запуске {len(batch_results)}; "
-                f"всего ок {report['ok']}, "
-                f"расхождений {report['mismatch']}, "
-                f"нет в CRM {report['missing']}, "
-                f"ошибок {report['error']}{snap_msg}"
+                f"{prefix}: в таблице {counts['total']} "
+                f"(жёлтых {counts['yellow']}, красных {counts['red']}, "
+                f"open {counts['open']}, mismatch {counts['mismatch']}); "
+                f"HTML {checked_n}{snap_msg}"
             ),
             report=report,
             cancel_requested=0,
             finished_at=_now(),
         )
         await self._safe_export_pages()
+
+    @staticmethod
+    def _ledger_verify_report(table: list[dict[str, Any]]) -> dict[str, Any]:
+        """Отчёт сверки из флагов ledger (для UI статуса)."""
+        counts = {"ok": 0, "norm": 0, "mismatch": 0, "missing": 0, "error": 0}
+        # map flags → legacy-ish counts for existing UI bits
+        for r in table:
+            f = str(r.get("flag") or "")
+            if f == "yellow":
+                counts["ok"] += 1
+            elif f == "red":
+                counts["mismatch"] += 1
+            elif f == "mismatch":
+                counts["mismatch"] += 1
+            elif f == "open":
+                counts["ok"] += 1
+        bad = [r for r in table if r.get("flag") in {"red", "mismatch"}]
+        bad.sort(
+            key=lambda x: (
+                -float(x.get("crm_debt") or x.get("sheet_debt") or 0),
+                str(x.get("ticket") or ""),
+            )
+        )
+        return {
+            "total": len(table),
+            "ok": counts["ok"],
+            "norm": counts["norm"],
+            "mismatch": counts["mismatch"],
+            "missing": counts["missing"],
+            "error": counts["error"],
+            "bad_count": len(bad),
+            "flags": {
+                "red": sum(1 for r in table if r.get("flag") == "red"),
+                "yellow": sum(1 for r in table if r.get("flag") == "yellow"),
+                "open": sum(1 for r in table if r.get("flag") == "open"),
+                "mismatch": sum(1 for r in table if r.get("flag") == "mismatch"),
+            },
+            "top_issues": [
+                {
+                    "ticket": r.get("ticket"),
+                    "sheet_title": r.get("sheet_title"),
+                    "verdict": r.get("flag"),
+                    "summary": r.get("flag_reason"),
+                    "sheet_debt": r.get("sheet_debt"),
+                    "crm_debt": r.get("crm_debt"),
+                    "field_diffs": {},
+                }
+                for r in bad[:40]
+            ],
+        }
 
     async def _snapshot_debt_daily(
         self,

@@ -1067,6 +1067,17 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 .vyrobotka-verdict.is-bad { color: #a12828; background: rgba(161, 40, 40, 0.12); }
 .vyrobotka-verdict.is-miss { color: #8a5a00; background: rgba(196, 92, 38, 0.14); }
 .vyrobotka-verdict.is-error { color: #5d6b7c; background: rgba(93, 107, 124, 0.14); }
+.vyrobotka-verdict.is-warn { color: #8a5a00; background: rgba(196, 148, 28, 0.18); }
+.vyrobotka-table tr.is-debt-red td { background: rgba(161, 40, 40, 0.12); }
+.vyrobotka-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.22); }
+.vyrobotka-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.12); }
+.vyrobotka-table tr.is-debt-open td { background: transparent; }
+.vyrobotka-flag-reason {
+  max-width: 22rem;
+  font-size: 0.82rem;
+  color: #5d6b7c;
+  white-space: normal;
+}
 .vyrobotka-table a.vyrobotka-ticket-link {
   color: inherit;
   text-decoration: underline;

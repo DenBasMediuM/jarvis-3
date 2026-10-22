@@ -2165,48 +2165,129 @@ class GincoreClient:
         return meta
 
     @staticmethod
+    def _money_from_td(td: Any) -> float | None:
+        raw = td.get_text(" ", strip=True).replace("\xa0", " ").replace(" ", "")
+        raw = raw.replace(",", ".")
+        m = re.search(r"-?\d+(?:\.\d+)?", raw)
+        if not m:
+            return None
+        try:
+            return float(m.group())
+        except ValueError:
+            return None
+
+    @staticmethod
+    def parse_repair_orders_debt_rows(html: str) -> list[dict[str, Any]]:
+        """Строки списка ремонтов: ticket, status, cost, paid, debt."""
+        soup = BeautifulSoup(html, "lxml")
+        rows: list[dict[str, Any]] = []
+        for tr in soup.select("table.table-of-repair-orders tbody tr"):
+            tds = tr.find_all("td", recursive=False)
+            if len(tds) < 13:
+                continue
+            id_raw = tds[1].get_text(" ", strip=True)
+            ticket = id_raw if re.fullmatch(r"\d{4,}", id_raw or "") else next(
+                (
+                    td.get_text(" ", strip=True)
+                    for td in tds
+                    if re.fullmatch(r"\d{4,}", td.get_text(" ", strip=True) or "")
+                ),
+                "",
+            )
+            if not ticket:
+                continue
+            cost = GincoreClient._money_from_td(tds[11])
+            if cost is None:
+                continue
+            paid = GincoreClient._money_from_td(tds[12])
+            if paid is None:
+                paid = 0.0
+            status = ""
+            btn = tds[6].select_one(".btn-title") or tds[6].select_one("button.as_button")
+            if btn:
+                status = btn.get_text(" ", strip=True)
+            if not status:
+                status = tds[6].get_text(" ", strip=True)[:80]
+            debt = max(0.0, float(cost) - float(paid))
+            rows.append(
+                {
+                    "ticket": str(ticket),
+                    "status": status[:80],
+                    "cost": round(float(cost), 2),
+                    "paid": round(float(paid), 2),
+                    "debt": round(debt, 2),
+                }
+            )
+        return rows
+
+    @staticmethod
     def parse_repair_orders_payment_totals(html: str) -> dict[str, Any]:
         """Суммы «Стоимость»/«Оплачено» со страницы списка ремонтов.
 
         «Ожидаемая сумма оплаты» в шапке колонки «Оплачено» =
         Σ max(0, стоимость − оплачено) по всем строкам фильтра.
         """
-        soup = BeautifulSoup(html, "lxml")
-        cost_sum = 0.0
-        paid_sum = 0.0
-        debt_sum = 0.0
-        orders = 0
-
-        def _money(td: Any) -> float | None:
-            raw = td.get_text(" ", strip=True).replace("\xa0", " ").replace(" ", "")
-            raw = raw.replace(",", ".")
-            m = re.search(r"-?\d+(?:\.\d+)?", raw)
-            if not m:
-                return None
-            try:
-                return float(m.group())
-            except ValueError:
-                return None
-
-        for tr in soup.select("table.table-of-repair-orders tbody tr"):
-            tds = tr.find_all("td", recursive=False)
-            if len(tds) < 13:
-                continue
-            cost = _money(tds[11])
-            if cost is None:
-                continue
-            paid = _money(tds[12])
-            if paid is None:
-                paid = 0.0
-            cost_sum += cost
-            paid_sum += paid
-            debt_sum += max(0.0, cost - paid)
-            orders += 1
+        rows = GincoreClient.parse_repair_orders_debt_rows(html)
+        cost_sum = round(sum(float(r["cost"]) for r in rows), 2)
+        paid_sum = round(sum(float(r["paid"]) for r in rows), 2)
+        debt_sum = round(sum(float(r["debt"]) for r in rows), 2)
         return {
-            "orders": orders,
-            "cost_sum": round(cost_sum, 2),
-            "paid_sum": round(paid_sum, 2),
-            "expected_payment_sum": round(debt_sum, 2),
+            "orders": len(rows),
+            "cost_sum": cost_sum,
+            "paid_sum": paid_sum,
+            "expected_payment_sum": debt_sum,
+            "rows": rows,
+        }
+
+    async def fetch_orders_expected_payment_list(
+        self,
+        *,
+        crm_params: dict[str, Any] | None = None,
+        page_pause_s: float = 0.4,
+    ) -> dict[str, Any]:
+        """Все страницы фильтра недоплат: список квитанций + суммы."""
+        import asyncio
+
+        params = dict(crm_params or {})
+        meta = await self._repair_orders_page(crm_params=params, page=1)
+        footer_total = int(meta.get("count") or 0)
+        chunk = self.parse_repair_orders_payment_totals(meta.get("html") or "")
+        all_rows: list[dict[str, Any]] = list(chunk.get("rows") or [])
+        totals = {
+            "orders": int(chunk["orders"]),
+            "cost_sum": float(chunk["cost_sum"]),
+            "paid_sum": float(chunk["paid_sum"]),
+            "expected_payment_sum": float(chunk["expected_payment_sum"]),
+        }
+        page = 1
+        seen = totals["orders"]
+        while seen < footer_total and page < MAX_PAGES:
+            page += 1
+            if page_pause_s > 0:
+                await asyncio.sleep(page_pause_s)
+            more = await self._repair_orders_page(crm_params=params, page=page)
+            chunk = self.parse_repair_orders_payment_totals(more.get("html") or "")
+            if not chunk["orders"]:
+                break
+            all_rows.extend(chunk.get("rows") or [])
+            totals["orders"] += int(chunk["orders"])
+            totals["cost_sum"] = round(totals["cost_sum"] + float(chunk["cost_sum"]), 2)
+            totals["paid_sum"] = round(totals["paid_sum"] + float(chunk["paid_sum"]), 2)
+            totals["expected_payment_sum"] = round(
+                totals["expected_payment_sum"] + float(chunk["expected_payment_sum"]), 2
+            )
+            seen = totals["orders"]
+        # dedupe by ticket (keep last)
+        by_ticket: dict[str, dict[str, Any]] = {}
+        for r in all_rows:
+            by_ticket[str(r["ticket"])] = r
+        rows = list(by_ticket.values())
+        return {
+            **totals,
+            "orders": len(rows),
+            "rows": rows,
+            "listed_total": footer_total,
+            "crm_params": params,
         }
 
     async def fetch_orders_expected_payment_sum(
@@ -2215,29 +2296,16 @@ class GincoreClient:
         crm_params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Итог «Ожидаемая сумма оплаты» по фильтру списка ремонтов (все страницы)."""
-        params = dict(crm_params or {})
-        meta = await self._repair_orders_page(crm_params=params, page=1)
-        footer_total = int(meta.get("count") or 0)
-        totals = self.parse_repair_orders_payment_totals(meta.get("html") or "")
-        page = 1
-        seen = totals["orders"]
-        while seen < footer_total and page < MAX_PAGES:
-            page += 1
-            more = await self._repair_orders_page(crm_params=params, page=page)
-            chunk = self.parse_repair_orders_payment_totals(more.get("html") or "")
-            if not chunk["orders"]:
-                break
-            totals["orders"] += chunk["orders"]
-            totals["cost_sum"] = round(totals["cost_sum"] + chunk["cost_sum"], 2)
-            totals["paid_sum"] = round(totals["paid_sum"] + chunk["paid_sum"], 2)
-            totals["expected_payment_sum"] = round(
-                totals["expected_payment_sum"] + chunk["expected_payment_sum"], 2
-            )
-            seen = totals["orders"]
+        data = await self.fetch_orders_expected_payment_list(
+            crm_params=crm_params, page_pause_s=0.4
+        )
         return {
-            **totals,
-            "listed_total": footer_total,
-            "crm_params": params,
+            "orders": data["orders"],
+            "cost_sum": data["cost_sum"],
+            "paid_sum": data["paid_sum"],
+            "expected_payment_sum": data["expected_payment_sum"],
+            "listed_total": data["listed_total"],
+            "crm_params": data["crm_params"],
         }
 
     @staticmethod

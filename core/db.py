@@ -188,6 +188,36 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_baseline_tickets (
   PRIMARY KEY (sheet_title, ticket)
 );
 
+CREATE TABLE IF NOT EXISTS vyrobotka_debt_ledger (
+  ticket TEXT PRIMARY KEY,
+  active INTEGER NOT NULL DEFAULT 1,
+  flag TEXT,
+  flag_reason TEXT,
+  first_sheet_total REAL,
+  first_sheet_paid REAL,
+  first_sheet_debt REAL,
+  first_crm_total REAL,
+  first_crm_paid REAL,
+  first_crm_debt REAL,
+  first_crm_status TEXT,
+  first_on_pay_list INTEGER,
+  first_seen_at TEXT,
+  sheet_title TEXT,
+  master TEXT,
+  sheet_total REAL,
+  sheet_paid REAL,
+  sheet_debt REAL,
+  report_amount REAL,
+  crm_total REAL,
+  crm_paid REAL,
+  crm_debt REAL,
+  crm_status TEXT,
+  on_pay_list INTEGER NOT NULL DEFAULT 0,
+  crm_url TEXT,
+  crm_checked_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS vitrine_users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   login TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -803,6 +833,195 @@ class Database:
         await self.conn.commit()
         out = await self.vyrobotka_get_debt_baseline()
         return out or {}
+
+    async def vyrobotka_list_debt_ledger(
+        self, *, active_only: bool = True
+    ) -> list[dict[str, Any]]:
+        if active_only:
+            cur = await self.conn.execute(
+                """
+                SELECT * FROM vyrobotka_debt_ledger
+                WHERE active = 1
+                ORDER BY
+                  CASE flag
+                    WHEN 'red' THEN 0
+                    WHEN 'mismatch' THEN 1
+                    WHEN 'yellow' THEN 2
+                    WHEN 'open' THEN 3
+                    ELSE 4
+                  END,
+                  COALESCE(crm_debt, sheet_debt, 0) DESC,
+                  ticket ASC
+                """
+            )
+        else:
+            cur = await self.conn.execute(
+                """
+                SELECT * FROM vyrobotka_debt_ledger
+                ORDER BY ticket ASC
+                """
+            )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def vyrobotka_get_debt_ledger_ticket(
+        self, ticket: str
+    ) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM vyrobotka_debt_ledger WHERE ticket = ?",
+            (str(ticket),),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def vyrobotka_upsert_debt_ledger(self, row: dict[str, Any]) -> None:
+        """Upsert ledger row. first_* заполняются только если ещё пусты."""
+        ticket = str(row.get("ticket") or "").strip()
+        if not ticket:
+            return
+        existing = await self.vyrobotka_get_debt_ledger_ticket(ticket)
+        now = datetime.now(timezone.utc).isoformat()
+
+        def _keep_first(key: str, new_val: Any) -> Any:
+            if existing and existing.get(key) is not None and existing.get(key) != "":
+                return existing.get(key)
+            return new_val if new_val is not None else (existing or {}).get(key)
+
+        first_seen = (existing or {}).get("first_seen_at") or row.get("first_seen_at") or now
+        merged = {
+            "ticket": ticket,
+            "active": int(row["active"]) if "active" in row else (
+                int(existing["active"]) if existing and "active" in existing else 1
+            ),
+            "flag": row.get("flag", (existing or {}).get("flag")),
+            "flag_reason": row.get("flag_reason", (existing or {}).get("flag_reason")),
+            "first_sheet_total": _keep_first("first_sheet_total", row.get("first_sheet_total")),
+            "first_sheet_paid": _keep_first("first_sheet_paid", row.get("first_sheet_paid")),
+            "first_sheet_debt": _keep_first("first_sheet_debt", row.get("first_sheet_debt")),
+            "first_crm_total": _keep_first("first_crm_total", row.get("first_crm_total")),
+            "first_crm_paid": _keep_first("first_crm_paid", row.get("first_crm_paid")),
+            "first_crm_debt": _keep_first("first_crm_debt", row.get("first_crm_debt")),
+            "first_crm_status": _keep_first("first_crm_status", row.get("first_crm_status")),
+            "first_on_pay_list": _keep_first(
+                "first_on_pay_list",
+                row.get("first_on_pay_list"),
+            ),
+            "first_seen_at": first_seen,
+            "sheet_title": row.get(
+                "sheet_title", (existing or {}).get("sheet_title")
+            ),
+            "master": row.get("master", (existing or {}).get("master")),
+            "sheet_total": row.get(
+                "sheet_total", (existing or {}).get("sheet_total")
+            ),
+            "sheet_paid": row.get("sheet_paid", (existing or {}).get("sheet_paid")),
+            "sheet_debt": row.get("sheet_debt", (existing or {}).get("sheet_debt")),
+            "report_amount": row.get(
+                "report_amount", (existing or {}).get("report_amount")
+            ),
+            "crm_total": row.get("crm_total", (existing or {}).get("crm_total")),
+            "crm_paid": row.get("crm_paid", (existing or {}).get("crm_paid")),
+            "crm_debt": row.get("crm_debt", (existing or {}).get("crm_debt")),
+            "crm_status": row.get(
+                "crm_status", (existing or {}).get("crm_status")
+            ),
+            "on_pay_list": int(
+                row["on_pay_list"]
+                if "on_pay_list" in row
+                else ((existing or {}).get("on_pay_list") or 0)
+            ),
+            "crm_url": row.get("crm_url", (existing or {}).get("crm_url")),
+            "crm_checked_at": row.get(
+                "crm_checked_at", (existing or {}).get("crm_checked_at")
+            ),
+            "updated_at": now,
+        }
+        # Explicit None overwrite for CRM fields when provided as keys
+        for k in (
+            "crm_total",
+            "crm_paid",
+            "crm_debt",
+            "crm_status",
+            "sheet_total",
+            "sheet_paid",
+            "sheet_debt",
+            "flag",
+            "flag_reason",
+        ):
+            if k in row:
+                merged[k] = row[k]
+
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_debt_ledger(
+              ticket, active, flag, flag_reason,
+              first_sheet_total, first_sheet_paid, first_sheet_debt,
+              first_crm_total, first_crm_paid, first_crm_debt,
+              first_crm_status, first_on_pay_list, first_seen_at,
+              sheet_title, master, sheet_total, sheet_paid, sheet_debt,
+              report_amount, crm_total, crm_paid, crm_debt, crm_status,
+              on_pay_list, crm_url, crm_checked_at, updated_at
+            ) VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            ON CONFLICT(ticket) DO UPDATE SET
+              active = excluded.active,
+              flag = excluded.flag,
+              flag_reason = excluded.flag_reason,
+              first_sheet_total = COALESCE(vyrobotka_debt_ledger.first_sheet_total, excluded.first_sheet_total),
+              first_sheet_paid = COALESCE(vyrobotka_debt_ledger.first_sheet_paid, excluded.first_sheet_paid),
+              first_sheet_debt = COALESCE(vyrobotka_debt_ledger.first_sheet_debt, excluded.first_sheet_debt),
+              first_crm_total = COALESCE(vyrobotka_debt_ledger.first_crm_total, excluded.first_crm_total),
+              first_crm_paid = COALESCE(vyrobotka_debt_ledger.first_crm_paid, excluded.first_crm_paid),
+              first_crm_debt = COALESCE(vyrobotka_debt_ledger.first_crm_debt, excluded.first_crm_debt),
+              first_crm_status = COALESCE(vyrobotka_debt_ledger.first_crm_status, excluded.first_crm_status),
+              first_on_pay_list = COALESCE(vyrobotka_debt_ledger.first_on_pay_list, excluded.first_on_pay_list),
+              first_seen_at = COALESCE(vyrobotka_debt_ledger.first_seen_at, excluded.first_seen_at),
+              sheet_title = excluded.sheet_title,
+              master = excluded.master,
+              sheet_total = excluded.sheet_total,
+              sheet_paid = excluded.sheet_paid,
+              sheet_debt = excluded.sheet_debt,
+              report_amount = excluded.report_amount,
+              crm_total = excluded.crm_total,
+              crm_paid = excluded.crm_paid,
+              crm_debt = excluded.crm_debt,
+              crm_status = excluded.crm_status,
+              on_pay_list = excluded.on_pay_list,
+              crm_url = excluded.crm_url,
+              crm_checked_at = excluded.crm_checked_at,
+              updated_at = excluded.updated_at
+            """,
+            (
+                merged["ticket"],
+                merged["active"],
+                merged["flag"],
+                merged["flag_reason"],
+                merged["first_sheet_total"],
+                merged["first_sheet_paid"],
+                merged["first_sheet_debt"],
+                merged["first_crm_total"],
+                merged["first_crm_paid"],
+                merged["first_crm_debt"],
+                merged["first_crm_status"],
+                merged["first_on_pay_list"],
+                merged["first_seen_at"],
+                merged["sheet_title"],
+                merged["master"],
+                merged["sheet_total"],
+                merged["sheet_paid"],
+                merged["sheet_debt"],
+                merged["report_amount"],
+                merged["crm_total"],
+                merged["crm_paid"],
+                merged["crm_debt"],
+                merged["crm_status"],
+                merged["on_pay_list"],
+                merged["crm_url"],
+                merged["crm_checked_at"],
+                merged["updated_at"],
+            ),
+        )
+        await self.conn.commit()
 
     async def vyrobotka_list_sheet_stats(self) -> list[dict[str, Any]]:
         cur = await self.conn.execute(

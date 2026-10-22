@@ -31,3 +31,15 @@ def test_parse_repair_orders_expected_payment_sum():
     assert totals["cost_sum"] == 3000
     assert totals["paid_sum"] == 250
     assert totals["expected_payment_sum"] == 2750  # 2000 + 750
+
+
+def test_parse_repair_orders_debt_rows():
+    rows = GincoreClient.parse_repair_orders_debt_rows(SAMPLE_LIST_HTML)
+    assert len(rows) == 2
+    by_id = {r["ticket"]: r for r in rows}
+    assert by_id["1001"]["status"] == "Готов"
+    assert by_id["1001"]["cost"] == 2000
+    assert by_id["1001"]["paid"] == 0
+    assert by_id["1001"]["debt"] == 2000
+    assert by_id["1002"]["status"] == "Выдан"
+    assert by_id["1002"]["debt"] == 750

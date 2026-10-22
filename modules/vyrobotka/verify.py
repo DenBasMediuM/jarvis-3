@@ -46,6 +46,150 @@ ATYPICAL_CRM_STATUSES = frozenset(
     }
 )
 
+# Готов к выдаче / выдан — нормальные статусы дебиторки other=pay.
+READY_CRM_STATUSES = frozenset({"готов", "выдан"})
+WRITE_OFF_CRM_STATUSES = ATYPICAL_CRM_STATUSES
+
+
+def _max_money(*vals: Any) -> float:
+    nums = [_money(v) for v in vals]
+    present = [float(v) for v in nums if v is not None]
+    return max(present) if present else 0.0
+
+
+def classify_debt_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Классификация строки сводной таблицы дебиторки.
+
+    Возвращает {active, flag, flag_reason}:
+    - active=0 — долг в CRM закрыт (убрать из таблицы);
+    - red — попытка скрыть дебиторку;
+    - yellow — долг совпадает в отчёте и CRM;
+    - open — долг только в CRM (нормально);
+    - mismatch — обе стороны с долгом, суммы разные.
+    """
+    sheet_debt = _money(row.get("sheet_debt")) or 0.0
+    crm_total = _money(row.get("crm_total"))
+    crm_paid = _money(row.get("crm_paid")) or 0.0
+    # None от underpayment_amount при полной оплате → 0 через total−paid
+    crm_debt = resolve_crm_debt(row)
+    on_pay = bool(int(row.get("on_pay_list") or 0))
+    st = _norm_status(row.get("crm_status"))
+    first_st = _norm_status(row.get("first_crm_status"))
+
+    expected_debt = _max_money(
+        row.get("first_sheet_debt"),
+        row.get("first_crm_debt"),
+        sheet_debt,
+    )
+    expected_total = _max_money(
+        row.get("first_sheet_total"),
+        row.get("first_crm_total"),
+        row.get("sheet_total"),
+    )
+    first_on_pay = bool(int(row.get("first_on_pay_list") or 0))
+    had_pay_signal = (
+        first_on_pay
+        or (_money(row.get("first_crm_debt")) or 0) > MONEY_TOL
+        or sheet_debt > MONEY_TOL
+    )
+    unpaid = crm_debt is not None and float(crm_debt) > MONEY_TOL
+
+    # R2 раньше remove: обнулили стоимость без оплаты — это скрытие, не «закрыли долг»
+    if (
+        expected_total > MONEY_TOL
+        and crm_total is not None
+        and float(crm_total) <= MONEY_TOL
+        and crm_paid <= MONEY_TOL
+    ):
+        return {
+            "active": 1,
+            "flag": "red",
+            "flag_reason": "Стоимость в CRM обнулена без оплаты",
+        }
+
+    # R1 write-off + деньги не собраны (в т.ч. когда crm_debt уже 0 из-за write-off)
+    if st in WRITE_OFF_CRM_STATUSES:
+        money_missing = unpaid or (
+            expected_debt > MONEY_TOL and crm_paid + MONEY_TOL < expected_debt
+        )
+        if money_missing:
+            return {
+                "active": 1,
+                "flag": "red",
+                "flag_reason": f"Статус «{row.get('crm_status') or st}», оплата не собрана",
+            }
+
+    # Убрать: клиент реально закрыл долг в CRM (оплата пришла / долга нет)
+    if crm_debt is not None and float(crm_debt) <= MONEY_TOL:
+        if row.get("crm_checked_at") or on_pay or row.get("crm_status") is not None:
+            return {
+                "active": 0,
+                "flag": None,
+                "flag_reason": "В CRM долг закрыт",
+            }
+
+    # R3 снятие с готов/выдан при долге
+    was_ready = first_st in READY_CRM_STATUSES
+    now_ready = st in READY_CRM_STATUSES if st else False
+    if was_ready and expected_debt > MONEY_TOL and st and not now_ready:
+        if unpaid or not on_pay:
+            return {
+                "active": 1,
+                "flag": "red",
+                "flag_reason": (
+                    f"Был «{row.get('first_crm_status')}», сейчас «{row.get('crm_status')}» "
+                    f"при ожидаемом долге {expected_debt:g}"
+                ),
+            }
+
+    # R4 пропал с other=pay при долге
+    if had_pay_signal and not on_pay and unpaid and st and st not in READY_CRM_STATUSES:
+        return {
+            "active": 1,
+            "flag": "red",
+            "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
+        }
+
+    # 3) Жёлтый — совпадение долгов
+    if sheet_debt > MONEY_TOL and unpaid and _close(sheet_debt, crm_debt):
+        return {
+            "active": 1,
+            "flag": "yellow",
+            "flag_reason": "Долг совпадает в отчёте и CRM",
+        }
+
+    # 4) open — только CRM
+    if unpaid and sheet_debt <= MONEY_TOL:
+        return {
+            "active": 1,
+            "flag": "open",
+            "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+        }
+
+    # 5) mismatch — обе стороны, суммы разные
+    if sheet_debt > MONEY_TOL and unpaid and not _close(sheet_debt, crm_debt):
+        return {
+            "active": 1,
+            "flag": "mismatch",
+            "flag_reason": (
+                f"Долг: отчёт {_fmt_money(sheet_debt)} ≠ CRM {_fmt_money(crm_debt)}"
+            ),
+        }
+
+    # sheet-only ещё не сверено с CRM
+    if sheet_debt > MONEY_TOL and crm_debt is None:
+        return {
+            "active": 1,
+            "flag": "open",
+            "flag_reason": "Есть в отчёте, CRM ещё не проверен",
+        }
+
+    return {
+        "active": 1,
+        "flag": "open",
+        "flag_reason": "На контроле",
+    }
+
 
 def is_atypical_debt_case(
     *,
@@ -93,7 +237,12 @@ def _fmt_money(v: float | None) -> str:
 
 
 def crm_totals_from_payment(payment: dict[str, Any]) -> tuple[float | None, float | None, float | None]:
-    """(total, paid, debt) из parse_order_payment."""
+    """(total, paid, debt) из parse_order_payment.
+
+    Важно: при полной оплате debt=0.0, а не None.
+    None у underpayment_amount значит «нет недоплаты» для Sheets;
+    в ledger None читается как «CRM ещё не проверен» — путаница.
+    """
     total = _money(payment.get("total_with_discount"))
     if total is None:
         total = _money(payment.get("repair_cost"))
@@ -105,7 +254,22 @@ def crm_totals_from_payment(payment: dict[str, Any]) -> tuple[float | None, floa
     if debt is None and due is not None and due > MONEY_TOL:
         # CRM иногда показывает «к оплате» явно
         debt = round(float(due), 2)
+    elif debt is None and total is not None and paid is not None:
+        # полная оплата / переплата → явный ноль
+        debt = 0.0
     return total, paid, debt
+
+
+def resolve_crm_debt(row: dict[str, Any]) -> float | None:
+    """Долг CRM: явный crm_debt, иначе total−paid если суммы известны."""
+    explicit = _money(row.get("crm_debt"))
+    if explicit is not None:
+        return explicit
+    total = _money(row.get("crm_total"))
+    paid = _money(row.get("crm_paid"))
+    if total is None or paid is None:
+        return None
+    return max(0.0, round(float(total) - float(paid), 2))
 
 
 def compare_ticket_with_crm(
