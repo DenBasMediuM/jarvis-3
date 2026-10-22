@@ -362,6 +362,38 @@ def test_crm_totals_full_pay_debt_is_zero_not_none():
     assert total == 11500 and paid == 11500 and debt == 0.0
 
 
+def test_crm_totals_prefers_repair_cost_over_zero_works_total():
+    """117339: order_sum/span «Итого» = 0, Стоимость ремонта = 1500."""
+    total, paid, debt = crm_totals_from_payment(
+        {
+            "repair_cost": 1500,
+            "total_with_discount": 0,
+            "paid": 0,
+            "due": 1500,
+        }
+    )
+    assert total == 1500 and paid == 0 and debt == 1500
+
+
+def test_classify_zero_total_with_visible_debt_is_not_red():
+    """Ложный R2: crm_total=0 из-за парсинга, но долг CRM ещё виден."""
+    r = classify_debt_row(
+        {
+            "first_crm_total": 1500,
+            "first_crm_debt": 1500,
+            "first_crm_status": "Готов",
+            "crm_total": 0,
+            "crm_paid": 0,
+            "crm_debt": 1500,
+            "crm_status": "Готов",
+            "on_pay_list": 1,
+            "crm_checked_at": "x",
+        }
+    )
+    assert r["flag"] != "red" or "обнулена" not in (r["flag_reason"] or "").casefold()
+    assert r["active"] == 1
+
+
 def test_classify_121059_style_paid_in_full_null_debt():
     """paid=total, crm_debt=None (баг underpayment) → убрать, не «CRM не проверен»."""
     r = classify_debt_row(

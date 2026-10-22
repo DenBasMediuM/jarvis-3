@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import date, datetime, timezone
 from typing import Any, Awaitable, Callable
 
@@ -231,60 +232,64 @@ class VyrobotkaService:
         return out
 
     async def get_debt_order_preview(self, ticket: str) -> dict[str, Any]:
-        """Карточка квитанции CRM + лента комментариев для модалки дебиторки."""
-        from bs4 import BeautifulSoup
-
+        """Карточка квитанции из локального кэша (без запросов в Gincore)."""
         oid = str(ticket or "").strip()
         if not oid:
             raise SheetsError("Не указан номер квитанции")
-        if not self._gincore_client_factory:
-            raise SheetsError("Gincore не подключён")
-        client = await self._gincore_client_factory()
-        await client.ensure_login()
-        html = await client.fetch_order_html(oid)
-        payment = client.parse_order_payment(html)
-        feed = client.parse_order_live_feed(html)
-        status = client.parse_order_status(html)
-        title_el = BeautifulSoup(html, "lxml").title
         ledger = await self.db.vyrobotka_get_debt_ledger_ticket(oid) or {}
+        if not ledger:
+            raise SheetsError(f"Квитанция №{oid} не найдена в таблице дебиторки")
         salary = ledger.get("salary")
         report_amount = ledger.get("report_amount")
         master = ledger.get("master")
         sheet_title = ledger.get("sheet_title")
-        if (
-            salary is None
-            or report_amount is None
-            or not master
-            or not sheet_title
-        ):
-            cur = await self.db.conn.execute(
-                """
-                SELECT salary, report_amount, master, sheet_title
-                FROM vyrobotka_rows
-                WHERE ticket = ?
-                ORDER BY row_index ASC
-                LIMIT 1
-                """,
-                (oid,),
-            )
-            src = await cur.fetchone()
-            if src:
-                if salary is None:
-                    salary = src["salary"]
-                if report_amount is None:
-                    report_amount = src["report_amount"]
-                if not master:
-                    master = src["master"]
-                if not sheet_title:
-                    sheet_title = src["sheet_title"]
+        sheet_comments = None
+        cur = await self.db.conn.execute(
+            """
+            SELECT salary, report_amount, master, sheet_title, comments
+            FROM vyrobotka_rows
+            WHERE ticket = ?
+            ORDER BY row_index ASC
+            LIMIT 1
+            """,
+            (oid,),
+        )
+        src = await cur.fetchone()
+        if src:
+            if salary is None:
+                salary = src["salary"]
+            if report_amount is None:
+                report_amount = src["report_amount"]
+            if not master:
+                master = src["master"]
+            if not sheet_title:
+                sheet_title = src["sheet_title"]
+            sheet_comments = src["comments"]
+        feed: list[dict[str, Any]] = []
+        raw_feed = ledger.get("crm_feed_json")
+        if raw_feed:
+            try:
+                parsed = json.loads(raw_feed)
+                if isinstance(parsed, list):
+                    feed = parsed
+            except json.JSONDecodeError:
+                feed = []
+        crm_url = ledger.get("crm_url") or f"https://itserviceoutsourcing.gincore.net/orders/{oid}"
         return {
             "ok": True,
             "order_id": oid,
-            "url": f"{client.base_url}/orders/{oid}",
-            "title": title_el.get_text(strip=True) if title_el else None,
-            "payment": payment or {},
-            "live_feed": feed or [],
-            "crm_status": (status or {}).get("status_name") or ledger.get("crm_status"),
+            "url": crm_url,
+            "title": None,
+            "payment": {
+                "repair_cost": ledger.get("crm_total"),
+                "total_with_discount": ledger.get("crm_total"),
+                "paid": ledger.get("crm_paid"),
+                "due": ledger.get("crm_debt"),
+            },
+            "live_feed": feed,
+            "crm_status": ledger.get("crm_status"),
+            "crm_feed_at": ledger.get("crm_feed_at"),
+            "from_cache": True,
             "ledger": {
                 "sheet_debt": ledger.get("sheet_debt"),
                 "crm_debt": ledger.get("crm_debt"),
@@ -296,6 +301,7 @@ class VyrobotkaService:
                 "flag": ledger.get("flag"),
                 "flag_reason": ledger.get("flag_reason"),
                 "sheet_title": sheet_title,
+                "sheet_comments": sheet_comments,
             },
         }
 
@@ -862,25 +868,35 @@ class VyrobotkaService:
                     {"ticket": oid, "on_pay_list": 0}
                 )
 
-        # 3) Кандидаты на HTML: active, не на pay-list, был ожидаемый долг
+        # 3) Кандидаты на HTML:
+        #    — пропали с other=pay (подозрение на скрытие);
+        #    — ещё нет сохранённой ленты комментариев (для карточки без Gincore).
         ledger = await self.db.vyrobotka_list_debt_ledger(active_only=True)
         candidates: list[dict[str, Any]] = []
+        seen: set[str] = set()
         for row in ledger:
             oid = str(row.get("ticket") or "")
-            if not oid or oid in on_list:
+            if not oid or oid in seen:
                 continue
             expected = max(
                 float(row.get("first_sheet_debt") or 0),
                 float(row.get("first_crm_debt") or 0),
                 float(row.get("sheet_debt") or 0),
             )
-            if expected <= 1.0 and not int(row.get("first_on_pay_list") or 0):
-                continue
-            if mode == "new":
-                # только пропавшие с фильтра в этом запуске или ещё ни разу не смотрели HTML
-                if oid not in flipped_off and row.get("crm_checked_at"):
-                    continue
-            candidates.append(row)
+            need_miss = False
+            if oid not in on_list:
+                if expected > 1.0 or int(row.get("first_on_pay_list") or 0):
+                    if mode == "new":
+                        need_miss = oid in flipped_off or not row.get("crm_checked_at")
+                    else:
+                        need_miss = True
+            need_feed = not row.get("crm_feed_json")
+            if mode == "new" and need_feed and row.get("crm_feed_at"):
+                # уже пытались сохранить ленту (пустую) — не долбим снова
+                need_feed = False
+            if need_miss or need_feed:
+                candidates.append(row)
+                seen.add(oid)
 
         await self.db.vyrobotka_set_debt_verify_state(
             status="running",
@@ -888,7 +904,7 @@ class VyrobotkaService:
             done=0,
             message=(
                 f"Pay-list {len(on_list)}, отчёты +{sheet_merged}. "
-                f"Точечно проверяю {len(candidates)} пропавших с фильтра…"
+                f"HTML {len(candidates)} (пропавшие + без ленты)…"
             ),
         )
 
@@ -924,6 +940,12 @@ class VyrobotkaService:
                 "debt": row.get("sheet_debt"),
             }
             compared = await self._verify_one(client, sheet_stub)
+            feed = compared.get("live_feed")
+            feed_json = (
+                json.dumps(feed, ensure_ascii=False)
+                if isinstance(feed, list)
+                else "[]"
+            )
             await self.db.vyrobotka_upsert_debt_ledger(
                 {
                     "ticket": oid,
@@ -932,8 +954,10 @@ class VyrobotkaService:
                     "crm_debt": compared.get("crm_debt"),
                     "crm_status": compared.get("crm_status"),
                     "crm_url": compared.get("crm_url"),
-                    "on_pay_list": 0,
+                    "on_pay_list": 1 if oid in on_list else 0,
                     "crm_checked_at": _now(),
+                    "crm_feed_json": feed_json,
+                    "crm_feed_at": _now(),
                     "first_crm_total": compared.get("crm_total"),
                     "first_crm_paid": compared.get("crm_paid"),
                     "first_crm_debt": compared.get("crm_debt"),
@@ -1141,6 +1165,19 @@ class VyrobotkaService:
         from modules.gincore.client import GincoreError
 
         oid = str(ticket.get("ticket") or "").strip()
+        url = f"{getattr(client, 'base_url', '')}/orders/{oid}"
+
+        def _pack(html: str | None, **kwargs: Any) -> dict[str, Any]:
+            out = compare_ticket_with_crm(ticket, **kwargs)
+            feed: list[dict[str, Any]] = []
+            if html:
+                try:
+                    feed = client.parse_order_live_feed(html) or []
+                except Exception:  # noqa: BLE001
+                    feed = []
+            out["live_feed"] = feed
+            return out
+
         try:
             html = await client.fetch_order_html(oid)
             payment = client.parse_order_payment(html)
@@ -1153,14 +1190,14 @@ class VyrobotkaService:
                 and not status.get("status_name")
                 and not status.get("status_id")
             ):
-                return compare_ticket_with_crm(ticket, missing=True, crm_url=f"{client.base_url}/orders/{oid}")
-            return compare_ticket_with_crm(
-                ticket,
+                return _pack(html, missing=True, crm_url=url)
+            return _pack(
+                html,
                 crm_total=crm_total,
                 crm_paid=crm_paid,
                 crm_debt=crm_debt,
                 crm_status=status.get("status_name"),
-                crm_url=f"{client.base_url}/orders/{oid}",
+                crm_url=url,
             )
         except GincoreError as exc:
             msg = str(exc)
@@ -1171,28 +1208,18 @@ class VyrobotkaService:
                     payment = client.parse_order_payment(html)
                     status = client.parse_order_status(html)
                     crm_total, crm_paid, crm_debt = crm_totals_from_payment(payment)
-                    return compare_ticket_with_crm(
-                        ticket,
+                    return _pack(
+                        html,
                         crm_total=crm_total,
                         crm_paid=crm_paid,
                         crm_debt=crm_debt,
                         crm_status=status.get("status_name"),
-                        crm_url=f"{client.base_url}/orders/{oid}",
+                        crm_url=url,
                     )
                 except Exception as exc2:  # noqa: BLE001
-                    return compare_ticket_with_crm(
-                        ticket, error=str(exc2), crm_url=f"{getattr(client, 'base_url', '')}/orders/{oid}"
-                    )
+                    return _pack(None, error=str(exc2), crm_url=url)
             if "404" in msg or "не найден" in msg.casefold():
-                return compare_ticket_with_crm(
-                    ticket, missing=True, crm_url=f"{client.base_url}/orders/{oid}"
-                )
-            return compare_ticket_with_crm(
-                ticket, error=msg, crm_url=f"{getattr(client, 'base_url', '')}/orders/{oid}"
-            )
+                return _pack(None, missing=True, crm_url=url)
+            return _pack(None, error=msg, crm_url=url)
         except Exception as exc:  # noqa: BLE001
-            return compare_ticket_with_crm(
-                ticket,
-                error=str(exc),
-                crm_url=f"{getattr(client, 'base_url', '')}/orders/{oid}",
-            )
+            return _pack(None, error=str(exc), crm_url=url)

@@ -215,6 +215,8 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_ledger (
   on_pay_list INTEGER NOT NULL DEFAULT 0,
   crm_url TEXT,
   crm_checked_at TEXT,
+  crm_feed_json TEXT,
+  crm_feed_at TEXT,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -320,6 +322,16 @@ class Database:
         if "row_count" not in cols:
             await self.conn.execute(
                 "ALTER TABLE vyrobotka_sheet_stats ADD COLUMN row_count INTEGER"
+            )
+        cur = await self.conn.execute("PRAGMA table_info(vyrobotka_debt_ledger)")
+        ledger_cols = {str(r[1]) for r in await cur.fetchall()}
+        if "crm_feed_json" not in ledger_cols:
+            await self.conn.execute(
+                "ALTER TABLE vyrobotka_debt_ledger ADD COLUMN crm_feed_json TEXT"
+            )
+        if "crm_feed_at" not in ledger_cols:
+            await self.conn.execute(
+                "ALTER TABLE vyrobotka_debt_ledger ADD COLUMN crm_feed_at TEXT"
             )
 
     async def close(self) -> None:
@@ -933,6 +945,12 @@ class Database:
             "crm_checked_at": row.get(
                 "crm_checked_at", (existing or {}).get("crm_checked_at")
             ),
+            "crm_feed_json": row.get(
+                "crm_feed_json", (existing or {}).get("crm_feed_json")
+            ),
+            "crm_feed_at": row.get(
+                "crm_feed_at", (existing or {}).get("crm_feed_at")
+            ),
             "updated_at": now,
         }
         # Explicit None overwrite for CRM fields when provided as keys
@@ -946,6 +964,8 @@ class Database:
             "sheet_debt",
             "flag",
             "flag_reason",
+            "crm_feed_json",
+            "crm_feed_at",
         ):
             if k in row:
                 merged[k] = row[k]
@@ -959,9 +979,10 @@ class Database:
               first_crm_status, first_on_pay_list, first_seen_at,
               sheet_title, master, sheet_total, sheet_paid, sheet_debt,
               report_amount, crm_total, crm_paid, crm_debt, crm_status,
-              on_pay_list, crm_url, crm_checked_at, updated_at
+              on_pay_list, crm_url, crm_checked_at, crm_feed_json, crm_feed_at,
+              updated_at
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             ON CONFLICT(ticket) DO UPDATE SET
               active = excluded.active,
@@ -989,6 +1010,8 @@ class Database:
               on_pay_list = excluded.on_pay_list,
               crm_url = excluded.crm_url,
               crm_checked_at = excluded.crm_checked_at,
+              crm_feed_json = COALESCE(excluded.crm_feed_json, vyrobotka_debt_ledger.crm_feed_json),
+              crm_feed_at = COALESCE(excluded.crm_feed_at, vyrobotka_debt_ledger.crm_feed_at),
               updated_at = excluded.updated_at
             """,
             (
@@ -1018,6 +1041,8 @@ class Database:
                 merged["on_pay_list"],
                 merged["crm_url"],
                 merged["crm_checked_at"],
+                merged["crm_feed_json"],
+                merged["crm_feed_at"],
                 merged["updated_at"],
             ),
         )
@@ -1160,7 +1185,8 @@ class Database:
               checked_at = excluded.checked_at
             """,
             (
-                row.get("sheet_title"),
+                # CRM-only квитанции без листа отчёта — пустая строка вместо NULL
+                str(row.get("sheet_title") or ""),
                 str(row.get("ticket") or ""),
                 row.get("verdict") or "error",
                 row.get("summary"),

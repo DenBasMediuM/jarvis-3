@@ -94,12 +94,15 @@ def classify_debt_row(row: dict[str, Any]) -> dict[str, Any]:
     )
     unpaid = crm_debt is not None and float(crm_debt) > MONEY_TOL
 
-    # R2 раньше remove: обнулили стоимость без оплаты — это скрытие, не «закрыли долг»
+    # R2 раньше remove: обнулили стоимость без оплаты — это скрытие, не «закрыли долг».
+    # Если «к оплате»/долг в CRM ещё виден — это не обнуление, а рассинхрон полей
+    # (раньше ловили span «Итого: 0» вместо «Стоимость ремонта»).
     if (
         expected_total > MONEY_TOL
         and crm_total is not None
         and float(crm_total) <= MONEY_TOL
         and crm_paid <= MONEY_TOL
+        and not unpaid
     ):
         return {
             "active": 1,
@@ -239,13 +242,16 @@ def _fmt_money(v: float | None) -> str:
 def crm_totals_from_payment(payment: dict[str, Any]) -> tuple[float | None, float | None, float | None]:
     """(total, paid, debt) из parse_order_payment.
 
+    Стоимость = «Стоимость ремонта» (блок Оплата), не сумма работ/запчастей
+    и не span «Итого: 0 грн». «Итого со скидкой» — только запасной вариант.
+
     Важно: при полной оплате debt=0.0, а не None.
     None у underpayment_amount значит «нет недоплаты» для Sheets;
     в ledger None читается как «CRM ещё не проверен» — путаница.
     """
-    total = _money(payment.get("total_with_discount"))
+    total = _money(payment.get("repair_cost"))
     if total is None:
-        total = _money(payment.get("repair_cost"))
+        total = _money(payment.get("total_with_discount"))
     paid = _money(payment.get("paid"))
     if paid is None:
         paid = 0.0 if total is not None else None

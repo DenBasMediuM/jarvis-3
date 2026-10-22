@@ -360,11 +360,17 @@ class GincoreClient:
                     ).strip() or None
                     break
 
+        # Блок «Оплата»: работы/запчасти и span.total-sum («Итого: 0 грн») игнорируем —
+        # в CRM они почти всегда пустые/нулевые. Канон — «Стоимость ремонта» (sum).
+        # «Итого со скидкой» в разметке часто без name, только id=order_sum.
         return {
             "payment_method": payment_method,
             "repair_cost": _val('input[name="sum"]', "#order-total"),
             "discount": _val('input[name="discount"]'),
-            "total_with_discount": _val('input[name="order_sum"]', 'span.total-sum'),
+            "total_with_discount": _val(
+                "#order_sum",
+                'input[name="order_sum"]',
+            ),
             "paid": _val("#order-sum-paid", 'input[name="order-sum-paid"]'),
             "prepay": _val('input[name="prepay"]'),
             "due": _val(

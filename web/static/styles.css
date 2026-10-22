@@ -1092,6 +1092,186 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   cursor: pointer;
 }
 .vyrobotka-ticket-btn:hover { color: var(--accent); }
+
+.debt-order-overlay .debt-order-card {
+  width: min(720px, 96vw);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  padding: 1.25rem 1.35rem 1.5rem;
+}
+.debt-order-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+.debt-order-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5d6b7c;
+}
+.debt-order-head h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.15;
+}
+.debt-order-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0.45rem 0 0;
+}
+.debt-order-status {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 650;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(28, 36, 48, 0.08);
+}
+.debt-order-head-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+.debt-order-crm-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.debt-order-crm-link:hover { text-decoration: underline; }
+.debt-order-reason {
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  background: rgba(28, 36, 48, 0.06);
+  color: #1c2430;
+}
+.debt-order-reason.is-debt-red {
+  background: rgba(161, 40, 40, 0.1);
+  color: #7a1c1c;
+}
+.debt-order-reason.is-debt-yellow {
+  background: rgba(214, 176, 48, 0.2);
+  color: #6a5600;
+}
+.debt-order-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+@media (max-width: 640px) {
+  .debt-order-grid { grid-template-columns: 1fr; }
+}
+.debt-order-panel {
+  border: 1px solid rgba(28, 36, 48, 0.1);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.65);
+}
+.debt-order-panel h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5d6b7c;
+}
+.debt-order-panel dl {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.debt-order-panel dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.92rem;
+}
+.debt-order-panel dt {
+  color: #5d6b7c;
+}
+.debt-order-panel dd {
+  margin: 0;
+  font-weight: 650;
+  text-align: right;
+}
+.debt-order-panel dd.is-emphasis {
+  font-size: 1.05rem;
+}
+.debt-order-decision {
+  border: 1px dashed rgba(28, 36, 48, 0.22);
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 0.9rem;
+  background: rgba(26, 95, 138, 0.04);
+}
+.debt-order-decision h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+.debt-order-decision-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5d6b7c;
+}
+.debt-order-feed h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+}
+.debt-order-feed h3 span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5d6b7c;
+}
+.debt-feed-cached {
+  font-weight: 500 !important;
+  opacity: 0.85;
+}
+.debt-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+.debt-feed-item {
+  border-left: 3px solid rgba(26, 95, 138, 0.35);
+  padding: 0.35rem 0.55rem 0.45rem 0.7rem;
+  background: rgba(28, 36, 48, 0.035);
+  border-radius: 0 8px 8px 0;
+}
+.debt-feed-item header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  color: #5d6b7c;
+  margin-bottom: 0.2rem;
+}
+.debt-feed-item p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.debt-feed-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #5d6b7c;
+}
 .vyrobotka-table a.vyrobotka-ticket-link {
   color: inherit;
   text-decoration: underline;

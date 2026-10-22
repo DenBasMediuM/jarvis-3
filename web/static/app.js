@@ -3990,6 +3990,17 @@ function resolveVyrobotkaDisplayVerdict(verify) {
 
 let vyrobotkaDebtSort = { key: "flag", dir: 1 };
 
+function vyrobotkaDebtSortValue(row, key) {
+  if (key === "ticket") return String(row.ticket || "");
+  if (key === "crm_status") return String(row.crm_status || "").toLowerCase();
+  if (key === "flag" || key === "flag_reason") return vyrobotkaDebtFlagRank(row.flag);
+  if (key === "sheet_debt") return Number(row.sheet_debt) || 0;
+  if (key === "crm_debt") return Number(row.crm_debt) || 0;
+  if (key === "crm_paid") return Number(row.crm_paid ?? row.sheet_paid) || 0;
+  if (key === "report_amount") return Number(row.report_amount) || 0;
+  return Number(row.crm_debt || row.sheet_debt) || 0;
+}
+
 function vyrobotkaDebtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
   return order[String(flag || "")] ?? 9;
@@ -4512,44 +4523,11 @@ function applyVyrobotkaVerifyUi(verify) {
   const btn = $("#vyrobotka-debt-verify-btn");
   const btnNew = $("#vyrobotka-debt-verify-new-btn");
   const cancel = $("#vyrobotka-debt-verify-cancel");
-  const reportEl = $("#vyrobotka-debt-report");
   if (statusEl) statusEl.textContent = formatVyrobotkaVerify(verify);
   const running = verify?.status === "running";
   if (btn) btn.disabled = !!running;
   if (btnNew) btnNew.disabled = !!running;
   if (cancel) cancel.hidden = !running;
-
-  const report = verify?.report;
-  if (!reportEl) return;
-  if (!report || !report.total) {
-    reportEl.hidden = true;
-    reportEl.innerHTML = "";
-    return;
-  }
-  reportEl.hidden = false;
-  const top = report.top_issues || [];
-  reportEl.innerHTML = `
-    <h3>Отчёт сверки с Gincore</h3>
-    <div class="vyrobotka-verify-report-kpis">
-      <span class="vyrobotka-verify-chip">всего ${report.total}</span>
-      <span class="vyrobotka-verify-chip is-ok">ок ${report.ok ?? 0}</span>
-      <span class="vyrobotka-verify-chip is-norm">норма ${report.norm ?? 0}</span>
-      <span class="vyrobotka-verify-chip is-bad">расхождения ${report.mismatch ?? 0}</span>
-      <span class="vyrobotka-verify-chip is-miss">нет в CRM ${report.missing ?? 0}</span>
-      <span class="vyrobotka-verify-chip">ошибки ${report.error ?? 0}</span>
-    </div>
-    ${
-      top.length
-        ? `<ol class="vyrobotka-verify-issues">${top
-            .map(
-              (i) => `<li><strong>№${escapeHtml(i.ticket)}</strong> · ${escapeHtml(
-                i.sheet_title || ""
-              )} — ${escapeHtml(i.summary || i.verdict || "")}</li>`
-            )
-            .join("")}</ol>`
-        : `<p class="vyrobotka-verify-status">Расхождений нет — таблица совпадает с CRM.</p>`
-    }
-  `;
 }
 
 function closeDebtOrderModal() {
@@ -4561,9 +4539,9 @@ async function openDebtOrderModal(orderId) {
   closeDebtOrderModal();
   const overlay = document.createElement("div");
   overlay.id = "debt-order-modal";
-  overlay.className = "cj-import-overlay quality-feed-overlay";
+  overlay.className = "cj-import-overlay debt-order-overlay";
   const card = document.createElement("div");
-  card.className = "cj-import-card";
+  card.className = "cj-import-card debt-order-card";
   card.innerHTML = `<div class="cj-import-loading">Загрузка квитанции №${escapeHtml(orderId)}…</div>`;
   overlay.appendChild(card);
   overlay.addEventListener("click", (e) => {
@@ -4576,44 +4554,95 @@ async function openDebtOrderModal(orderId) {
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     const pay = data.payment || {};
     const ledger = data.ledger || {};
-    const total = pay.total_with_discount ?? pay.repair_cost ?? ledger.crm_total;
+    const flagMeta = vyrobotkaDebtFlagMeta(ledger.flag);
+    const total = pay.repair_cost ?? pay.total_with_discount ?? ledger.crm_total;
     const paid = pay.paid ?? ledger.crm_paid;
     let due = pay.due ?? ledger.crm_debt;
     if (due == null && total != null && paid != null) {
       due = Math.max(0, Number(total) - Number(paid));
     }
+    const sheetDebt = ledger.sheet_debt;
+    const zp = ledger.report_amount;
     const feed = Array.isArray(data.live_feed) ? data.live_feed : [];
+    const feedAt = data.crm_feed_at
+      ? `<span class="debt-feed-cached">кэш ${escapeHtml(String(data.crm_feed_at).slice(0, 19).replace("T", " "))}</span>`
+      : `<span class="debt-feed-cached">лента ещё не сохранена — запустите сверку</span>`;
     const feedHtml = feed.length
       ? feed
           .map(
-            (f) => `<div class="cj-feed-row">
-              <span class="cj-feed-date">${escapeHtml(f.date || "")}</span>
-              <span class="cj-feed-author">${escapeHtml(f.author || "")}</span>
-              <span class="cj-feed-text">${escapeHtml(f.text || "")}</span>
-            </div>`,
+            (f) => `<article class="debt-feed-item">
+              <header>
+                <time>${escapeHtml(f.date || "")}</time>
+                <span>${escapeHtml(f.author || "")}</span>
+              </header>
+              <p>${escapeHtml(f.text || "")}</p>
+            </article>`,
           )
           .join("")
-      : "<em>Комментариев нет</em>";
-    const crm = data.url
-      ? `<a href="${escapeHtml(data.url)}" target="_blank" rel="noopener">открыть в CRM</a>`
+      : `<p class="debt-feed-empty">${
+          data.crm_feed_at
+            ? "Комментариев в CRM нет"
+            : "Лента ещё не подтянута при сверке"
+        }</p>`;
+    const crmLink = data.url
+      ? `<a class="debt-order-crm-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener">Открыть в CRM ↗</a>`
       : "";
     card.innerHTML = `
-      <div class="cj-import-head">
-        <strong>Квитанция №${escapeHtml(data.order_id || orderId)}</strong>
-        <button type="button" class="quality-back-btn" data-close>Закрыть</button>
+      <div class="debt-order-head">
+        <div>
+          <p class="debt-order-kicker">Дебиторка · карточка</p>
+          <h2>№${escapeHtml(data.order_id || orderId)}</h2>
+          <p class="debt-order-status-line">
+            <span class="debt-order-status">${escapeHtml(data.crm_status || "—")}</span>
+            ${
+              ledger.flag
+                ? `<span class="vyrobotka-verdict ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>`
+                : ""
+            }
+          </p>
+        </div>
+        <div class="debt-order-head-actions">
+          ${crmLink}
+          <button type="button" class="quality-back-btn" data-close>Закрыть</button>
+        </div>
       </div>
-      <div class="quality-feed-meta">
-        <span>Статус: <strong>${escapeHtml(data.crm_status || "—")}</strong></span>
-        <span>Мастер (отчёт): <strong>${escapeHtml(ledger.master || "—")}</strong></span>
-        <span>Стоимость: <strong>${fmtMoneyUa(total)}</strong></span>
-        <span>Оплачено: <strong>${fmtMoneyUa(paid)}</strong></span>
-        <span>Долг CRM: <strong>${fmtMoneyUa(due)}</strong></span>
-        <span>Долг отчёт: <strong>${fmtMoneyUa(ledger.sheet_debt)}</strong></span>
-        <span>В отчёте: <strong>${fmtMoneyUa(ledger.report_amount)}</strong></span>
-        <span>Лист: <strong>${escapeHtml(ledger.sheet_title || "—")}</strong></span>
-        ${crm}
+
+      ${
+        ledger.flag_reason
+          ? `<div class="debt-order-reason ${flagMeta.cls || ""}">${escapeHtml(ledger.flag_reason)}</div>`
+          : ""
+      }
+
+      <div class="debt-order-grid">
+        <section class="debt-order-panel">
+          <h3>CRM</h3>
+          <dl>
+            <div><dt>Стоимость</dt><dd>${fmtMoneyUa(total)}</dd></div>
+            <div><dt>Оплачено</dt><dd>${fmtMoneyUa(paid)}</dd></div>
+            <div><dt>Долг</dt><dd class="is-emphasis">${fmtMoneyUa(due)}</dd></div>
+            <div><dt>Форма оплаты</dt><dd>${escapeHtml(pay.payment_method || "—")}</dd></div>
+          </dl>
+        </section>
+        <section class="debt-order-panel">
+          <h3>Отчёт мастера</h3>
+          <dl>
+            <div><dt>Мастер</dt><dd>${escapeHtml(ledger.master || "—")}</dd></div>
+            <div><dt>Лист</dt><dd>${escapeHtml(ledger.sheet_title || "—")}</dd></div>
+            <div><dt>Долг в отчёте</dt><dd class="is-emphasis">${fmtMoneyUa(sheetDebt)}</dd></div>
+            <div><dt>ЗП мастеру</dt><dd>${fmtMoneyUa(zp)}</dd></div>
+          </dl>
+        </section>
       </div>
-      <div class="quality-feed-body"><div class="cj-feed">${feedHtml}</div></div>
+
+      <section class="debt-order-decision" aria-label="Решение">
+        <h3>Решение</h3>
+        <p class="debt-order-decision-hint">Здесь позже появится блок закрытия вопроса по квитанции.</p>
+      </section>
+
+      <section class="debt-order-feed">
+        <h3>Комментарии CRM <span>${feed.length}</span> ${feedAt}</h3>
+        <div class="debt-feed-list">${feedHtml}</div>
+      </section>
     `;
     card.querySelector("[data-close]")?.addEventListener("click", closeDebtOrderModal);
   } catch (err) {
@@ -4647,29 +4676,29 @@ function renderVyrobotkaDebt() {
   initVyrobotkaTableSort();
   applyVyrobotkaVerifyUi(verify);
 
-  const last = sheets[sheets.length - 1];
-  const debtSum = Number(vyrobotkaDebtCache.debt_sum) || 0;
-  const debtN = Number(vyrobotkaDebtCache.tickets_count) || 0;
   const daily = vyrobotkaDebtCache.daily || [];
   const lastDaily = daily.length ? daily[daily.length - 1] : null;
-  const flags = verify?.report?.flags || counts;
+  const flags = {
+    red: counts.red ?? 0,
+    yellow: counts.yellow ?? 0,
+    open: counts.open ?? 0,
+    mismatch: counts.mismatch ?? 0,
+  };
+  const tableCrmDebt = table.reduce((s, r) => s + (Number(r.crm_debt) || 0), 0);
 
   if (kpis) {
     const kpiRows = [
-      ["Σ недоплат (слепок)", fmtMoneyUa(debtSum), `${debtN} квитанций`],
       [
-        "CRM дебиторка",
+        "CRM (фильтр)",
         fmtMoneyUa(lastDaily?.crm_debt_sum),
-        lastDaily ? `снимок ${fmtQualityDate(lastDaily.day)}` : "после сверки",
+        lastDaily ? `other=pay · ${fmtQualityDate(lastDaily.day)}` : "после сверки",
       ],
-      ["В таблице", fmtMoneyUa(table.length), "активных строк"],
-      ["Красных", fmtMoneyUa(flags.red || 0), "подозрение"],
-      ["Жёлтых", fmtMoneyUa(flags.yellow || 0), "совпадает"],
-      ["Только CRM", fmtMoneyUa(flags.open || 0), "без отчёта"],
+      ["Σ в таблице", fmtMoneyUa(tableCrmDebt), `${table.length} активных`],
+      ["Красных", String(flags.red || 0), "подозрение"],
+      ["Жёлтых", String(flags.yellow || 0), "совпадает"],
+      ["Только CRM", String(flags.open || 0), "без отчёта"],
+      ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
     ];
-    if (last) {
-      kpiRows.push(["Посл. лист Σ", fmtMoneyUa(last?.debt_sum), last?.sheet_title || "—"]);
-    }
     kpis.innerHTML = kpiRows
       .map(
         ([label, value, hint]) => `<div class="vyrobotka-kpi">
@@ -4684,23 +4713,35 @@ function renderVyrobotkaDebt() {
   if (meta) {
     const bl = vyrobotkaDebtCache.baseline;
     const blNote = bl?.day
-      ? ` · отчёты мастеров зафиксированы слепком ${fmtQualityDate(bl.day)}`
+      ? ` · отчёты мастеров с ${fmtQualityDate(bl.day)}`
       : "";
-    meta.textContent = `Таблица дебиторки · ${table.length} активных · слепок отчётов Σ ${fmtMoneyUa(debtSum)}${blNote}`;
+    meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}`;
   }
 
   if (tbody) {
     if (!table.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
     } else {
+      const key = vyrobotkaDebtSort.key || "flag";
+      const dir = vyrobotkaDebtSort.dir || 1;
       const ordered = [...table].sort((a, b) => {
-        const dr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
-        if (dr) return dr;
-        const da =
-          Number(b.crm_debt || b.sheet_debt || 0) - Number(a.crm_debt || a.sheet_debt || 0);
+        const av = vyrobotkaDebtSortValue(a, key);
+        const bv = vyrobotkaDebtSortValue(b, key);
+        let cmp = 0;
+        if (typeof av === "string" || typeof bv === "string") {
+          cmp = String(av).localeCompare(String(bv), "ru", { numeric: true });
+        } else {
+          cmp = Number(av) - Number(bv);
+        }
+        if (cmp) return dir * cmp;
+        // вторичная сортировка: флаг → долг CRM → квитанция
+        const fr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
+        if (fr) return fr;
+        const da = (Number(b.crm_debt) || 0) - (Number(a.crm_debt) || 0);
         if (da) return da;
         return String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
       });
+      updateVyrobotkaSortHeaders("vyrobotka-debt-table", vyrobotkaDebtSort, "data-debt-sort");
       const btnNew = $("#vyrobotka-debt-verify-new-btn");
       if (btnNew && verify?.status !== "running") {
         btnNew.textContent = "Сверить новые";
@@ -4709,6 +4750,7 @@ function renderVyrobotkaDebt() {
       tbody.innerHTML = ordered
         .map((r) => {
           const metaF = vyrobotkaDebtFlagMeta(r.flag);
+          const paid = r.crm_paid ?? r.sheet_paid;
           const sheetDebtHtml = r.sheet_url
             ? `<a class="vyrobotka-sheet-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener" title="${escapeHtml(
                 `${r.sheet_title || ""} · ${r.master || ""}`.trim(),
@@ -4724,8 +4766,9 @@ function renderVyrobotkaDebt() {
               r.ticket || "",
             )}">${escapeHtml(r.ticket || "—")}</button></td>
             <td>${sheetDebtHtml}</td>
-            <td>${fmtMoneyUa(r.report_amount)}</td>
             <td>${crmDebtHtml}</td>
+            <td>${fmtMoneyUa(paid)}</td>
+            <td>${fmtMoneyUa(r.report_amount)}</td>
             <td>${escapeHtml(r.crm_status || "—")}</td>
             <td class="vyrobotka-flag-reason">${escapeHtml(r.flag_reason || "—")}</td>
           </tr>`;
@@ -4747,7 +4790,7 @@ function renderVyrobotkaDebt() {
       const tip = daily[daily.length - 1];
       dailyMeta.textContent = `Точек: ${daily.length} · посл. ${fmtQualityDate(tip.day)} · CRM ${fmtMoneyUa(
         tip.crm_debt_sum,
-      )} · отчёты ${fmtMoneyUa(tip.sheets_debt_sum)}`;
+      )}`;
     }
   }
 
@@ -4786,13 +4829,6 @@ function renderVyrobotkaDebt() {
           label: "CRM (ожидаемая оплата)",
           data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
           borderColor: "#a12828",
-        },
-        {
-          ...line,
-          label: "Отчёты мастеров",
-          data: daily.map((d) => (d.sheets_debt_sum == null ? null : Number(d.sheets_debt_sum))),
-          borderColor: "#1a5f8a",
-          borderDash: [5, 4],
         },
       ],
     },
