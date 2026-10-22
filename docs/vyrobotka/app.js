@@ -39,37 +39,113 @@ function shortLabel(title) {
 }
 
 let debtSort = { key: "flag", dir: 1 };
-/** Квитанции, пропущенные в этой сессии — не открывать снова, пока не перезагрузят страницу. */
-const debtSessionSkipped = new Set();
+/** work | pending | rework — какой блок сейчас листаем */
+let debtQueueMode = "work";
+const DEBT_PROGRESS_KEY = "jarvis.vyrobotka.debt.progress";
+const debtSkipped = new Set();
+const debtDecided = new Set();
 
 function debtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
   return order[flag] ?? 9;
 }
 
-function debtRowVisibleInTable(row) {
+function debtProgressLoad() {
+  debtSkipped.clear();
+  debtDecided.clear();
+  try {
+    const raw = localStorage.getItem(DEBT_PROGRESS_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    for (const t of data.skipped || []) debtSkipped.add(String(t));
+    for (const t of data.decided || []) debtDecided.add(String(t));
+    if (data.queueMode === "pending" || data.queueMode === "rework" || data.queueMode === "work") {
+      debtQueueMode = data.queueMode;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function debtProgressSave() {
+  try {
+    localStorage.setItem(
+      DEBT_PROGRESS_KEY,
+      JSON.stringify({
+        exported_at: DATA?.exported_at || null,
+        skipped: [...debtSkipped],
+        decided: [...debtDecided],
+        queueMode: debtQueueMode,
+        saved_at: new Date().toISOString(),
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Подчистить прогресс под актуальный снимок (после модерации/экспорта). */
+function debtProgressReconcile() {
+  const byTicket = new Map(
+    (DATA?.debt_table || []).map((r) => [String(r.ticket || ""), r]),
+  );
+  for (const t of [...debtSkipped]) {
+    if (!byTicket.has(t)) debtSkipped.delete(t);
+  }
+  for (const t of [...debtDecided]) {
+    const row = byTicket.get(t);
+    if (!row) {
+      debtDecided.delete(t);
+      continue;
+    }
+    const ds = String(row.decision_status || "");
+    // снова в работе (доработать) — можно брать заново
+    if (ds === "rework") debtDecided.delete(t);
+  }
+  debtProgressSave();
+}
+
+function debtRowInMainTable(row) {
+  const t = String(row?.ticket || "");
+  if (!t) return false;
+  if (debtDecided.has(t)) return false;
   const ds = String(row?.decision_status || "");
-  // pending/closed — уже с решением: в таблице не показываем
-  return ds !== "closed" && ds !== "pending";
+  if (ds === "closed" || ds === "pending") return false;
+  return true;
 }
 
-function debtBrowseTicketList() {
+function debtBrowseTicketList(mode = debtQueueMode) {
   return (DATA?.debt_table || [])
-    .filter((r) => debtRowVisibleInTable(r))
-    .map((r) => String(r.ticket || ""))
-    .filter((t) => t && !debtSessionSkipped.has(t));
+    .filter((r) => {
+      const t = String(r.ticket || "");
+      if (!t) return false;
+      if (debtSkipped.has(t)) return false;
+      const ds = String(r.decision_status || "");
+      if (mode === "pending") return ds === "pending";
+      if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
+      // основная обработка
+      return debtRowInMainTable(r);
+    })
+    .map((r) => String(r.ticket || ""));
 }
 
-function debtRemoveTicketFromTable(ticket) {
+function debtMarkDecided(ticket) {
   const t = String(ticket);
-  if (!DATA || !Array.isArray(DATA.debt_table)) return;
-  DATA.debt_table = DATA.debt_table.filter((r) => String(r.ticket) !== t);
-  debtSessionSkipped.delete(t);
+  debtDecided.add(t);
+  debtSkipped.delete(t);
+  const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === t);
+  if (row) row.decision_status = "pending";
+  debtProgressSave();
 }
 
-/** Следующая квитанция после current в порядке таблицы (без wrap на уже пропущенные). */
-function debtNextBrowseTicket(current) {
-  const eligible = new Set(debtBrowseTicketList());
+function debtMarkSkipped(ticket) {
+  debtSkipped.add(String(ticket));
+  debtProgressSave();
+}
+
+/** Следующая квитанция после current в текущем блоке. */
+function debtNextBrowseTicket(current, mode = debtQueueMode) {
+  const eligible = new Set(debtBrowseTicketList(mode));
   eligible.delete(String(current));
   if (!eligible.size) return null;
   const ordered = (DATA?.debt_table || [])
@@ -84,6 +160,18 @@ function debtNextBrowseTicket(current) {
     if (eligible.has(ordered[i])) return ordered[i];
   }
   return null;
+}
+
+function startDebtQueue(mode) {
+  debtQueueMode = mode || "work";
+  debtProgressSave();
+  const list = debtBrowseTicketList(debtQueueMode);
+  if (!list.length) {
+    const labels = { pending: "на модерации", rework: "на доработке", work: "к обработке" };
+    alert(`Нет квитанций «${labels[debtQueueMode] || debtQueueMode}».`);
+    return;
+  }
+  openDebtModal(list[0]);
 }
 
 
@@ -176,7 +264,13 @@ function openDebtModal(ticket) {
   overlay.innerHTML = `<div class="debt-order-card">
     <div class="debt-order-head">
       <div>
-        <p class="debt-order-kicker">Дебиторка · карточка</p>
+        <p class="debt-order-kicker">Дебиторка · ${
+          debtQueueMode === "pending"
+            ? "на модерации"
+            : debtQueueMode === "rework"
+              ? "доработать"
+              : "карточка"
+        }</p>
         <h2>№${escapeHtml(row.ticket)}</h2>
         <p class="debt-order-status-line">
           <span class="debt-order-status">${escapeHtml(row.crm_status || "—")}</span>
@@ -237,12 +331,20 @@ function openDebtModal(ticket) {
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeDebtModal();
   });
-  overlay.querySelector("[data-close]")?.addEventListener("click", closeDebtModal);
+  overlay.querySelector("[data-close]")?.addEventListener("click", () => {
+    debtQueueMode = "work";
+    debtProgressSave();
+    closeDebtModal();
+  });
   overlay.querySelector("[data-skip]")?.addEventListener("click", () => {
-    debtSessionSkipped.add(String(ticket));
+    debtMarkSkipped(ticket);
     const next = debtNextBrowseTicket(ticket);
     if (next) openDebtModal(next);
-    else closeDebtModal();
+    else {
+      debtQueueMode = "work";
+      debtProgressSave();
+      closeDebtModal();
+    }
   });
   overlay.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
     const code = ev.target.value;
@@ -270,10 +372,14 @@ function openDebtModal(ticket) {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || res.statusText);
       const next = debtNextBrowseTicket(ticket);
-      debtRemoveTicketFromTable(ticket);
+      debtMarkDecided(ticket);
       renderDebt();
       if (next) openDebtModal(next);
-      else closeDebtModal();
+      else {
+        debtQueueMode = "work";
+        debtProgressSave();
+        closeDebtModal();
+      }
     } catch (err) {
       if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
       ev.target.value = row.decision_code || "";
@@ -514,13 +620,13 @@ function renderUpsell(sheets) {
 function renderDebt() {
   const empty = $("#debt-empty");
   const body = $("#debt-body");
-  if (DATA && Array.isArray(DATA.debt_table)) {
-    DATA.debt_table = DATA.debt_table.filter(debtRowVisibleInTable);
-  }
-  const table = DATA?.debt_table || [];
+  const allRows = DATA?.debt_table || [];
+  const table = allRows.filter(debtRowInMainTable);
   const counts = DATA?.debt_table_counts || {};
+  const pendingN = allRows.filter((r) => r.decision_status === "pending").length;
+  const reworkN = allRows.filter((r) => r.decision_status === "rework" && !debtDecided.has(String(r.ticket))).length;
   const daily = DATA?.debt_daily || [];
-  const hasData = table.length > 0 || daily.length > 0;
+  const hasData = allRows.length > 0 || daily.length > 0;
   if (!hasData) {
     if (empty) empty.hidden = false;
     if (body) body.hidden = true;
@@ -532,10 +638,10 @@ function renderDebt() {
 
   const lastDaily = daily.length ? daily[daily.length - 1] : null;
   const flags = {
-    red: counts.red ?? 0,
-    yellow: counts.yellow ?? 0,
-    open: counts.open ?? 0,
-    mismatch: counts.mismatch ?? 0,
+    red: table.filter((r) => r.flag === "red").length,
+    yellow: table.filter((r) => r.flag === "yellow").length,
+    open: table.filter((r) => r.flag === "open").length,
+    mismatch: table.filter((r) => r.flag === "mismatch").length,
   };
   const tableCrmDebt = table.reduce((s, r) => s + (Number(r.crm_debt) || 0), 0);
 
@@ -543,7 +649,11 @@ function renderDebt() {
   if (meta) {
     const bl = DATA?.debt_baseline;
     const blNote = bl?.day ? ` · отчёты мастеров с ${fmtDay(bl.day)}` : "";
-    meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}`;
+    const prog =
+      debtSkipped.size || debtDecided.size
+        ? ` · прогресс: пропуск ${debtSkipped.size}, решений ${debtDecided.size}`
+        : "";
+    meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}${prog}`;
   }
   const verifyStatus = $("#debt-verify-status");
   if (verifyStatus) {
@@ -553,25 +663,37 @@ function renderDebt() {
   const kpis = $("#debt-kpis");
   if (kpis) {
     kpis.innerHTML = [
-      [
-        "CRM (фильтр)",
-        fmtMoney(lastDaily?.crm_debt_sum),
-        lastDaily ? `other=pay · ${fmtDay(lastDaily.day)}` : "после сверки",
-      ],
-      ["Σ в таблице", fmtMoney(tableCrmDebt), `${table.length} активных`],
-      ["Красных", String(flags.red || 0), "подозрение"],
-      ["Жёлтых", String(flags.yellow || 0), "совпадает"],
-      ["Только CRM", String(flags.open || 0), "без отчёта"],
-      ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
-      ["На модерации", String(counts.pending || 0), "зелёные"],
-      ["Доработать", String(counts.rework || 0), "фиолетовые"],
+      ["CRM (фильтр)", fmtMoney(lastDaily?.crm_debt_sum), lastDaily ? `other=pay · ${fmtDay(lastDaily.day)}` : "после сверки", null],
+      ["Σ в таблице", fmtMoney(tableCrmDebt), `${table.length} активных`, null],
+      ["Красных", String(flags.red || 0), "подозрение", null],
+      ["Жёлтых", String(flags.yellow || 0), "совпадает", null],
+      ["Только CRM", String(flags.open || 0), "без отчёта", null],
+      ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM", null],
+      ["На модерации", String(pendingN || counts.pending || 0), "клик — открыть очередь", "pending"],
+      ["Доработать", String(reworkN || counts.rework || 0), "клик — открыть очередь", "rework"],
     ]
-      .map(
-        ([l, v, h]) => `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
+      .map(([l, v, h, queue]) => {
+        if (queue) {
+          return `<div class="kpi kpi-queue" role="button" tabindex="0" data-debt-queue="${queue}">
+            <span class="kpi-label">${escapeHtml(l)}</span>
+            <span class="kpi-value">${escapeHtml(v)}</span>
+            <span class="kpi-hint">${escapeHtml(h)}</span></div>`;
+        }
+        return `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
         <span class="kpi-value">${escapeHtml(v)}</span>
-        <span class="kpi-hint">${escapeHtml(h)}</span></div>`,
-      )
+        <span class="kpi-hint">${escapeHtml(h)}</span></div>`;
+      })
       .join("");
+    kpis.querySelectorAll("[data-debt-queue]").forEach((el) => {
+      const run = () => startDebtQueue(el.getAttribute("data-debt-queue"));
+      el.addEventListener("click", run);
+      el.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          run();
+        }
+      });
+    });
   }
 
   const tbody = $("#tbody-debt");
@@ -618,7 +740,11 @@ function renderDebt() {
         })
         .join("");
       tbody.querySelectorAll("[data-debt-ticket]").forEach((btn) => {
-        btn.addEventListener("click", () => openDebtModal(btn.getAttribute("data-debt-ticket")));
+        btn.addEventListener("click", () => {
+          debtQueueMode = "work";
+          debtProgressSave();
+          openDebtModal(btn.getAttribute("data-debt-ticket"));
+        });
       });
     }
   }
@@ -1007,6 +1133,8 @@ async function boot() {
     const res = await fetch(`./data.json?t=${Date.now()}`);
     if (!res.ok) throw new Error(`data.json: ${res.status}`);
     DATA = await res.json();
+    debtProgressLoad();
+    debtProgressReconcile();
   } catch (err) {
     if (meta) meta.textContent = `Нет снимка: ${err.message || err}. Экспортируйте из Jarvis.`;
     $("#upsell-empty").hidden = false;

@@ -134,15 +134,18 @@ def build_vyrobotka_pages_payload(
     raw_rows = list(debt_table or [])
     pending_n = sum(1 for r in raw_rows if r.get("decision_status") == "pending")
     rework_n = sum(1 for r in raw_rows if r.get("decision_status") == "rework")
-    # На витрине не показываем уже отправленные на модерацию / закрытые
+    # closed уже отфильтрованы active=0; pending/rework оставляем — витрина
+    # прячет pending из основной таблицы, но открывает блок через KPI
     table = [
         sanitize_debt_table_row(r)
         for r in raw_rows
-        if str(r.get("decision_status") or "") not in {"pending", "closed"}
+        if str(r.get("decision_status") or "") != "closed"
     ]
-    counts = debt_table_counts(table)
+    work_rows = [r for r in table if r.get("decision_status") != "pending"]
+    counts = debt_table_counts(work_rows)
     counts["pending"] = pending_n
     counts["rework"] = rework_n
+    counts["total"] = len(work_rows)
     daily = [_pick(d, _DEBT_DAILY_KEYS) for d in (debt_daily or [])]
     baseline = None
     if debt_baseline:

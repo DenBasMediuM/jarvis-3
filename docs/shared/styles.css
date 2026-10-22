@@ -412,6 +412,17 @@ html, body {
   font-size: 0.72rem;
 }
 
+.kpi.kpi-queue {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi.kpi-queue:hover,
+.kpi.kpi-queue:focus-visible {
+  border-color: #3d7ea6;
+  box-shadow: 0 0 0 2px rgba(61, 126, 166, 0.2);
+  outline: none;
+}
+
 .card {
   border: 1px solid var(--line);
   border-radius: 16px;
