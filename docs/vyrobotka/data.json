@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-10-22T11:06:24.836364+00:00",
+  "exported_at": "2026-10-22T11:33:44.119599+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
@@ -836,132 +836,6 @@
           "date": "30 Апр.",
           "author": "Златіна Аля",
           "text": "п18"
-        }
-      ]
-    },
-    {
-      "ticket": "120521",
-      "sheet_title": "202605(16-23)",
-      "master": "Руднев",
-      "sheet_debt": 5650.0,
-      "sheet_total": 6400.0,
-      "sheet_paid": 750.0,
-      "crm_debt": 5650.0,
-      "crm_paid": 750.0,
-      "crm_total": 6400.0,
-      "crm_status": "Выдан без ремонта",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/120521",
-      "report_amount": 750.0,
-      "salary": 375.0,
-      "flag": "red",
-      "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
-      "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A78",
-      "crm_feed_at": "2026-10-22T09:15:09.866656+00:00",
-      "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
-      "live_feed": [
-        {
-          "date": "29 Апр.",
-          "author": "Демина Виктория",
-          "text": "на карту"
-        },
-        {
-          "date": "29 Апр.",
-          "author": "Демина Виктория",
-          "text": "оплатил 750 грн"
-        },
-        {
-          "date": "29 Апр.",
-          "author": "Демина Виктория",
-          "text": "Изменил статус на Выдан без ремонта"
-        },
-        {
-          "date": "26 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "Исходящий"
-        },
-        {
-          "date": "26 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "Изменил статус на Собран на возврат"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Драгомарецкая Руслана",
-          "text": "отказ"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Хаустов Сергей",
-          "text": "Входящий"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "озвучил 6400, думает"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "Изменил статус на На согласовании"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Без оператора",
-          "text": "Исходящий"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Без оператора",
-          "text": "Исходящий"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "озвучить риски при разборке экрана."
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Без оператора",
-          "text": "Входящий"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "озвучить 6400"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Без оператора",
-          "text": "Исходящий"
-        },
-        {
-          "date": "21 Апр.",
-          "author": "Вовчук Владимир",
-          "text": "Согласовать:  120521 Что ремонтировать: замена подсветки Цена, грн в отчёт мастеру - 5000 Стоимость запчастей - 1000 Сроки, день:  3 дней Предоплата, грн:  3000 Особые условия/риски:"
-        },
-        {
-          "date": "11 Апр.",
-          "author": "Демина Виктория",
-          "text": "У Жени"
-        },
-        {
-          "date": "11 Апр.",
-          "author": "Рынгач Иван",
-          "text": "Изменил мастера на Руднев Евгений"
-        },
-        {
-          "date": "11 Апр.",
-          "author": "Рынгач Иван",
-          "text": "Изменил статус на На диагностике"
-        },
-        {
-          "date": "",
-          "author": "Демина Виктория",
-          "text": "SMS : Замовлення телевизор Сяоми 55, №120521 прийнято. ☎ 0931703105"
         }
       ]
     },
@@ -24453,8 +24327,8 @@
     }
   ],
   "debt_table_counts": {
-    "total": 160,
-    "red": 65,
+    "total": 159,
+    "red": 64,
     "yellow": 34,
     "open": 56,
     "mismatch": 5,
@@ -24540,7 +24414,7 @@
     "sheets_debt_sum": 693417.0,
     "sheets_tickets": 412
   },
-  "debt_verify_message": "В таблице 160 (жёлтых 34, красных 65, open 56, mismatch 5)",
+  "debt_verify_message": "В таблице 159 (жёлтых 34, красных 64, open 56, mismatch 5)",
   "debt_inbox": {
     "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
     "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
@@ -24552,7 +24426,7 @@
   },
   "counts": {
     "upsell_sheets": 56,
-    "debt_table": 160,
+    "debt_table": 159,
     "debt_daily": 8,
     "pending": 0,
     "rework": 0

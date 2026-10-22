@@ -4025,6 +4025,8 @@ const DEBT_DECISION_CODES = {
 };
 
 let debtModerateQueue = null;
+/** Пропущенные в сессии (режим просмотра таблицы) — не открывать снова. */
+const debtSessionSkipped = new Set();
 let debtModalMode = "browse";
 
 let vyrobotkaUpsellSort = { key: "sheet", dir: 1 };
@@ -4564,12 +4566,43 @@ function debtQueueTicketsForSkip(currentTicket) {
   const table = vyrobotkaDebtCache.table || [];
   return table
     .filter((r) => {
+      const t = String(r.ticket || "");
+      if (!t) return false;
+      if (currentTicket && t === String(currentTicket)) return false;
+      if (debtSessionSkipped.has(t)) return false;
       const ds = r.decision_status;
-      if (ds === "pending") return false;
+      if (ds === "pending" || ds === "closed") return false;
       return true;
     })
     .map((r) => String(r.ticket || ""))
     .filter(Boolean);
+}
+
+function debtNextBrowseTicketAdmin(current) {
+  const eligible = new Set(debtQueueTicketsForSkip(current));
+  if (!eligible.size) return null;
+  const ordered = (vyrobotkaDebtCache.table || [])
+    .map((r) => String(r.ticket || ""))
+    .filter(Boolean);
+  const start = ordered.indexOf(String(current));
+  const from = start >= 0 ? start + 1 : 0;
+  for (let i = from; i < ordered.length; i++) {
+    if (eligible.has(ordered[i])) return ordered[i];
+  }
+  for (let i = 0; i < from; i++) {
+    if (eligible.has(ordered[i])) return ordered[i];
+  }
+  return null;
+}
+
+function debtRemoveTicketFromAdminTable(ticket) {
+  const t = String(ticket);
+  if (!Array.isArray(vyrobotkaDebtCache.table)) return;
+  vyrobotkaDebtCache.table = vyrobotkaDebtCache.table.filter((r) => String(r.ticket) !== t);
+  debtSessionSkipped.delete(t);
+  if (vyrobotkaDebtCache.table_counts) {
+    vyrobotkaDebtCache.table_counts.total = vyrobotkaDebtCache.table.length;
+  }
 }
 
 async function openDebtOrderModal(orderId, { mode } = {}) {
@@ -4719,10 +4752,9 @@ async function openDebtOrderModal(orderId, { mode } = {}) {
       closeDebtOrderModal();
     });
     card.querySelector("[data-skip]")?.addEventListener("click", () => {
-      const list = debtQueueTicketsForSkip(orderId);
-      const i = list.indexOf(String(orderId));
-      const next = list[(i + 1) % Math.max(list.length, 1)];
-      if (next && next !== String(orderId)) openDebtOrderModal(next);
+      debtSessionSkipped.add(String(orderId));
+      const next = debtNextBrowseTicketAdmin(orderId);
+      if (next) openDebtOrderModal(next);
       else closeDebtOrderModal();
     });
     card.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
@@ -4736,10 +4768,9 @@ async function openDebtOrderModal(orderId, { mode } = {}) {
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
-        await loadVyrobotkaStats();
-        const list = debtQueueTicketsForSkip(orderId);
-        const idx = list.indexOf(String(orderId));
-        const next = list[idx >= 0 ? idx : 0];
+        const next = debtNextBrowseTicketAdmin(orderId);
+        debtRemoveTicketFromAdminTable(orderId);
+        renderVyrobotkaDebt();
         if (next) openDebtOrderModal(next);
         else closeDebtOrderModal();
       } catch (err) {
@@ -4773,6 +4804,8 @@ async function openDebtOrderModal(orderId, { mode } = {}) {
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
+        debtRemoveTicketFromAdminTable(orderId);
+        renderVyrobotkaDebt();
         await goNextModerate();
       } catch (err) {
         alert(err.message || err);
@@ -4808,6 +4841,12 @@ function renderVyrobotkaDebt() {
   const tbody = $("#vyrobotka-debt-tbody");
   const canvas = $("#vyrobotka-chart-debt");
   const sheets = vyrobotkaDebtCache.sheets || [];
+  if (Array.isArray(vyrobotkaDebtCache.table)) {
+    vyrobotkaDebtCache.table = vyrobotkaDebtCache.table.filter((r) => {
+      const ds = String(r.decision_status || "");
+      return ds !== "pending" && ds !== "closed";
+    });
+  }
   const table = vyrobotkaDebtCache.table || [];
   const counts = vyrobotkaDebtCache.table_counts || {};
   const verify = vyrobotkaDebtCache.verify || null;

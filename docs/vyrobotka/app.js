@@ -39,11 +39,53 @@ function shortLabel(title) {
 }
 
 let debtSort = { key: "flag", dir: 1 };
+/** Квитанции, пропущенные в этой сессии — не открывать снова, пока не перезагрузят страницу. */
+const debtSessionSkipped = new Set();
 
 function debtFlagRank(flag) {
   const order = { red: 0, mismatch: 1, yellow: 2, open: 3 };
   return order[flag] ?? 9;
 }
+
+function debtRowVisibleInTable(row) {
+  const ds = String(row?.decision_status || "");
+  // pending/closed — уже с решением: в таблице не показываем
+  return ds !== "closed" && ds !== "pending";
+}
+
+function debtBrowseTicketList() {
+  return (DATA?.debt_table || [])
+    .filter((r) => debtRowVisibleInTable(r))
+    .map((r) => String(r.ticket || ""))
+    .filter((t) => t && !debtSessionSkipped.has(t));
+}
+
+function debtRemoveTicketFromTable(ticket) {
+  const t = String(ticket);
+  if (!DATA || !Array.isArray(DATA.debt_table)) return;
+  DATA.debt_table = DATA.debt_table.filter((r) => String(r.ticket) !== t);
+  debtSessionSkipped.delete(t);
+}
+
+/** Следующая квитанция после current в порядке таблицы (без wrap на уже пропущенные). */
+function debtNextBrowseTicket(current) {
+  const eligible = new Set(debtBrowseTicketList());
+  eligible.delete(String(current));
+  if (!eligible.size) return null;
+  const ordered = (DATA?.debt_table || [])
+    .map((r) => String(r.ticket || ""))
+    .filter(Boolean);
+  const start = ordered.indexOf(String(current));
+  const from = start >= 0 ? start + 1 : 0;
+  for (let i = from; i < ordered.length; i++) {
+    if (eligible.has(ordered[i])) return ordered[i];
+  }
+  for (let i = 0; i < from; i++) {
+    if (eligible.has(ordered[i])) return ordered[i];
+  }
+  return null;
+}
+
 
 function debtFlagMeta(flag, decisionStatus) {
   const ds = String(decisionStatus || "");
@@ -197,12 +239,9 @@ function openDebtModal(ticket) {
   });
   overlay.querySelector("[data-close]")?.addEventListener("click", closeDebtModal);
   overlay.querySelector("[data-skip]")?.addEventListener("click", () => {
-    const list = table
-      .filter((r) => r.decision_status !== "pending")
-      .map((r) => String(r.ticket || ""));
-    const i = list.indexOf(String(ticket));
-    const next = list[(i + 1) % Math.max(list.length, 1)];
-    if (next && next !== String(ticket)) openDebtModal(next);
+    debtSessionSkipped.add(String(ticket));
+    const next = debtNextBrowseTicket(ticket);
+    if (next) openDebtModal(next);
     else closeDebtModal();
   });
   overlay.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
@@ -230,23 +269,11 @@ function openDebtModal(ticket) {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || res.statusText);
-      row.decision_status = "pending";
-      row.decision_code = code;
-      row.decision_by = vitrineLogin() || null;
-      if (statusEl) {
-        statusEl.textContent =
-          "Решение отправлено. Зелёным станет после запуска Jarvis (Inbox CF) и обновления снимка.";
-      }
+      const next = debtNextBrowseTicket(ticket);
+      debtRemoveTicketFromTable(ticket);
       renderDebt();
-      const list = table
-        .filter((r) => r.decision_status !== "pending" || String(r.ticket) === String(ticket))
-        .filter((r) => r.decision_status !== "pending")
-        .map((r) => String(r.ticket || ""));
-      const next = list[0];
-      setTimeout(() => {
-        if (next) openDebtModal(next);
-        else closeDebtModal();
-      }, 600);
+      if (next) openDebtModal(next);
+      else closeDebtModal();
     } catch (err) {
       if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
       ev.target.value = row.decision_code || "";
@@ -487,6 +514,9 @@ function renderUpsell(sheets) {
 function renderDebt() {
   const empty = $("#debt-empty");
   const body = $("#debt-body");
+  if (DATA && Array.isArray(DATA.debt_table)) {
+    DATA.debt_table = DATA.debt_table.filter(debtRowVisibleInTable);
+  }
   const table = DATA?.debt_table || [];
   const counts = DATA?.debt_table_counts || {};
   const daily = DATA?.debt_daily || [];

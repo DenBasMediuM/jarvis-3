@@ -131,10 +131,16 @@ def build_vyrobotka_pages_payload(
     verify_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     del debt_sheets, debt_tickets, verify_rows  # unused legacy
-    table = [sanitize_debt_table_row(r) for r in (debt_table or [])]
+    raw_rows = list(debt_table or [])
+    pending_n = sum(1 for r in raw_rows if r.get("decision_status") == "pending")
+    rework_n = sum(1 for r in raw_rows if r.get("decision_status") == "rework")
+    # На витрине не показываем уже отправленные на модерацию / закрытые
+    table = [
+        sanitize_debt_table_row(r)
+        for r in raw_rows
+        if str(r.get("decision_status") or "") not in {"pending", "closed"}
+    ]
     counts = debt_table_counts(table)
-    pending_n = sum(1 for r in table if r.get("decision_status") == "pending")
-    rework_n = sum(1 for r in table if r.get("decision_status") == "rework")
     counts["pending"] = pending_n
     counts["rework"] = rework_n
     daily = [_pick(d, _DEBT_DAILY_KEYS) for d in (debt_daily or [])]
