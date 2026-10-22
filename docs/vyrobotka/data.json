@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-10-22T12:02:23.008399+00:00",
+  "exported_at": "2026-10-22T12:16:24.457373+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
@@ -989,10 +989,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A16",
       "crm_feed_at": "2026-10-22T09:15:12.226926+00:00",
       "on_pay_list": 0,
-      "decision_status": "pending",
-      "decision_code": "mgmt_ok",
-      "decision_by": "demo",
-      "decision_at": "2026-10-22T11:38:24.015Z",
+      "decision_status": "rework",
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16.12.25",
@@ -1108,72 +1108,6 @@
           "date": "15.12.25",
           "author": "Перебейнос Игорь",
           "text": "Исходящий"
-        }
-      ]
-    },
-    {
-      "ticket": "121342",
-      "sheet_title": "202605(16-23)",
-      "master": "Садоян",
-      "sheet_debt": 3600.0,
-      "sheet_total": 4350.0,
-      "sheet_paid": 750.0,
-      "crm_debt": 3600.0,
-      "crm_paid": 750.0,
-      "crm_total": 4350.0,
-      "crm_status": "Выдан без ремонта",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121342",
-      "report_amount": 750.0,
-      "salary": 337.5,
-      "flag": "red",
-      "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
-      "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A38",
-      "crm_feed_at": "2026-10-22T09:15:13.452281+00:00",
-      "on_pay_list": 0,
-      "decision_status": "pending",
-      "decision_code": "mgmt_ok",
-      "decision_by": "demo",
-      "decision_at": "2026-10-22T11:53:26.022Z",
-      "live_feed": [
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "Изменил статус на Выдан без ремонта"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "ждем предоплату"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "Изменил статус на Ждем оплату"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "звонить на номер Никиты"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "0505634975 Никита"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "Оставил номер телефона друга."
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "Изменил мастера на Садоян Дмитрий"
-        },
-        {
-          "date": "23 Май",
-          "author": "Демина Виктория",
-          "text": "у Димы"
         }
       ]
     },
@@ -24327,13 +24261,13 @@
     }
   ],
   "debt_table_counts": {
-    "total": 156,
-    "red": 61,
+    "total": 157,
+    "red": 62,
     "yellow": 34,
     "open": 56,
     "mismatch": 5,
-    "pending": 3,
-    "rework": 1
+    "pending": 1,
+    "rework": 2
   },
   "debt_daily": [
     {
@@ -24414,7 +24348,7 @@
     "sheets_debt_sum": 693417.0,
     "sheets_tickets": 412
   },
-  "debt_verify_message": "В таблице 156 (жёлтых 34, красных 61, open 56, mismatch 5)",
+  "debt_verify_message": "В таблице 157 (жёлтых 34, красных 62, open 56, mismatch 5)",
   "debt_inbox": {
     "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
     "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
@@ -24426,9 +24360,9 @@
   },
   "counts": {
     "upsell_sheets": 56,
-    "debt_table": 159,
+    "debt_table": 158,
     "debt_daily": 8,
-    "pending": 3,
-    "rework": 1
+    "pending": 1,
+    "rework": 2
   }
 }
