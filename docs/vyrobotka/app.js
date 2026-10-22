@@ -172,11 +172,7 @@ function debtBrowseTicketList(mode = debtQueueMode) {
       if (!t) return false;
       if (skipped.has(t)) return false;
       const ds = String(r.decision_status || "");
-      if (mode === "pending") {
-        // уже отправленные/просмотренные как done в этом блоке
-        if (debtDecided.has(t)) return false;
-        return ds === "pending";
-      }
+      if (mode === "pending") return ds === "pending";
       if (mode === "rework") return ds === "rework" && !debtDecided.has(t);
       return debtRowInMainTable(r);
     })
@@ -681,8 +677,11 @@ function renderDebt() {
   const allRows = DATA?.debt_table || [];
   const table = allRows.filter(debtRowInMainTable);
   const counts = DATA?.debt_table_counts || {};
-  const pendingN = debtBrowseTicketList("pending").length;
-  const reworkN = debtBrowseTicketList("rework").length;
+  // Счётчик = факт из снимка (как в админке), не «остаток после моего прогресса»
+  const pendingN = allRows.filter((r) => String(r.decision_status || "") === "pending").length;
+  const reworkN = allRows.filter(
+    (r) => String(r.decision_status || "") === "rework" && !debtDecided.has(String(r.ticket)),
+  ).length;
   const skipTotal =
     debtSkippedByMode.work.size + debtSkippedByMode.pending.size + debtSkippedByMode.rework.size;
   const daily = DATA?.debt_daily || [];

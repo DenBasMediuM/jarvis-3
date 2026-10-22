@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-10-22T11:49:02.093899+00:00",
+  "exported_at": "2026-10-22T12:02:23.008399+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
@@ -1130,10 +1130,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A38",
       "crm_feed_at": "2026-10-22T09:15:13.452281+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "demo",
+      "decision_at": "2026-10-22T11:53:26.022Z",
       "live_feed": [
         {
           "date": "23 Май",
@@ -1196,10 +1196,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A7",
       "crm_feed_at": "2026-10-22T09:15:14.636256+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "demo",
+      "decision_at": "2026-10-22T11:53:54.013Z",
       "live_feed": [
         {
           "date": "21.11.25",
@@ -24327,12 +24327,12 @@
     }
   ],
   "debt_table_counts": {
-    "total": 158,
-    "red": 63,
+    "total": 156,
+    "red": 61,
     "yellow": 34,
     "open": 56,
     "mismatch": 5,
-    "pending": 1,
+    "pending": 3,
     "rework": 1
   },
   "debt_daily": [
@@ -24414,7 +24414,7 @@
     "sheets_debt_sum": 693417.0,
     "sheets_tickets": 412
   },
-  "debt_verify_message": "В таблице 158 (жёлтых 34, красных 63, open 56, mismatch 5)",
+  "debt_verify_message": "В таблице 156 (жёлтых 34, красных 61, open 56, mismatch 5)",
   "debt_inbox": {
     "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
     "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
@@ -24428,7 +24428,7 @@
     "upsell_sheets": 56,
     "debt_table": 159,
     "debt_daily": 8,
-    "pending": 1,
+    "pending": 3,
     "rework": 1
   }
 }
