@@ -4006,7 +4006,10 @@ function vyrobotkaDebtFlagRank(flag) {
   return order[String(flag || "")] ?? 9;
 }
 
-function vyrobotkaDebtFlagMeta(flag) {
+function vyrobotkaDebtFlagMeta(flag, decisionStatus) {
+  const ds = String(decisionStatus || "");
+  if (ds === "pending") return { label: "решение", cls: "is-debt-pending", chip: "is-ok" };
+  if (ds === "rework") return { label: "доработать", cls: "is-debt-rework", chip: "is-warn" };
   const f = String(flag || "");
   if (f === "red") return { label: "красный", cls: "is-debt-red", chip: "is-bad" };
   if (f === "yellow") return { label: "жёлтый", cls: "is-debt-yellow", chip: "is-ok" };
@@ -4014,6 +4017,16 @@ function vyrobotkaDebtFlagMeta(flag) {
   if (f === "open") return { label: "CRM", cls: "is-debt-open", chip: "" };
   return { label: f || "—", cls: "", chip: "" };
 }
+
+const DEBT_DECISION_CODES = {
+  mgmt_ok: "закрыть с разрешения руководства",
+  paid_fact: "оплата по факту была",
+  no_pay: "оплаты не было и не будет",
+};
+
+let debtModerateQueue = null;
+let debtModalMode = "browse";
+
 let vyrobotkaUpsellSort = { key: "sheet", dir: 1 };
 
 function vyrobotkaSheetOrder(title) {
@@ -4534,8 +4547,34 @@ function closeDebtOrderModal() {
   document.getElementById("debt-order-modal")?.remove();
 }
 
-async function openDebtOrderModal(orderId) {
+function debtDecisionSelectHtml(selected) {
+  const opts = Object.entries(DEBT_DECISION_CODES)
+    .map(
+      ([code, label]) =>
+        `<option value="${escapeHtml(code)}"${selected === code ? " selected" : ""}>${escapeHtml(label)}</option>`,
+    )
+    .join("");
+  return `<select data-decision-select>
+    <option value="">— выбрать решение —</option>
+    ${opts}
+  </select>`;
+}
+
+function debtQueueTicketsForSkip(currentTicket) {
+  const table = vyrobotkaDebtCache.table || [];
+  return table
+    .filter((r) => {
+      const ds = r.decision_status;
+      if (ds === "pending") return false;
+      return true;
+    })
+    .map((r) => String(r.ticket || ""))
+    .filter(Boolean);
+}
+
+async function openDebtOrderModal(orderId, { mode } = {}) {
   if (!orderId) return;
+  if (mode) debtModalMode = mode;
   closeDebtOrderModal();
   const overlay = document.createElement("div");
   overlay.id = "debt-order-modal";
@@ -4554,7 +4593,7 @@ async function openDebtOrderModal(orderId) {
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     const pay = data.payment || {};
     const ledger = data.ledger || {};
-    const flagMeta = vyrobotkaDebtFlagMeta(ledger.flag);
+    const flagMeta = vyrobotkaDebtFlagMeta(ledger.flag, ledger.decision_status);
     const total = pay.repair_cost ?? pay.total_with_discount ?? ledger.crm_total;
     const paid = pay.paid ?? ledger.crm_paid;
     let due = pay.due ?? ledger.crm_debt;
@@ -4587,18 +4626,48 @@ async function openDebtOrderModal(orderId) {
     const crmLink = data.url
       ? `<a class="debt-order-crm-link" href="${escapeHtml(data.url)}" target="_blank" rel="noopener">Открыть в CRM ↗</a>`
       : "";
+    const codes = data.decision_codes || DEBT_DECISION_CODES;
+    Object.assign(DEBT_DECISION_CODES, codes);
+    const isModerate = debtModalMode === "moderate";
+    const modHint =
+      isModerate && debtModerateQueue
+        ? ` · модерация ${debtModerateQueue.index + 1}/${debtModerateQueue.tickets.length}`
+        : "";
+    let decisionBlock = "";
+    if (isModerate) {
+      decisionBlock = `
+        <p class="debt-decision-current">${
+          ledger.decision_code
+            ? `Предложено: <strong>${escapeHtml(ledger.decision_label || DEBT_DECISION_CODES[ledger.decision_code] || ledger.decision_code)}</strong>
+               ${ledger.decision_by ? ` · ${escapeHtml(ledger.decision_by)}` : ""}`
+            : "Нет решения"
+        }</p>
+        <div class="debt-decision-row">
+          <button type="button" class="cj-import-btn" data-approve>Одобрить</button>
+          <button type="button" class="cj-import-btn is-muted" data-rework>Доработать</button>
+          <button type="button" class="secondary" data-skip-mod>Пропустить</button>
+        </div>`;
+    } else {
+      decisionBlock = `
+        ${
+          ledger.decision_status
+            ? `<p class="debt-decision-current">Статус: <strong>${escapeHtml(ledger.decision_status)}</strong>
+               ${ledger.decision_code ? ` · ${escapeHtml(ledger.decision_label || ledger.decision_code)}` : ""}</p>`
+            : ""
+        }
+        <div class="debt-decision-row">
+          <button type="button" class="secondary" data-skip>Пропустить</button>
+          ${debtDecisionSelectHtml(ledger.decision_code)}
+        </div>`;
+    }
     card.innerHTML = `
       <div class="debt-order-head">
         <div>
-          <p class="debt-order-kicker">Дебиторка · карточка</p>
+          <p class="debt-order-kicker">Дебиторка · карточка${escapeHtml(modHint)}</p>
           <h2>№${escapeHtml(data.order_id || orderId)}</h2>
           <p class="debt-order-status-line">
             <span class="debt-order-status">${escapeHtml(data.crm_status || "—")}</span>
-            ${
-              ledger.flag
-                ? `<span class="vyrobotka-verdict ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>`
-                : ""
-            }
+            <span class="vyrobotka-verdict ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>
           </p>
         </div>
         <div class="debt-order-head-actions">
@@ -4636,7 +4705,7 @@ async function openDebtOrderModal(orderId) {
 
       <section class="debt-order-decision" aria-label="Решение">
         <h3>Решение</h3>
-        <p class="debt-order-decision-hint">Здесь позже появится блок закрытия вопроса по квитанции.</p>
+        ${decisionBlock}
       </section>
 
       <section class="debt-order-feed">
@@ -4644,7 +4713,86 @@ async function openDebtOrderModal(orderId) {
         <div class="debt-feed-list">${feedHtml}</div>
       </section>
     `;
-    card.querySelector("[data-close]")?.addEventListener("click", closeDebtOrderModal);
+    card.querySelector("[data-close]")?.addEventListener("click", () => {
+      debtModalMode = "browse";
+      debtModerateQueue = null;
+      closeDebtOrderModal();
+    });
+    card.querySelector("[data-skip]")?.addEventListener("click", () => {
+      const list = debtQueueTicketsForSkip(orderId);
+      const i = list.indexOf(String(orderId));
+      const next = list[(i + 1) % Math.max(list.length, 1)];
+      if (next && next !== String(orderId)) openDebtOrderModal(next);
+      else closeDebtOrderModal();
+    });
+    card.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
+      const code = ev.target.value;
+      if (!code) return;
+      try {
+        const r = await fetch("/api/vyrobotka/debt-decision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticket: orderId, decision_code: code, decision_by: "admin" }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
+        await loadVyrobotkaStats();
+        const list = debtQueueTicketsForSkip(orderId);
+        const idx = list.indexOf(String(orderId));
+        const next = list[idx >= 0 ? idx : 0];
+        if (next) openDebtOrderModal(next);
+        else closeDebtOrderModal();
+      } catch (err) {
+        alert(err.message || err);
+        ev.target.value = ledger.decision_code || "";
+      }
+    });
+    const goNextModerate = async () => {
+      if (!debtModerateQueue) {
+        closeDebtOrderModal();
+        return;
+      }
+      debtModerateQueue.index += 1;
+      if (debtModerateQueue.index >= debtModerateQueue.tickets.length) {
+        debtModerateQueue = null;
+        debtModalMode = "browse";
+        closeDebtOrderModal();
+        await loadVyrobotkaStats();
+        return;
+      }
+      await openDebtOrderModal(debtModerateQueue.tickets[debtModerateQueue.index], {
+        mode: "moderate",
+      });
+    };
+    card.querySelector("[data-approve]")?.addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/vyrobotka/debt-decision/moderate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticket: orderId, action: "approve", moderated_by: "admin" }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
+        await goNextModerate();
+      } catch (err) {
+        alert(err.message || err);
+      }
+    });
+    card.querySelector("[data-rework]")?.addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/vyrobotka/debt-decision/moderate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticket: orderId, action: "rework", moderated_by: "admin" }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
+        await goNextModerate();
+      } catch (err) {
+        alert(err.message || err);
+      }
+    });
+    card.querySelector("[data-skip-mod]")?.addEventListener("click", () => goNextModerate());
   } catch (err) {
     card.innerHTML = `<div class="cj-import-error">Ошибка: ${escapeHtml(err.message || err)}</div>
       <div class="cj-import-actions"></div>`;
@@ -4698,6 +4846,8 @@ function renderVyrobotkaDebt() {
       ["Жёлтых", String(flags.yellow || 0), "совпадает"],
       ["Только CRM", String(flags.open || 0), "без отчёта"],
       ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
+      ["На модерации", String(counts.pending || 0), "зелёные"],
+      ["Доработать", String(counts.rework || 0), "фиолетовые"],
     ];
     kpis.innerHTML = kpiRows
       .map(
@@ -4749,7 +4899,7 @@ function renderVyrobotkaDebt() {
 
       tbody.innerHTML = ordered
         .map((r) => {
-          const metaF = vyrobotkaDebtFlagMeta(r.flag);
+          const metaF = vyrobotkaDebtFlagMeta(r.flag, r.decision_status);
           const paid = r.crm_paid ?? r.sheet_paid;
           const sheetDebtHtml = r.sheet_url
             ? `<a class="vyrobotka-sheet-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener" title="${escapeHtml(
@@ -5063,6 +5213,67 @@ $("#vyrobotka-debt-verify-new-btn")?.addEventListener("click", () =>
   startVyrobotkaDebtVerify("new")
 );
 $("#vyrobotka-debt-verify-cancel")?.addEventListener("click", () => cancelVyrobotkaDebtVerify());
+
+$("#vyrobotka-debt-moderate-btn")?.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/vyrobotka/debt-decision/pending");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    const tickets = data.tickets || [];
+    if (!tickets.length) {
+      alert("Нет квитанций с решением на модерации");
+      return;
+    }
+    debtModerateQueue = { tickets, index: 0 };
+    debtModalMode = "moderate";
+    openDebtOrderModal(tickets[0], { mode: "moderate" });
+  } catch (err) {
+    alert(err.message || err);
+  }
+});
+
+$("#vyrobotka-debt-closed-btn")?.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/vyrobotka/debt-closed");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    const rows = data.rows || [];
+    if (!rows.length) {
+      alert("Архив пуст");
+      return;
+    }
+    const lines = rows
+      .slice(0, 80)
+      .map(
+        (r) =>
+          `${r.ticket} · ${r.decision_label || r.decision_code || "—"} · ${String(r.closed_at || "").slice(0, 19)} · CRM ${r.crm_debt ?? "—"}`,
+      )
+      .join("\n");
+    alert(`Закрытые (${rows.length}):\n\n${lines}${rows.length > 80 ? "\n…" : ""}`);
+  } catch (err) {
+    alert(err.message || err);
+  }
+});
+
+$("#vyrobotka-debt-ingest-btn")?.addEventListener("click", async () => {
+  const btn = $("#vyrobotka-debt-ingest-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/vyrobotka/debt-decision/ingest", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    await loadVyrobotkaStats();
+    alert(
+      data.skipped
+        ? "Inbox CF не настроен (.env)"
+        : `Inbox: получено ${data.fetched ?? 0}, применено ${data.applied ?? 0}`,
+    );
+  } catch (err) {
+    alert(err.message || err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
 
 /* —— Пользователи витрины —— */
 let vitrineAccessOptions = [];

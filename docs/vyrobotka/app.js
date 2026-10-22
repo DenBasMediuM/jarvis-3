@@ -45,13 +45,34 @@ function debtFlagRank(flag) {
   return order[flag] ?? 9;
 }
 
-function debtFlagMeta(flag) {
+function debtFlagMeta(flag, decisionStatus) {
+  const ds = String(decisionStatus || "");
+  if (ds === "pending") return { label: "решение", cls: "is-debt-pending", chip: "is-ok" };
+  if (ds === "rework") return { label: "доработать", cls: "is-debt-rework", chip: "is-miss" };
   const f = String(flag || "");
   if (f === "red") return { label: "красный", cls: "is-debt-red", chip: "is-bad" };
   if (f === "yellow") return { label: "жёлтый", cls: "is-debt-yellow", chip: "is-ok" };
   if (f === "mismatch") return { label: "разница", cls: "is-debt-mismatch", chip: "is-bad" };
   if (f === "open") return { label: "CRM", cls: "is-debt-open", chip: "" };
   return { label: "—", cls: "", chip: "" };
+}
+
+function debtDecisionCodes() {
+  return (
+    DATA?.debt_inbox?.decision_codes || {
+      mgmt_ok: "закрыть с разрешения руководства",
+      paid_fact: "оплата по факту была",
+      no_pay: "оплаты не было и не будет",
+    }
+  );
+}
+
+function vitrineLogin() {
+  try {
+    return window.JarvisVitrineAuth?.session()?.login || "";
+  } catch {
+    return "";
+  }
 }
 
 function debtSortValue(row, key) {
@@ -77,9 +98,11 @@ function closeDebtModal() {
 function openDebtModal(ticket) {
   if (!ticket) return;
   closeDebtModal();
-  const row = (DATA?.debt_table || []).find((r) => String(r.ticket) === String(ticket));
+  const table = DATA?.debt_table || [];
+  const row = table.find((r) => String(r.ticket) === String(ticket));
   if (!row) return;
-  const flagMeta = debtFlagMeta(row.flag);
+  const flagMeta = debtFlagMeta(row.flag, row.decision_status);
+  const codes = debtDecisionCodes();
   const feed = Array.isArray(row.live_feed) ? row.live_feed : [];
   const feedAt = row.crm_feed_at
     ? `<span class="debt-feed-cached">кэш ${escapeHtml(String(row.crm_feed_at).slice(0, 19).replace("T", " "))}</span>`
@@ -97,6 +120,14 @@ function openDebtModal(ticket) {
   const crmLink = row.crm_url
     ? `<a class="debt-order-crm-link" href="${escapeHtml(row.crm_url)}" target="_blank" rel="noopener">Открыть в CRM ↗</a>`
     : "";
+  const opts = Object.entries(codes)
+    .map(
+      ([code, label]) =>
+        `<option value="${escapeHtml(code)}"${row.decision_code === code ? " selected" : ""}>${escapeHtml(label)}</option>`,
+    )
+    .join("");
+  const inboxUrl = (DATA?.debt_inbox?.url || "").replace(/\/$/, "");
+  const writeKey = DATA?.debt_inbox?.write_key || "";
   const overlay = document.createElement("div");
   overlay.id = "debt-order-modal";
   overlay.className = "debt-order-overlay";
@@ -107,7 +138,7 @@ function openDebtModal(ticket) {
         <h2>№${escapeHtml(row.ticket)}</h2>
         <p class="debt-order-status-line">
           <span class="debt-order-status">${escapeHtml(row.crm_status || "—")}</span>
-          ${row.flag ? `<span class="chip ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>` : ""}
+          <span class="chip ${flagMeta.chip}">${escapeHtml(flagMeta.label)}</span>
         </p>
       </div>
       <div class="debt-order-head-actions">
@@ -141,7 +172,20 @@ function openDebtModal(ticket) {
     </div>
     <section class="debt-order-decision">
       <h3>Решение</h3>
-      <p class="debt-order-decision-hint">Здесь позже появится блок закрытия вопроса по квитанции.</p>
+      ${
+        row.decision_status
+          ? `<p class="debt-order-decision-hint">Сейчас: <strong>${escapeHtml(row.decision_status)}</strong>
+             ${row.decision_code ? ` · ${escapeHtml(codes[row.decision_code] || row.decision_code)}` : ""}</p>`
+          : ""
+      }
+      <div class="debt-decision-row">
+        <button type="button" class="debt-close-btn" data-skip>Пропустить</button>
+        <select data-decision-select>
+          <option value="">— выбрать решение —</option>
+          ${opts}
+        </select>
+      </div>
+      <p class="debt-order-decision-hint" data-decision-status></p>
     </section>
     <section class="debt-order-feed">
       <h3>Комментарии CRM <span>${feed.length}</span> ${feedAt}</h3>
@@ -152,6 +196,62 @@ function openDebtModal(ticket) {
     if (e.target === overlay) closeDebtModal();
   });
   overlay.querySelector("[data-close]")?.addEventListener("click", closeDebtModal);
+  overlay.querySelector("[data-skip]")?.addEventListener("click", () => {
+    const list = table
+      .filter((r) => r.decision_status !== "pending")
+      .map((r) => String(r.ticket || ""));
+    const i = list.indexOf(String(ticket));
+    const next = list[(i + 1) % Math.max(list.length, 1)];
+    if (next && next !== String(ticket)) openDebtModal(next);
+    else closeDebtModal();
+  });
+  overlay.querySelector("[data-decision-select]")?.addEventListener("change", async (ev) => {
+    const code = ev.target.value;
+    const statusEl = overlay.querySelector("[data-decision-status]");
+    if (!code) return;
+    if (!inboxUrl || !writeKey) {
+      if (statusEl) statusEl.textContent = "Inbox не настроен в снимке — обновите экспорт из Jarvis.";
+      ev.target.value = row.decision_code || "";
+      return;
+    }
+    if (statusEl) statusEl.textContent = "Отправка…";
+    try {
+      const res = await fetch(`${inboxUrl}/decision`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${writeKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ticket: String(ticket),
+          decision_code: code,
+          decision_by: vitrineLogin() || undefined,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || res.statusText);
+      row.decision_status = "pending";
+      row.decision_code = code;
+      row.decision_by = vitrineLogin() || null;
+      if (statusEl) {
+        statusEl.textContent =
+          "Решение отправлено. Зелёным станет после запуска Jarvis (Inbox CF) и обновления снимка.";
+      }
+      renderDebt();
+      const list = table
+        .filter((r) => r.decision_status !== "pending" || String(r.ticket) === String(ticket))
+        .filter((r) => r.decision_status !== "pending")
+        .map((r) => String(r.ticket || ""));
+      const next = list[0];
+      setTimeout(() => {
+        if (next) openDebtModal(next);
+        else closeDebtModal();
+      }, 600);
+    } catch (err) {
+      if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+      ev.target.value = row.decision_code || "";
+    }
+  });
   document.body.appendChild(overlay);
 }
 
@@ -433,6 +533,8 @@ function renderDebt() {
       ["Жёлтых", String(flags.yellow || 0), "совпадает"],
       ["Только CRM", String(flags.open || 0), "без отчёта"],
       ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
+      ["На модерации", String(counts.pending || 0), "зелёные"],
+      ["Доработать", String(counts.rework || 0), "фиолетовые"],
     ]
       .map(
         ([l, v, h]) => `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
@@ -467,7 +569,7 @@ function renderDebt() {
       });
       tbody.innerHTML = ordered
         .map((r) => {
-          const metaF = debtFlagMeta(r.flag);
+          const metaF = debtFlagMeta(r.flag, r.decision_status);
           const sheetDebtHtml = r.sheet_url
             ? `<a class="ticket-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener"><strong>${fmtMoney(r.sheet_debt)}</strong></a>`
             : `<strong>${fmtMoney(r.sheet_debt)}</strong>`;

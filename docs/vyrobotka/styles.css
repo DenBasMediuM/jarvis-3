@@ -49,6 +49,23 @@
 .debt-ledger-table tr.is-debt-red td { background: rgba(161, 40, 40, 0.12); }
 .debt-ledger-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.22); }
 .debt-ledger-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.12); }
+.debt-ledger-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.18); }
+.debt-ledger-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.18); }
+.debt-decision-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.debt-decision-row select {
+  flex: 1 1 220px;
+  min-width: 160px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font: inherit;
+}
 .debt-flag-reason {
   max-width: 22rem;
   font-size: 0.82rem;

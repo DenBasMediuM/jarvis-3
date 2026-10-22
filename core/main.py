@@ -181,6 +181,12 @@ async def lifespan(_: FastAPI):
     masters_kpi_service = MastersKpiService(
         db, lambda: get_module_settings("vyrobotka")
     )
+    # Подтянуть решения витрины из Cloudflare KV (если настроено)
+    if vyrobotka_service is not None:
+        try:
+            await vyrobotka_service.ingest_debt_decisions()
+        except Exception:  # noqa: BLE001
+            pass
     yield
     await db.close()
 
@@ -369,6 +375,68 @@ async def vyrobotka_debt_order_preview(ticket: str) -> dict[str, Any]:
 
         if isinstance(exc, SheetsError):
             raise HTTPException(400, str(exc)) from exc
+        raise HTTPException(500, str(exc)) from exc
+
+
+class DebtDecisionBody(BaseModel):
+    ticket: str
+    decision_code: str
+    decision_by: str | None = None
+
+
+class DebtModerateBody(BaseModel):
+    ticket: str
+    action: str
+    moderated_by: str | None = None
+
+
+@app.post("/api/vyrobotka/debt-decision")
+async def vyrobotka_debt_decision(body: DebtDecisionBody) -> dict[str, Any]:
+    """Зафиксировать решение (админка / локально). Витрина обычно пишет в CF Worker."""
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.set_debt_decision(
+            body.ticket, body.decision_code, decision_by=body.decision_by
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/vyrobotka/debt-decision/moderate")
+async def vyrobotka_debt_decision_moderate(body: DebtModerateBody) -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.moderate_debt_decision(
+            body.ticket, body.action, moderated_by=body.moderated_by
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/vyrobotka/debt-decision/pending")
+async def vyrobotka_debt_decision_pending() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return await vyrobotka_service.list_debt_pending()
+
+
+@app.get("/api/vyrobotka/debt-closed")
+async def vyrobotka_debt_closed() -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    return await vyrobotka_service.list_debt_closed()
+
+
+@app.post("/api/vyrobotka/debt-decision/ingest")
+async def vyrobotka_debt_decision_ingest() -> dict[str, Any]:
+    """Забрать решения из Cloudflare KV inbox."""
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.ingest_debt_decisions()
+    except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 
 

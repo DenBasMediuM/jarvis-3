@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from core.config import ROOT
+from modules.vyrobotka.decisions import DECISION_CODES
 
 _SHEET_KEYS = (
     "sheet_title",
@@ -41,6 +42,10 @@ _DEBT_TABLE_KEYS = (
     "sheet_url",
     "crm_feed_at",
     "on_pay_list",
+    "decision_status",
+    "decision_code",
+    "decision_by",
+    "decision_at",
 )
 
 _DEBT_DAILY_KEYS = (
@@ -119,6 +124,7 @@ def build_vyrobotka_pages_payload(
     debt_verify_message: str | None = None,
     sync: dict[str, Any] | None = None,
     spreadsheet_title: str | None = None,
+    debt_inbox: dict[str, Any] | None = None,
     # legacy kwargs — игнорируем, чтобы не ломать старые вызовы
     debt_sheets: list[dict[str, Any]] | None = None,
     debt_tickets: list[dict[str, Any]] | None = None,
@@ -127,6 +133,10 @@ def build_vyrobotka_pages_payload(
     del debt_sheets, debt_tickets, verify_rows  # unused legacy
     table = [sanitize_debt_table_row(r) for r in (debt_table or [])]
     counts = debt_table_counts(table)
+    pending_n = sum(1 for r in table if r.get("decision_status") == "pending")
+    rework_n = sum(1 for r in table if r.get("decision_status") == "rework")
+    counts["pending"] = pending_n
+    counts["rework"] = rework_n
     daily = [_pick(d, _DEBT_DAILY_KEYS) for d in (debt_daily or [])]
     baseline = None
     if debt_baseline:
@@ -140,6 +150,8 @@ def build_vyrobotka_pages_payload(
         f"(жёлтых {counts['yellow']}, красных {counts['red']}, "
         f"open {counts['open']}, mismatch {counts['mismatch']})"
     )
+    inbox = dict(debt_inbox or {})
+    inbox.setdefault("decision_codes", dict(DECISION_CODES))
     return {
         "schema_version": 2,
         "exported_at": datetime.now(timezone.utc).isoformat(),
@@ -156,10 +168,13 @@ def build_vyrobotka_pages_payload(
         "debt_daily": daily,
         "debt_baseline": baseline,
         "debt_verify_message": live_msg or debt_verify_message,
+        "debt_inbox": inbox,
         "counts": {
             "upsell_sheets": len(upsell_sheets),
             "debt_table": len(table),
             "debt_daily": len(daily),
+            "pending": pending_n,
+            "rework": rework_n,
         },
     }
 

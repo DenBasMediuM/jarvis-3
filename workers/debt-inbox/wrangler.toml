@@ -1,0 +1,7 @@
+name = "jarvis-debt-inbox"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "INBOX"
+id = "5fd236626c674eab844d7f066b12b847"

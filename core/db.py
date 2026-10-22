@@ -217,7 +217,30 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_ledger (
   crm_checked_at TEXT,
   crm_feed_json TEXT,
   crm_feed_at TEXT,
+  decision_status TEXT,
+  decision_code TEXT,
+  decision_by TEXT,
+  decision_at TEXT,
+  moderated_by TEXT,
+  moderated_at TEXT,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS vyrobotka_debt_closed (
+  ticket TEXT PRIMARY KEY,
+  closed_at TEXT NOT NULL,
+  decision_code TEXT,
+  decision_by TEXT,
+  decision_at TEXT,
+  moderated_by TEXT,
+  snapshot_json TEXT NOT NULL,
+  flag TEXT,
+  flag_reason TEXT,
+  crm_debt REAL,
+  sheet_debt REAL,
+  crm_status TEXT,
+  master TEXT,
+  sheet_title TEXT
 );
 
 CREATE TABLE IF NOT EXISTS vitrine_users (
@@ -333,6 +356,38 @@ class Database:
             await self.conn.execute(
                 "ALTER TABLE vyrobotka_debt_ledger ADD COLUMN crm_feed_at TEXT"
             )
+        for col, typ in (
+            ("decision_status", "TEXT"),
+            ("decision_code", "TEXT"),
+            ("decision_by", "TEXT"),
+            ("decision_at", "TEXT"),
+            ("moderated_by", "TEXT"),
+            ("moderated_at", "TEXT"),
+        ):
+            if col not in ledger_cols:
+                await self.conn.execute(
+                    f"ALTER TABLE vyrobotka_debt_ledger ADD COLUMN {col} {typ}"
+                )
+        await self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vyrobotka_debt_closed (
+              ticket TEXT PRIMARY KEY,
+              closed_at TEXT NOT NULL,
+              decision_code TEXT,
+              decision_by TEXT,
+              decision_at TEXT,
+              moderated_by TEXT,
+              snapshot_json TEXT NOT NULL,
+              flag TEXT,
+              flag_reason TEXT,
+              crm_debt REAL,
+              sheet_debt REAL,
+              crm_status TEXT,
+              master TEXT,
+              sheet_title TEXT
+            )
+            """
+        )
 
     async def close(self) -> None:
         if self._conn:
@@ -1047,6 +1102,142 @@ class Database:
             ),
         )
         await self.conn.commit()
+
+    async def vyrobotka_set_debt_decision(
+        self,
+        ticket: str,
+        *,
+        decision_status: str | None,
+        decision_code: str | None = None,
+        decision_by: str | None = None,
+        decision_at: str | None = None,
+        moderated_by: str | None = None,
+        moderated_at: str | None = None,
+        clear_moderation: bool = False,
+    ) -> dict[str, Any] | None:
+        oid = str(ticket or "").strip()
+        if not oid:
+            return None
+        now = datetime.now(timezone.utc).isoformat()
+        row = await self.vyrobotka_get_debt_ledger_ticket(oid)
+        if not row:
+            return None
+        fields = {
+            "decision_status": decision_status,
+            "decision_code": decision_code,
+            "decision_by": decision_by,
+            "decision_at": decision_at,
+            "updated_at": now,
+        }
+        if clear_moderation:
+            fields["moderated_by"] = None
+            fields["moderated_at"] = None
+        else:
+            if moderated_by is not None:
+                fields["moderated_by"] = moderated_by
+            if moderated_at is not None:
+                fields["moderated_at"] = moderated_at
+        sets = ", ".join(f"{k} = ?" for k in fields)
+        await self.conn.execute(
+            f"UPDATE vyrobotka_debt_ledger SET {sets} WHERE ticket = ?",
+            (*fields.values(), oid),
+        )
+        await self.conn.commit()
+        return await self.vyrobotka_get_debt_ledger_ticket(oid)
+
+    async def vyrobotka_list_debt_pending(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM vyrobotka_debt_ledger
+            WHERE active = 1 AND decision_status = 'pending'
+            ORDER BY decision_at ASC, ticket ASC
+            """
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def vyrobotka_close_debt_ticket(
+        self,
+        ticket: str,
+        *,
+        moderated_by: str | None,
+    ) -> dict[str, Any] | None:
+        import json as _json
+
+        oid = str(ticket or "").strip()
+        row = await self.vyrobotka_get_debt_ledger_ticket(oid)
+        if not row:
+            return None
+        now = datetime.now(timezone.utc).isoformat()
+        snap = dict(row)
+        await self.conn.execute(
+            """
+            INSERT INTO vyrobotka_debt_closed(
+              ticket, closed_at, decision_code, decision_by, decision_at,
+              moderated_by, snapshot_json, flag, flag_reason,
+              crm_debt, sheet_debt, crm_status, master, sheet_title
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(ticket) DO UPDATE SET
+              closed_at = excluded.closed_at,
+              decision_code = excluded.decision_code,
+              decision_by = excluded.decision_by,
+              decision_at = excluded.decision_at,
+              moderated_by = excluded.moderated_by,
+              snapshot_json = excluded.snapshot_json,
+              flag = excluded.flag,
+              flag_reason = excluded.flag_reason,
+              crm_debt = excluded.crm_debt,
+              sheet_debt = excluded.sheet_debt,
+              crm_status = excluded.crm_status,
+              master = excluded.master,
+              sheet_title = excluded.sheet_title
+            """,
+            (
+                oid,
+                now,
+                row.get("decision_code"),
+                row.get("decision_by"),
+                row.get("decision_at"),
+                moderated_by,
+                _json.dumps(snap, ensure_ascii=False),
+                row.get("flag"),
+                row.get("flag_reason"),
+                row.get("crm_debt"),
+                row.get("sheet_debt"),
+                row.get("crm_status"),
+                row.get("master"),
+                row.get("sheet_title"),
+            ),
+        )
+        await self.conn.execute(
+            """
+            UPDATE vyrobotka_debt_ledger
+            SET active = 0, decision_status = 'closed',
+                moderated_by = ?, moderated_at = ?, updated_at = ?
+            WHERE ticket = ?
+            """,
+            (moderated_by, now, now, oid),
+        )
+        await self.conn.commit()
+        return {
+            "ticket": oid,
+            "closed_at": now,
+            "decision_code": row.get("decision_code"),
+            "moderated_by": moderated_by,
+        }
+
+    async def vyrobotka_list_debt_closed(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT ticket, closed_at, decision_code, decision_by, decision_at,
+                   moderated_by, flag, flag_reason, crm_debt, sheet_debt,
+                   crm_status, master, sheet_title
+            FROM vyrobotka_debt_closed
+            ORDER BY closed_at DESC
+            LIMIT ?
+            """,
+            (int(limit),),
+        )
+        return [dict(r) for r in await cur.fetchall()]
 
     async def vyrobotka_list_sheet_stats(self) -> list[dict[str, Any]]:
         cur = await self.conn.execute(

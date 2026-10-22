@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-10-22T10:04:45.481016+00:00",
+  "exported_at": "2026-10-22T11:06:24.836364+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
@@ -702,6 +702,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A64",
       "crm_feed_at": "2026-10-22T09:15:08.680244+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Сен.",
@@ -854,6 +858,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A78",
       "crm_feed_at": "2026-10-22T09:15:09.866656+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Апр.",
@@ -976,6 +984,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A19",
       "crm_feed_at": "2026-10-22T09:15:11.033568+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Сен.",
@@ -1103,6 +1115,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A16",
       "crm_feed_at": "2026-10-22T09:15:12.226926+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16.12.25",
@@ -1240,6 +1256,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A38",
       "crm_feed_at": "2026-10-22T09:15:13.452281+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "23 Май",
@@ -1302,6 +1322,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A7",
       "crm_feed_at": "2026-10-22T09:15:14.636256+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21.11.25",
@@ -1489,6 +1513,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=333255523#gid=333255523&range=A14",
       "crm_feed_at": "2026-10-22T09:15:15.815166+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Июл.",
@@ -1631,6 +1659,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A76",
       "crm_feed_at": "2026-10-22T09:15:16.975049+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "03.11.25",
@@ -1803,6 +1835,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A78",
       "crm_feed_at": "2026-10-22T09:15:18.148695+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "09.12.25",
@@ -1945,6 +1981,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1207439478#gid=1207439478&range=A21",
       "crm_feed_at": "2026-10-22T09:15:19.337537+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "7 Окт.",
@@ -2117,6 +2157,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A75",
       "crm_feed_at": "2026-10-22T09:15:20.478897+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "13 Июл.",
@@ -2229,6 +2273,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A80",
       "crm_feed_at": "2026-10-22T09:15:21.610800+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "10.10.25",
@@ -2321,6 +2369,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A41",
       "crm_feed_at": "2026-10-22T09:15:22.895031+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "12 Мар.",
@@ -2493,6 +2545,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A60",
       "crm_feed_at": "2026-10-22T09:15:24.033074+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "7 Окт.",
@@ -2565,6 +2621,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=2051687616#gid=2051687616&range=A24",
       "crm_feed_at": "2026-10-22T09:15:25.159120+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -2672,6 +2732,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A71",
       "crm_feed_at": "2026-10-22T09:15:26.373996+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Авг.",
@@ -2814,6 +2878,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1173586366#gid=1173586366&range=A56",
       "crm_feed_at": "2026-10-22T09:15:27.510261+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "12 Окт.",
@@ -2981,6 +3049,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A23",
       "crm_feed_at": "2026-10-22T09:15:28.694788+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "9 Янв.",
@@ -3173,6 +3245,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1242273594#gid=1242273594&range=A32",
       "crm_feed_at": "2026-10-22T09:15:29.882650+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Фев.",
@@ -3445,6 +3521,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A68",
       "crm_feed_at": "2026-10-22T09:15:31.124097+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "13 Авг.",
@@ -3577,6 +3657,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A102",
       "crm_feed_at": "2026-10-22T09:15:35.593164+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "08.10.25",
@@ -3764,6 +3848,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A80",
       "crm_feed_at": "2026-10-22T09:15:36.736321+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "01.11.25",
@@ -3871,6 +3959,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A49",
       "crm_feed_at": "2026-10-22T09:15:37.898829+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Авг.",
@@ -3968,6 +4060,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A25",
       "crm_feed_at": "2026-10-22T09:15:39.119562+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "12 Окт.",
@@ -4110,6 +4206,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A10",
       "crm_feed_at": "2026-10-22T09:15:40.278610+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "06.11.25",
@@ -4227,6 +4327,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=167882906#gid=167882906&range=A31",
       "crm_feed_at": "2026-10-22T09:15:41.504952+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Окт.",
@@ -4364,6 +4468,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1737404958#gid=1737404958&range=A99",
       "crm_feed_at": "2026-10-22T09:15:42.761321+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -4806,6 +4914,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1944472646#gid=1944472646&range=A69",
       "crm_feed_at": "2026-10-22T09:15:44.062838+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Май",
@@ -4913,6 +5025,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A98",
       "crm_feed_at": "2026-10-22T09:15:45.257484+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -5210,6 +5326,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A100",
       "crm_feed_at": "2026-10-22T09:15:46.476616+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -5502,6 +5622,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A42",
       "crm_feed_at": "2026-10-22T09:15:47.665770+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Авг.",
@@ -5649,6 +5773,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A53",
       "crm_feed_at": "2026-10-22T09:15:48.762231+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Май",
@@ -5741,6 +5869,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1242273594#gid=1242273594&range=A47",
       "crm_feed_at": "2026-10-22T09:15:49.938110+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "6 Июл.",
@@ -5883,6 +6015,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A44",
       "crm_feed_at": "2026-10-22T09:15:51.143016+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -6105,6 +6241,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A45",
       "crm_feed_at": "2026-10-22T09:15:52.447361+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -6327,6 +6467,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A46",
       "crm_feed_at": "2026-10-22T09:15:53.652677+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -6549,6 +6693,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A47",
       "crm_feed_at": "2026-10-22T09:15:54.850203+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -6771,6 +6919,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A48",
       "crm_feed_at": "2026-10-22T09:15:56.045461+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -6993,6 +7145,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A53",
       "crm_feed_at": "2026-10-22T09:15:57.194602+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "25 Сен.",
@@ -7150,6 +7306,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A85",
       "crm_feed_at": "2026-10-22T09:15:58.665832+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -7437,6 +7597,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1415612777#gid=1415612777&range=A5",
       "crm_feed_at": "2026-10-22T09:16:03.106936+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19.11.25",
@@ -7599,6 +7763,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1415612777#gid=1415612777&range=A32",
       "crm_feed_at": "2026-10-22T09:16:04.386890+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "14.11.25",
@@ -7696,6 +7864,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A24",
       "crm_feed_at": "2026-10-22T09:16:05.546494+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -7793,6 +7965,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A53",
       "crm_feed_at": "2026-10-22T09:16:06.736693+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Май",
@@ -7875,6 +8051,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A22",
       "crm_feed_at": "2026-10-22T09:16:07.891919+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -7922,6 +8102,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A79",
       "crm_feed_at": "2026-10-22T09:16:09.045739+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Фев.",
@@ -8024,6 +8208,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A56",
       "crm_feed_at": "2026-10-22T09:16:10.218345+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Авг.",
@@ -8136,6 +8324,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A55",
       "crm_feed_at": "2026-10-22T09:16:11.355244+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "25 Май",
@@ -8223,6 +8415,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=215292533#gid=215292533&range=A77",
       "crm_feed_at": "2026-10-22T09:16:12.761382+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Июн.",
@@ -8340,6 +8536,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=606755194#gid=606755194&range=A40",
       "crm_feed_at": "2026-10-22T09:16:13.894450+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "27 Сен.",
@@ -8472,6 +8672,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1088354319#gid=1088354319&range=A57",
       "crm_feed_at": "2026-10-22T09:16:15.185678+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "8 Сен.",
@@ -8569,6 +8773,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A20",
       "crm_feed_at": "2026-10-22T09:16:16.356980+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "27 Июл.",
@@ -8711,6 +8919,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A87",
       "crm_feed_at": "2026-10-22T09:16:17.460000+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "10 Окт.",
@@ -8783,6 +8995,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A42",
       "crm_feed_at": "2026-10-22T09:16:18.645780+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "13.11.25",
@@ -8880,6 +9096,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A97",
       "crm_feed_at": "2026-10-22T09:16:19.929257+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -9177,6 +9397,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A99",
       "crm_feed_at": "2026-10-22T09:16:21.140213+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -9469,6 +9693,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1737404958#gid=1737404958&range=A83",
       "crm_feed_at": "2026-10-22T09:16:22.293962+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "2 Сен.",
@@ -9596,6 +9824,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A49",
       "crm_feed_at": "2026-10-22T09:16:23.420668+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Май",
@@ -9678,6 +9910,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A87",
       "crm_feed_at": "2026-10-22T09:16:24.678099+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Авг.",
@@ -9820,6 +10056,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A53",
       "crm_feed_at": "2026-10-22T09:16:25.859012+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "28.10.25",
@@ -9897,6 +10137,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1944472646#gid=1944472646&range=A27",
       "crm_feed_at": "2026-10-22T09:16:30.255827+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "23 Апр.",
@@ -9949,6 +10193,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=108813282#gid=108813282&range=A40",
       "crm_feed_at": "2026-10-22T09:16:31.391988+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "1 Июн.",
@@ -10031,6 +10279,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A113",
       "crm_feed_at": "2026-10-22T09:16:32.586113+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Май",
@@ -10163,6 +10415,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A69",
       "crm_feed_at": "2026-10-22T09:16:33.792778+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "23 Сен.",
@@ -10310,6 +10566,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A12",
       "crm_feed_at": "2026-10-22T09:16:36.174329+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "6 Мар.",
@@ -10492,6 +10752,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A82",
       "crm_feed_at": "2026-10-22T09:12:07.275957+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -10759,6 +11023,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A94",
       "crm_feed_at": "2026-10-22T09:16:39.753423+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "7 Авг.",
@@ -10891,6 +11159,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=215292533#gid=215292533&range=A53",
       "crm_feed_at": "2026-10-22T09:12:09.623887+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Июн.",
@@ -10988,6 +11260,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=133216305#gid=133216305&range=A78",
       "crm_feed_at": "2026-10-22T09:12:10.844685+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -11070,6 +11346,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=117464197#gid=117464197&range=A31",
       "crm_feed_at": "2026-10-22T09:16:41.036370+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Сен.",
@@ -11272,6 +11552,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A7",
       "crm_feed_at": "2026-10-22T09:12:13.207275+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -11394,6 +11678,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A11",
       "crm_feed_at": "2026-10-22T09:12:14.435779+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "14 Окт.",
@@ -11466,6 +11754,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A32",
       "crm_feed_at": "2026-10-22T09:12:15.582669+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -11583,6 +11875,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A4",
       "crm_feed_at": "2026-10-22T09:12:16.779611+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -11669,6 +11965,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=167882906#gid=167882906&range=A110",
       "crm_feed_at": "2026-10-22T09:12:18.024766+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -11961,6 +12261,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A55",
       "crm_feed_at": "2026-10-22T09:12:19.232016+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -12118,6 +12422,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131287833#gid=1131287833&range=A18",
       "crm_feed_at": "2026-10-22T09:12:20.355372+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -12220,6 +12528,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=2051687616#gid=2051687616&range=A33",
       "crm_feed_at": "2026-10-22T09:12:24.956833+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19 Май",
@@ -12632,6 +12944,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A38",
       "crm_feed_at": "2026-10-22T09:12:26.295834+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -12839,6 +13155,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=675927907#gid=675927907&range=A28",
       "crm_feed_at": "2026-10-22T09:12:27.460056+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -12911,6 +13231,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A37",
       "crm_feed_at": "2026-10-22T09:12:28.693926+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Июл.",
@@ -13143,6 +13467,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=2001075752#gid=2001075752&range=A30",
       "crm_feed_at": "2026-10-22T09:12:29.886360+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Июл.",
@@ -13360,6 +13688,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A12",
       "crm_feed_at": "2026-10-22T09:12:31.093277+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29.12.25",
@@ -13567,6 +13899,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1737404958#gid=1737404958&range=A45",
       "crm_feed_at": "2026-10-22T09:12:32.368673+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Май",
@@ -13864,6 +14200,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=993369796#gid=993369796&range=A18",
       "crm_feed_at": "2026-10-22T09:12:33.600595+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "10 Сен.",
@@ -14036,6 +14376,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A54",
       "crm_feed_at": "2026-10-22T09:12:34.938731+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -14213,6 +14557,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=2051687616#gid=2051687616&range=A26",
       "crm_feed_at": "2026-10-22T09:12:36.457165+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -14375,6 +14723,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=333255523#gid=333255523&range=A58",
       "crm_feed_at": "2026-10-22T09:12:37.629718+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -14502,6 +14854,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1415612777#gid=1415612777&range=A27",
       "crm_feed_at": "2026-10-22T09:16:42.234646+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19 Янв.",
@@ -14734,6 +15090,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A89",
       "crm_feed_at": "2026-10-22T09:12:40.117629+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июл.",
@@ -14801,6 +15161,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A87",
       "crm_feed_at": "2026-10-22T09:12:41.484242+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -14868,6 +15232,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=108813282#gid=108813282&range=A16",
       "crm_feed_at": "2026-10-22T09:12:42.673162+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -14990,6 +15358,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1347706859#gid=1347706859&range=A5",
       "crm_feed_at": "2026-10-22T09:12:43.815409+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -15117,6 +15489,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=675927907#gid=675927907&range=A3",
       "crm_feed_at": "2026-10-22T09:12:44.908836+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -15194,6 +15570,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1917127622#gid=1917127622&range=A100",
       "crm_feed_at": "2026-10-22T09:12:46.152490+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -15246,6 +15626,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A88",
       "crm_feed_at": "2026-10-22T09:12:47.265084+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Сен.",
@@ -15323,6 +15707,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=842179081#gid=842179081&range=A22",
       "crm_feed_at": "2026-10-22T09:12:48.473622+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Июл.",
@@ -15500,6 +15888,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A64",
       "crm_feed_at": "2026-10-22T09:12:52.933441+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Сен.",
@@ -15717,6 +16109,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=993369796#gid=993369796&range=A66",
       "crm_feed_at": "2026-10-22T09:12:54.074124+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "11 Авг.",
@@ -15804,6 +16200,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=117464197#gid=117464197&range=A62",
       "crm_feed_at": "2026-10-22T09:12:55.201024+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Сен.",
@@ -15871,6 +16271,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A110",
       "crm_feed_at": "2026-10-22T09:12:56.325181+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Июл.",
@@ -16008,6 +16412,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1088354319#gid=1088354319&range=A69",
       "crm_feed_at": "2026-10-22T09:16:43.413915+00:00",
       "on_pay_list": 0,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "24 Июн.",
@@ -16120,6 +16528,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A26",
       "crm_feed_at": "2026-10-22T09:12:58.798753+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "13 Окт.",
@@ -16177,6 +16589,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A49",
       "crm_feed_at": "2026-10-22T09:13:00.151174+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Июн.",
@@ -16414,6 +16830,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A11",
       "crm_feed_at": "2026-10-22T09:13:01.291238+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Окт.",
@@ -16486,6 +16906,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1207439478#gid=1207439478&range=A17",
       "crm_feed_at": "2026-10-22T09:16:44.652459+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19 Окт.",
@@ -16727,6 +17151,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:45.866709+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -16833,6 +17261,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:48.417863+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19 Авг.",
@@ -17079,6 +17511,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:49.561550+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "14 Окт.",
@@ -17195,6 +17631,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:51.378957+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Янв.",
@@ -17342,6 +17782,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=117464197#gid=117464197&range=A52",
       "crm_feed_at": "2026-10-22T09:16:52.540302+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "23 Сен.",
@@ -17539,6 +17983,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A33",
       "crm_feed_at": "2026-10-22T09:16:53.723077+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Окт.",
@@ -17630,6 +18078,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:58.179873+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "23.07.25",
@@ -17761,6 +18213,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:16:59.522150+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Окт.",
@@ -17822,6 +18278,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:00.812377+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -17998,6 +18458,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:02.081666+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16.05.25",
@@ -18144,6 +18608,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:03.334887+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "8:13",
@@ -18290,6 +18758,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:04.777560+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -18432,6 +18904,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1088354319#gid=1088354319&range=A16",
       "crm_feed_at": "2026-10-22T09:17:05.995035+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -18593,6 +19069,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:07.346050+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "29 Май",
@@ -18759,6 +19239,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:08.562005+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "10 Сен.",
@@ -18891,6 +19375,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A59",
       "crm_feed_at": "2026-10-22T09:17:09.871970+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -18982,6 +19470,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:11.052291+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -19104,6 +19596,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A58",
       "crm_feed_at": "2026-10-22T09:17:12.327708+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -19210,6 +19706,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:14.388759+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -19311,6 +19811,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:15.545740+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "18 Май",
@@ -19447,6 +19951,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:16.722303+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -19594,6 +20102,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1207439478#gid=1207439478&range=A6",
       "crm_feed_at": "2026-10-22T09:17:17.885230+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -19791,6 +20303,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A42",
       "crm_feed_at": "2026-10-22T09:16:47.159883+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "7 Окт.",
@@ -19977,6 +20493,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:19.018826+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -20053,6 +20573,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:20.316589+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "14 Май",
@@ -20274,6 +20798,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:21.432960+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "2 Июн.",
@@ -20360,6 +20888,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:22.638261+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "25 Фев.",
@@ -20542,6 +21074,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A47",
       "crm_feed_at": "2026-10-22T09:17:27.020317+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -20649,6 +21185,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=133216305#gid=133216305&range=A80",
       "crm_feed_at": "2026-10-22T09:17:28.203221+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "24 Авг.",
@@ -20750,6 +21290,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:29.471889+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "13 Сен.",
@@ -21121,6 +21665,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:30.635566+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "28.08.25",
@@ -21232,6 +21780,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:31.840590+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Сен.",
@@ -21378,6 +21930,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:33.147093+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Июл.",
@@ -21654,6 +22210,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:34.382934+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -21800,6 +22360,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:35.548926+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -21907,6 +22471,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A89",
       "crm_feed_at": "2026-10-22T09:17:36.706445+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "17 Сен.",
@@ -21983,6 +22551,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:37.873490+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -22099,6 +22671,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:39.042674+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -22166,6 +22742,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A44",
       "crm_feed_at": "2026-10-22T09:17:40.965075+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "11:49",
@@ -22252,6 +22832,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:42.120119+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -22328,6 +22912,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:43.372972+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -22390,6 +22978,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=333255523#gid=333255523&range=A55",
       "crm_feed_at": "2026-10-22T09:17:44.646546+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16 Июл.",
@@ -22592,6 +23184,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1391251169#gid=1391251169&range=A20",
       "crm_feed_at": "2026-10-22T09:17:45.848531+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -22688,6 +23284,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:47.021727+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "26 Фев.",
@@ -22814,6 +23414,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:48.203960+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "15 Июл.",
@@ -22915,6 +23519,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:49.312995+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "16.05.25",
@@ -22996,6 +23604,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:50.436987+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "25 Июн.",
@@ -23077,6 +23689,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:55.086485+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "14.05.25",
@@ -23208,6 +23824,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:56.460543+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "21 Окт.",
@@ -23289,6 +23909,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:57.664316+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "4 Мар.",
@@ -23410,6 +24034,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:58.786864+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -23451,6 +24079,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:17:59.967047+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "20 Окт.",
@@ -23507,6 +24139,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:18:01.145535+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "",
@@ -23568,6 +24204,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-10-22T09:18:02.391001+00:00",
       "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
       "live_feed": [
         {
           "date": "19 Авг.",
@@ -23817,7 +24457,9 @@
     "red": 65,
     "yellow": 34,
     "open": 56,
-    "mismatch": 5
+    "mismatch": 5,
+    "pending": 0,
+    "rework": 0
   },
   "debt_daily": [
     {
@@ -23899,9 +24541,20 @@
     "sheets_tickets": 412
   },
   "debt_verify_message": "В таблице 160 (жёлтых 34, красных 65, open 56, mismatch 5)",
+  "debt_inbox": {
+    "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
+    "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
+    "decision_codes": {
+      "mgmt_ok": "закрыть с разрешения руководства",
+      "paid_fact": "оплата по факту была",
+      "no_pay": "оплаты не было и не будет"
+    }
+  },
   "counts": {
     "upsell_sheets": 56,
     "debt_table": 160,
-    "debt_daily": 8
+    "debt_daily": 8,
+    "pending": 0,
+    "rework": 0
   }
 }

@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
 
+    # Cloudflare Worker inbox решений дебиторки (витрина → KV → Jarvis)
+    debt_inbox_url: str = ""
+    debt_inbox_write_key: str = ""
+    debt_inbox_read_key: str = ""
+
     def resolved_db_path(self) -> Path:
         return self.db_path or (self.data_dir / "jarvis.db")
 

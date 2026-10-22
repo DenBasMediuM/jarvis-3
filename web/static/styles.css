@@ -1072,6 +1072,30 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 .vyrobotka-table tr.is-debt-yellow td { background: rgba(214, 176, 48, 0.22); }
 .vyrobotka-table tr.is-debt-mismatch td { background: rgba(196, 148, 28, 0.12); }
 .vyrobotka-table tr.is-debt-open td { background: transparent; }
+.vyrobotka-table tr.is-debt-pending td { background: rgba(34, 140, 80, 0.18); }
+.vyrobotka-table tr.is-debt-rework td { background: rgba(110, 70, 180, 0.18); }
+.debt-order-reason.is-debt-pending { background: rgba(34, 140, 80, 0.12); }
+.debt-order-reason.is-debt-rework { background: rgba(110, 70, 180, 0.12); }
+.debt-decision-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.debt-decision-row select {
+  flex: 1 1 220px;
+  min-width: 180px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(28, 36, 48, 0.15);
+  font: inherit;
+}
+.debt-decision-current {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  color: #334155;
+}
 .vyrobotka-flag-reason {
   max-width: 22rem;
   font-size: 0.82rem;

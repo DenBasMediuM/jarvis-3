@@ -19,6 +19,14 @@ from modules.vyrobotka.parse import (
     underpayment_amount,
 )
 from modules.vyrobotka.sheets import GoogleSheetsClient, SheetsError
+from modules.vyrobotka.decisions import (
+    DECISION_CODES,
+    DebtInboxClient,
+    apply_decision_to_ledger,
+    decision_label,
+    ingest_cloudflare_inbox,
+    moderate_decision,
+)
 from modules.vyrobotka.verify import (
     apply_display_verdicts,
     build_verify_report,
@@ -27,6 +35,7 @@ from modules.vyrobotka.verify import (
     crm_totals_from_payment,
     is_atypical_debt_case,
 )
+from core.config import settings as app_settings
 
 SettingsProvider = Callable[[], Awaitable[dict[str, Any]]]
 GincoreClientFactory = Callable[[], Awaitable[Any]]
@@ -180,11 +189,24 @@ class VyrobotkaService:
 
     @staticmethod
     def _debt_table_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
-        counts = {"total": len(rows), "red": 0, "yellow": 0, "open": 0, "mismatch": 0}
+        counts = {
+            "total": len(rows),
+            "red": 0,
+            "yellow": 0,
+            "open": 0,
+            "mismatch": 0,
+            "pending": 0,
+            "rework": 0,
+        }
         for r in rows:
             f = str(r.get("flag") or "")
             if f in counts:
                 counts[f] += 1
+            ds = str(r.get("decision_status") or "")
+            if ds == "pending":
+                counts["pending"] += 1
+            elif ds == "rework":
+                counts["rework"] += 1
         return counts
 
     def _enrich_debt_table(
@@ -302,8 +324,68 @@ class VyrobotkaService:
                 "flag_reason": ledger.get("flag_reason"),
                 "sheet_title": sheet_title,
                 "sheet_comments": sheet_comments,
+                "decision_status": ledger.get("decision_status"),
+                "decision_code": ledger.get("decision_code"),
+                "decision_by": ledger.get("decision_by"),
+                "decision_at": ledger.get("decision_at"),
+                "decision_label": decision_label(ledger.get("decision_code")),
             },
+            "decision_codes": dict(DECISION_CODES),
         }
+
+    def debt_inbox_client(self) -> DebtInboxClient:
+        return DebtInboxClient(
+            app_settings.debt_inbox_url or "",
+            write_key=app_settings.debt_inbox_write_key or "",
+            read_key=app_settings.debt_inbox_read_key or "",
+        )
+
+    async def ingest_debt_decisions(self) -> dict[str, Any]:
+        result = await ingest_cloudflare_inbox(self.db, self.debt_inbox_client())
+        if int(result.get("applied") or 0) > 0:
+            await self._safe_export_pages()
+        return result
+
+    async def set_debt_decision(
+        self,
+        ticket: str,
+        decision_code: str,
+        *,
+        decision_by: str | None = None,
+    ) -> dict[str, Any]:
+        row = await apply_decision_to_ledger(
+            self.db, ticket, decision_code, decision_by=decision_by
+        )
+        await self._safe_export_pages()
+        return {"ok": True, "ledger": row, "decision_label": decision_label(decision_code)}
+
+    async def moderate_debt_decision(
+        self,
+        ticket: str,
+        action: str,
+        *,
+        moderated_by: str | None = None,
+    ) -> dict[str, Any]:
+        out = await moderate_decision(
+            self.db, ticket, action, moderated_by=moderated_by
+        )
+        await self._safe_export_pages()
+        return out
+
+    async def list_debt_pending(self) -> dict[str, Any]:
+        rows = await self.db.vyrobotka_list_debt_pending()
+        return {
+            "ok": True,
+            "tickets": [str(r.get("ticket") or "") for r in rows if r.get("ticket")],
+            "rows": rows,
+            "count": len(rows),
+        }
+
+    async def list_debt_closed(self) -> dict[str, Any]:
+        rows = await self.db.vyrobotka_list_debt_closed()
+        for r in rows:
+            r["decision_label"] = decision_label(r.get("decision_code"))
+        return {"ok": True, "rows": rows, "count": len(rows)}
 
     async def ensure_debt_baseline(
         self, underpaid: list[dict[str, Any]] | None = None
@@ -673,6 +755,11 @@ class VyrobotkaService:
             debt_verify_message=verify.get("message"),
             sync=sync,
             spreadsheet_title=title,
+            debt_inbox={
+                "url": (app_settings.debt_inbox_url or "").rstrip("/"),
+                "write_key": app_settings.debt_inbox_write_key or "",
+                "decision_codes": dict(DECISION_CODES),
+            },
         )
         out = write_vyrobotka_pages_json(payload, Path(path) if path else None)
         return {
