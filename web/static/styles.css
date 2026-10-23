@@ -844,14 +844,20 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 #branch-kpi-body .branch-kpi-charts .vyrobotka-chart-box {
   height: 220px;
 }
-#masters-kpi-body.vyrobotka-section {
+#masters-kpi-body.vyrobotka-section,
+#reviews-body.vyrobotka-section {
   height: auto;
   min-height: 0;
   max-height: none;
   overflow: visible;
 }
-#masters-kpi-body.vyrobotka-section:not([hidden]) {
+#masters-kpi-body.vyrobotka-section:not([hidden]),
+#reviews-body.vyrobotka-section:not([hidden]) {
   flex: 1 1 auto;
+}
+#reviews-body.reviews-admin {
+  padding: 16px 18px 22px;
+  gap: 14px;
 }
 .masters-kpi-layout .vyrobotka-stack-top {
   overflow: visible;
@@ -3043,13 +3049,17 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
 }
 .reviews-admin-split {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 4px;
   align-items: start;
 }
 @media (max-width: 980px) {
   .reviews-admin-split { grid-template-columns: 1fr; }
+}
+.reviews-admin-panel-main .vyrobotka-table-wrap {
+  max-height: min(420px, 48vh);
+  overflow: auto;
 }
 .reviews-admin-panel {
   border: 1px solid var(--line);
