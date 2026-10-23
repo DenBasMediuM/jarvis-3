@@ -3049,25 +3049,46 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
 }
 .reviews-admin-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
   gap: 12px;
   margin-top: 4px;
   align-items: start;
 }
-@media (max-width: 1100px) {
-  .reviews-admin-split { grid-template-columns: 1fr; }
+@media (max-width: 1200px) {
+  .reviews-admin-split {
+    grid-template-columns: 1fr;
+  }
 }
-.reviews-admin-panel-main .vyrobotka-table-wrap {
-  max-height: min(420px, 48vh);
-  overflow: auto;
+.reviews-admin-panel .vyrobotka-table-wrap {
+  max-height: none;
+  overflow: visible;
 }
+#reviews-calls-table,
 #reviews-managers-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
 }
-#reviews-managers-table th:nth-child(1),
-#reviews-managers-table td:nth-child(1) {
-  width: 40%;
+#reviews-calls-table th,
+#reviews-calls-table td,
+#reviews-managers-table th,
+#reviews-managers-table td {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  vertical-align: top;
+  word-break: break-word;
+}
+#reviews-calls-table th.vyrobotka-th-sort,
+#reviews-calls-table th:last-child,
+#reviews-calls-table td.reviews-row-actions,
+#reviews-managers-table th:nth-child(2),
+#reviews-managers-table td:nth-child(2),
+#reviews-managers-table th:nth-child(3),
+#reviews-managers-table td:nth-child(3),
+#reviews-managers-table th:nth-child(4),
+#reviews-managers-table td:nth-child(4) {
+  white-space: nowrap;
 }
 #reviews-managers-table th:nth-child(2),
 #reviews-managers-table td:nth-child(2),
@@ -3075,19 +3096,23 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
 #reviews-managers-table td:nth-child(3),
 #reviews-managers-table th:nth-child(4),
 #reviews-managers-table td:nth-child(4) {
-  width: 20%;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  width: 1%;
 }
-#reviews-managers-table th:nth-child(1),
-#reviews-managers-table td:nth-child(1) {
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
+#reviews-calls-table td.reviews-row-actions {
+  width: 1%;
+  text-align: right;
+}
+#reviews-calls-table th:nth-child(1),
+#reviews-calls-table td:nth-child(1) {
   white-space: nowrap;
+  width: 1%;
 }
-.reviews-admin-panel .vyrobotka-table-wrap {
-  overflow-x: visible;
+#reviews-calls-table th:nth-child(2),
+#reviews-calls-table td:nth-child(2) {
+  white-space: nowrap;
+  width: 1%;
 }
 .reviews-admin-panel {
   border: 1px solid var(--line);
@@ -3182,9 +3207,4 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
   border-color: rgba(161, 40, 40, 0.3);
   background: rgba(161, 40, 40, 0.08);
 }
-#reviews-calls-table td {
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* журнал звонков: без горизонтального скролла, текст переносится */
