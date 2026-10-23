@@ -6330,13 +6330,285 @@ $("#updates-refresh-btn")?.addEventListener("click", () => loadUpdatesStatus());
 
 let reviewsOutcomesChart = null;
 let reviewsGoogleChart = null;
+let reviewsGoogleDynChart = null;
 let reviewsStatsCache = null;
+let reviewsCallsSort = { key: "called_at", dir: -1 };
+let reviewsOutcomeFilter = "all";
+const REVIEWS_BRANCH_COLORS = {
+  karetnaya: "rgba(26, 79, 134, 0.95)",
+  segedskaya: "rgba(15, 110, 86, 0.95)",
+  levitana: "rgba(196, 92, 38, 0.95)",
+};
+
+function initReviewsTableSort() {
+  const table = $("#reviews-calls-table");
+  if (!table || table.dataset.sortReady) return;
+  table.dataset.sortReady = "1";
+  table.querySelectorAll("th[data-reviews-sort]").forEach((th) => {
+    th.querySelector(".vyrobotka-th-btn")?.addEventListener("click", () => {
+      const key = th.getAttribute("data-reviews-sort");
+      if (reviewsCallsSort.key === key) reviewsCallsSort.dir *= -1;
+      else {
+        reviewsCallsSort.key = key;
+        reviewsCallsSort.dir = key === "called_at" ? -1 : 1;
+      }
+      renderReviewsCallsTable();
+    });
+  });
+}
+
+function reviewsCallSortValue(c, key) {
+  if (key === "called_at") return String(c.called_at || "");
+  if (key === "ticket") return String(c.ticket || "");
+  if (key === "manager") return String(c.manager || "").toLowerCase();
+  if (key === "outcome") return String(c.outcome || "");
+  if (key === "client") return String(c.client_name || c.phone || "").toLowerCase();
+  if (key === "comment") return String(c.comment || "").toLowerCase();
+  return "";
+}
+
+function reviewsOutcomeClass(code) {
+  if (code === "will_review") return "is-ok";
+  if (code === "unhappy") return "is-bad";
+  if (code === "no_answer") return "is-miss";
+  return "is-muted";
+}
+
+function renderReviewsAdminChips(data) {
+  const el = $("#reviews-admin-chips");
+  if (!el) return;
+  const b = data.batch;
+  const chips = [];
+  chips.push(
+    `<span class="vyrobotka-verify-chip ${data.inbox_configured ? "is-ok" : "is-miss"}">${
+      data.inbox_configured ? "Inbox CF OK" : "Inbox не настроен"
+    }</span>`,
+  );
+  if (b) {
+    chips.push(`<span class="vyrobotka-verify-chip">Пул ${escapeHtml(b.day || "—")} · ${escapeHtml(String(b.count ?? 0))}</span>`);
+    chips.push(`<span class="vyrobotka-verify-chip">Окно витрины ${escapeHtml(String(data.queue_size ?? 10))}</span>`);
+  } else {
+    chips.push(`<span class="vyrobotka-verify-chip is-miss">Пул не собран</span>`);
+  }
+  const rate = Math.round((data.will_review_rate || 0) * 100);
+  chips.push(`<span class="vyrobotka-verify-chip is-ok">Конверсия ${rate}%</span>`);
+  el.innerHTML = chips.join("");
+}
+
+function renderReviewsFilterChips(data) {
+  const el = $("#reviews-filter-chips");
+  if (!el) return;
+  const oc = data.outcome_counts || {};
+  const items = [
+    ["all", "Все", data.calls_total ?? 0],
+    ...Object.entries(data.outcomes || {}).map(([k, label]) => [k, label, oc[k] ?? 0]),
+  ];
+  el.innerHTML = items
+    .map(
+      ([key, label, n]) =>
+        `<button type="button" class="reviews-filter-chip${reviewsOutcomeFilter === key ? " is-active" : ""}" data-filter="${escapeHtml(key)}">${escapeHtml(label)} <em>${escapeHtml(String(n))}</em></button>`,
+    )
+    .join("");
+  el.querySelectorAll("[data-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      reviewsOutcomeFilter = btn.getAttribute("data-filter") || "all";
+      renderReviewsFilterChips(data);
+      renderReviewsCallsTable();
+    });
+  });
+}
+
+function renderReviewsManagers(data) {
+  const tbody = $("#reviews-managers-tbody");
+  if (!tbody) return;
+  const rows = data.managers || [];
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="quality-empty">Пока нет звонков</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows
+    .map((m) => {
+      const rate = Math.round((m.will_review_rate || 0) * 100);
+      return `<tr>
+        <td>${escapeHtml(m.manager || "—")}</td>
+        <td>${escapeHtml(String(m.total ?? 0))}</td>
+        <td>${escapeHtml(String(m.will_review ?? 0))}</td>
+        <td><span class="reviews-rate">${escapeHtml(String(rate))}%</span></td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderReviewsCallsTable() {
+  const data = reviewsStatsCache;
+  const tbody = $("#reviews-calls-tbody");
+  const meta = $("#reviews-calls-meta");
+  if (!data || !tbody) return;
+  updateVyrobotkaSortHeaders("reviews-calls-table", reviewsCallsSort, "data-reviews-sort");
+  let calls = [...(data.calls || [])];
+  if (reviewsOutcomeFilter !== "all") {
+    calls = calls.filter((c) => c.outcome === reviewsOutcomeFilter);
+  }
+  calls.sort((a, b) => {
+    const av = reviewsCallSortValue(a, reviewsCallsSort.key);
+    const bv = reviewsCallSortValue(b, reviewsCallsSort.key);
+    if (av < bv) return -1 * reviewsCallsSort.dir;
+    if (av > bv) return 1 * reviewsCallsSort.dir;
+    return (Number(b.id) || 0) - (Number(a.id) || 0);
+  });
+  if (meta) {
+    meta.textContent = `Показано ${calls.length} из ${data.calls_total ?? 0}`;
+  }
+  if (!calls.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Нет записей по фильтру</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = calls
+    .map((c) => {
+      const label = (data.outcomes && data.outcomes[c.outcome]) || c.outcome || "—";
+      const when = String(c.called_at || "").slice(0, 19).replace("T", " ");
+      const client = [c.client_name, c.phone].filter(Boolean).join(" · ") || "—";
+      return `<tr data-call-id="${escapeHtml(String(c.id))}">
+        <td>${escapeHtml(when)}</td>
+        <td><strong>${escapeHtml(c.ticket || "—")}</strong></td>
+        <td>${escapeHtml(c.manager || "—")}</td>
+        <td><span class="reviews-outcome ${reviewsOutcomeClass(c.outcome)}">${escapeHtml(label)}</span></td>
+        <td title="${escapeHtml(client)}">${escapeHtml(client)}</td>
+        <td title="${escapeHtml(c.comment || "")}">${escapeHtml(c.comment || "—")}</td>
+        <td class="reviews-row-actions">
+          <button type="button" class="reviews-del-btn" data-del="${escapeHtml(String(c.id))}" title="Удалить запись">✕</button>
+        </td>
+      </tr>`;
+    })
+    .join("");
+  tbody.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-del");
+      if (!id || !confirm(`Удалить запись #${id}? Клиент снова сможет попасть в пул после пересборки.`)) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/reviews/calls/${id}`, { method: "DELETE" });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.detail || j.error || res.statusText);
+        await loadReviewsStats();
+      } catch (err) {
+        alert(err.message || err);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function renderReviewsCharts(data) {
+  const oc = data.outcome_counts || {};
+  const canvasOc = $("#reviews-chart-outcomes");
+  if (canvasOc && typeof Chart !== "undefined") {
+    reviewsOutcomesChart?.destroy();
+    const labels = Object.keys(data.outcomes || {});
+    reviewsOutcomesChart = new Chart(canvasOc, {
+      type: "doughnut",
+      data: {
+        labels: labels.map((k) => data.outcomes[k] || k),
+        datasets: [
+          {
+            data: labels.map((k) => oc[k] || 0),
+            backgroundColor: [
+              "rgba(15, 110, 86, 0.75)",
+              "rgba(138, 90, 0, 0.65)",
+              "rgba(26, 79, 134, 0.55)",
+              "rgba(161, 40, 40, 0.7)",
+            ],
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
+      },
+    });
+  }
+  const canvasG = $("#reviews-chart-google");
+  if (canvasG && typeof Chart !== "undefined") {
+    reviewsGoogleChart?.destroy();
+    const latest = data.google_latest || [];
+    const nameBy = Object.fromEntries((data.branches || []).map((b) => [b.id, b.name]));
+    reviewsGoogleChart = new Chart(canvasG, {
+      type: "bar",
+      data: {
+        labels: latest.map((r) => nameBy[r.branch_id] || r.branch_id),
+        datasets: [
+          {
+            label: "Рейтинг",
+            data: latest.map((r) => r.rating),
+            backgroundColor: latest.map(
+              (r) => REVIEWS_BRANCH_COLORS[r.branch_id] || "rgba(70, 150, 220, 0.55)",
+            ),
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 1, max: 5, ticks: { stepSize: 0.5 } } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+  const canvasDyn = $("#reviews-chart-google-dyn");
+  if (canvasDyn && typeof Chart !== "undefined") {
+    reviewsGoogleDynChart?.destroy();
+    const series = data.google_series || {};
+    const days = series.days || [];
+    const byBranch = series.by_branch || {};
+    const nameBy = Object.fromEntries((data.branches || []).map((b) => [b.id, b.name]));
+    const branchIds = (data.branches || []).map((b) => b.id).filter((id) => byBranch[id]?.length);
+    const datasets = branchIds.map((bid) => {
+      const map = Object.fromEntries((byBranch[bid] || []).map((p) => [p.day, p.rating]));
+      return {
+        label: nameBy[bid] || bid,
+        data: days.map((d) => (map[d] != null ? map[d] : null)),
+        borderColor: REVIEWS_BRANCH_COLORS[bid] || "rgba(26, 79, 134, 0.8)",
+        backgroundColor: "transparent",
+        spanGaps: true,
+        tension: 0.25,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+      };
+    });
+    reviewsGoogleDynChart = new Chart(canvasDyn, {
+      type: "line",
+      data: {
+        labels: days.map((d) => {
+          const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+          return m ? `${m[3]}.${m[2]}` : d;
+        }),
+        datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          y: { min: 1, max: 5, ticks: { stepSize: 0.5 } },
+          x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        },
+      },
+    });
+  }
+}
 
 async function loadReviewsStats() {
   const statusEl = $("#reviews-sync-status");
   const meta = $("#reviews-meta");
   const kpis = $("#reviews-kpis");
-  const tbody = $("#reviews-calls-tbody");
+  initReviewsTableSort();
   try {
     const res = await fetch("/api/reviews/stats");
     const data = await res.json().catch(() => ({}));
@@ -6350,18 +6622,20 @@ async function loadReviewsStats() {
     if (meta) {
       const b = data.batch;
       meta.textContent = b
-        ? `Пул ${b.day || "—"} · ${b.count ?? 0} кандидатов · ${b.message || ""}`
-        : "Пула ещё нет — нажмите «Собрать пул кандидатов».";
+        ? `Пул на ${b.day || "—"}: ${b.count ?? 0} кандидатов. Витрина показывает по ${data.queue_size ?? 10}.`
+        : "Пула ещё нет — нажмите «Собрать пул кандидатов», затем опубликуйте витрину.";
     }
+    renderReviewsAdminChips(data);
     const oc = data.outcome_counts || {};
+    const rate = Math.round((data.will_review_rate || 0) * 100);
     if (kpis) {
       kpis.innerHTML = [
-        ["Всего звонков", String(data.calls_total ?? 0), ""],
-        ["Оставит отзыв", String(oc.will_review ?? 0), ""],
+        ["Всего звонков", String(data.calls_total ?? 0), "в журнале"],
+        ["Оставит отзыв", String(oc.will_review ?? 0), `${rate}% конверсия`],
         ["Не дозвон", String(oc.no_answer ?? 0), ""],
         ["Не оставит", String(oc.wont_review ?? 0), ""],
-        ["Недоволен", String(oc.unhappy ?? 0), ""],
-        ["Менеджеров", String((data.managers || []).length), ""],
+        ["Недоволен", String(oc.unhappy ?? 0), "эскалация"],
+        ["Менеджеров", String((data.managers || []).length), "в отчёте"],
       ]
         .map(
           ([l, v, h]) => `<div class="vyrobotka-kpi"><span class="vyrobotka-kpi-label">${escapeHtml(l)}</span>
@@ -6370,69 +6644,10 @@ async function loadReviewsStats() {
         )
         .join("");
     }
-    if (tbody) {
-      const calls = data.calls || [];
-      tbody.innerHTML = calls.length
-        ? calls
-            .slice(0, 100)
-            .map((c) => {
-              const label = (data.outcomes && data.outcomes[c.outcome]) || c.outcome || "—";
-              return `<tr>
-                <td>${escapeHtml(String(c.called_at || "").slice(0, 19).replace("T", " "))}</td>
-                <td>${escapeHtml(c.ticket || "—")}</td>
-                <td>${escapeHtml(c.manager || "—")}</td>
-                <td>${escapeHtml(label)}</td>
-                <td>${escapeHtml(c.client_name || c.phone || "—")}</td>
-                <td>${escapeHtml(c.comment || "—")}</td>
-              </tr>`;
-            })
-            .join("")
-        : `<tr><td colspan="6" class="quality-empty">Звонков пока нет</td></tr>`;
-    }
-    const canvasOc = $("#reviews-chart-outcomes");
-    if (canvasOc && typeof Chart !== "undefined") {
-      reviewsOutcomesChart?.destroy();
-      const labels = Object.keys(data.outcomes || {});
-      reviewsOutcomesChart = new Chart(canvasOc, {
-        type: "bar",
-        data: {
-          labels: labels.map((k) => data.outcomes[k] || k),
-          datasets: [
-            {
-              label: "Звонки",
-              data: labels.map((k) => oc[k] || 0),
-              backgroundColor: "rgba(26, 79, 134, 0.45)",
-            },
-          ],
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
-      });
-    }
-    const canvasG = $("#reviews-chart-google");
-    if (canvasG && typeof Chart !== "undefined") {
-      reviewsGoogleChart?.destroy();
-      const latest = data.google_latest || [];
-      const nameBy = Object.fromEntries((data.branches || []).map((b) => [b.id, b.name]));
-      reviewsGoogleChart = new Chart(canvasG, {
-        type: "bar",
-        data: {
-          labels: latest.map((r) => nameBy[r.branch_id] || r.branch_id),
-          datasets: [
-            {
-              label: "Рейтинг",
-              data: latest.map((r) => r.rating),
-              backgroundColor: "rgba(70, 150, 220, 0.45)",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { min: 1, max: 5 } },
-          plugins: { legend: { display: false } },
-        },
-      });
-    }
+    renderReviewsFilterChips(data);
+    renderReviewsManagers(data);
+    renderReviewsCallsTable();
+    renderReviewsCharts(data);
   } catch (err) {
     if (statusEl) statusEl.textContent = err.message || String(err);
   }

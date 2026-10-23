@@ -132,8 +132,14 @@ function latestHint(branchId) {
 function showGate() {
   const gate = $("#reviews-gate");
   const work = $("#reviews-work");
-  if (gate) gate.hidden = false;
-  if (work) work.hidden = true;
+  if (gate) {
+    gate.hidden = false;
+    gate.removeAttribute("hidden");
+  }
+  if (work) {
+    work.hidden = true;
+    work.setAttribute("hidden", "");
+  }
   try {
     sessionStorage.removeItem(SS_GATE);
   } catch {
@@ -260,8 +266,14 @@ async function submitGoogleGate() {
 function showWork() {
   const gate = $("#reviews-gate");
   const work = $("#reviews-work");
-  if (gate) gate.hidden = true;
-  if (work) work.hidden = false;
+  if (gate) {
+    gate.hidden = true;
+    gate.setAttribute("hidden", "");
+  }
+  if (work) {
+    work.hidden = false;
+    work.removeAttribute("hidden");
+  }
   renderSessionGoogle();
   renderQueue();
 }

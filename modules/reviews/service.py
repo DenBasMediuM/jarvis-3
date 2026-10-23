@@ -110,21 +110,68 @@ class ReviewsService:
                 "message": batch.get("message"),
                 "count": len(tickets) if isinstance(tickets, list) else 0,
             }
-        google = await self.db.reviews_list_google_stats(limit=200)
+        google = await self.db.reviews_list_google_stats(limit=1000)
         latest = await self.db.reviews_latest_google_stats()
+        will = by_outcome.get("will_review") or 0
+        total = len(calls) or 0
         return {
             "ok": True,
             "outcomes": CALL_OUTCOMES,
             "outcome_counts": by_outcome,
-            "managers": sorted(by_manager.values(), key=lambda x: (-x["total"], x["manager"])),
-            "calls_total": len(calls),
-            "calls": calls[:200],
+            "will_review_rate": round(will / total, 3) if total else 0,
+            "managers": sorted(by_manager.values(), key=lambda x: (-x["will_review"], -x["total"], x["manager"])),
+            "calls_total": total,
+            "calls": calls[:500],
             "batch": batch_out,
             "google_stats": google,
             "google_latest": latest,
+            "google_series": self._google_series(google),
             "branches": branches_public(),
             "inbox_configured": self.inbox_client().configured,
+            "queue_size": QUEUE_SIZE,
+            "pool_size": POOL_SIZE,
         }
+
+    @staticmethod
+    def _google_series(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Одна точка на день на филиал (в БД UNIQUE day+branch — уже последний снимок дня)."""
+        by_branch: dict[str, list[dict[str, Any]]] = {}
+        days: set[str] = set()
+        for r in rows:
+            bid = str(r.get("branch_id") or "")
+            day = str(r.get("day") or "")[:10]
+            if not bid or len(day) < 8:
+                continue
+            days.add(day)
+            by_branch.setdefault(bid, []).append(
+                {
+                    "day": day,
+                    "rating": float(r.get("rating") or 0),
+                    "review_count": int(r.get("review_count") or 0),
+                    "noted_at": r.get("noted_at"),
+                }
+            )
+        for bid, series in by_branch.items():
+            # на всякий случай: если дубли дня — берём по noted_at / порядку
+            best: dict[str, dict[str, Any]] = {}
+            for p in series:
+                prev = best.get(p["day"])
+                if not prev or str(p.get("noted_at") or "") >= str(prev.get("noted_at") or ""):
+                    best[p["day"]] = p
+            by_branch[bid] = [best[d] for d in sorted(best.keys())]
+        return {
+            "days": sorted(days),
+            "by_branch": by_branch,
+        }
+
+    async def delete_call(self, call_id: int) -> dict[str, Any]:
+        row = await self.db.reviews_get_call(call_id)
+        if not row:
+            raise ValueError("not_found")
+        ok = await self.db.reviews_delete_call(call_id)
+        if not ok:
+            raise ValueError("not_found")
+        return {"ok": True, "deleted_id": int(call_id), "ticket": row.get("ticket")}
 
     async def ingest_inbox(self) -> dict[str, Any]:
         client = self.inbox_client()

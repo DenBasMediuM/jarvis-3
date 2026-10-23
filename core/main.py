@@ -537,6 +537,18 @@ async def reviews_publish_pages() -> dict[str, Any]:
         raise HTTPException(500, str(exc)) from exc
 
 
+@app.delete("/api/reviews/calls/{call_id}")
+async def reviews_delete_call(call_id: int) -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.delete_call(int(call_id))
+    except ValueError as exc:
+        raise HTTPException(404, "Запись не найдена") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
 @app.get("/api/branch-kpi/stats")
 async def branch_kpi_stats() -> dict[str, Any]:
     if not branch_kpi_service:

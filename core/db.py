@@ -1879,6 +1879,22 @@ class Database:
         )
         return [dict(r) for r in await cur.fetchall()]
 
+    async def reviews_delete_call(self, call_id: int) -> bool:
+        cur = await self.conn.execute(
+            "DELETE FROM reviews_calls WHERE id = ?",
+            (int(call_id),),
+        )
+        await self.conn.commit()
+        return int(cur.rowcount or 0) > 0
+
+    async def reviews_get_call(self, call_id: int) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM reviews_calls WHERE id = ?",
+            (int(call_id),),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
     async def reviews_called_phones(self) -> set[str]:
         cur = await self.conn.execute(
             "SELECT DISTINCT phone_norm FROM reviews_calls WHERE phone_norm IS NOT NULL AND phone_norm != ''"

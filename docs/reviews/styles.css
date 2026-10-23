@@ -1,4 +1,10 @@
 /* Сбор отзывов */
+/* .stack задаёт display:grid и перебивает нативный [hidden] */
+#reviews-gate[hidden],
+#reviews-work[hidden] {
+  display: none !important;
+}
+
 .reviews-step-badge {
   display: inline-block;
   margin: 0 0 6px;

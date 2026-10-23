@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261023-reviews2" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261023-reviews4" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -534,39 +534,93 @@
             </div>
           </article>
 
-          <article id="reviews-body" class="vyrobotka-section" hidden>
-            <header class="vyrobotka-section-head">
-              <h2>Сбор отзывов</h2>
-              <p id="reviews-meta">
-                Очередь прозвона и отчёт по менеджерам. Рейтинг Google вводит менеджер на витрине перед работой.
-                Квоты CF: Dashboard → Workers → Metrics / Plans.
-              </p>
+          <article id="reviews-body" class="vyrobotka-section reviews-admin" hidden>
+            <header class="vyrobotka-section-head reviews-admin-head">
+              <div>
+                <h2>Сбор отзывов</h2>
+                <p id="reviews-meta">Пул кандидатов, отчёт по звонкам и динамика рейтинга Google.</p>
+              </div>
+              <div class="reviews-admin-chips" id="reviews-admin-chips" aria-label="Статус пула"></div>
             </header>
             <div class="vyrobotka-kpis" id="reviews-kpis" aria-label="Сводка отзывов"></div>
-            <div class="vyrobotka-charts" style="margin-top:12px">
+            <div class="reviews-admin-charts">
               <section class="vyrobotka-chart-panel">
                 <h3>Исходы звонков</h3>
+                <p class="vyrobotka-chart-sub">Распределение результатов прозвона</p>
                 <div class="vyrobotka-chart-box"><canvas id="reviews-chart-outcomes"></canvas></div>
               </section>
               <section class="vyrobotka-chart-panel">
-                <h3>Рейтинг Google по филиалам</h3>
+                <h3>Текущий рейтинг</h3>
+                <p class="vyrobotka-chart-sub">Последний снимок по филиалам</p>
                 <div class="vyrobotka-chart-box"><canvas id="reviews-chart-google"></canvas></div>
               </section>
+              <section class="vyrobotka-chart-panel reviews-admin-chart-wide">
+                <h3>Динамика рейтинга Google</h3>
+                <p class="vyrobotka-chart-sub">Одна точка на день · при нескольких вводах за день берётся последний</p>
+                <div class="vyrobotka-chart-box reviews-admin-chart-tall"><canvas id="reviews-chart-google-dyn"></canvas></div>
+              </section>
             </div>
-            <div class="table-wrap" style="margin-top:14px">
-              <table class="quality-table">
-                <thead>
-                  <tr>
-                    <th>Когда</th>
-                    <th>Кв.</th>
-                    <th>Менеджер</th>
-                    <th>Исход</th>
-                    <th>Клиент</th>
-                    <th>Комментарий</th>
-                  </tr>
-                </thead>
-                <tbody id="reviews-calls-tbody"></tbody>
-              </table>
+            <div class="reviews-admin-split">
+              <section class="reviews-admin-panel">
+                <div class="vyrobotka-side-head">
+                  <h3>Менеджеры</h3>
+                  <p class="vyrobotka-chart-sub" style="margin:0">Конверсия в «оставит отзыв»</p>
+                </div>
+                <div class="vyrobotka-table-wrap">
+                  <table class="quality-table vyrobotka-table" id="reviews-managers-table">
+                    <thead>
+                      <tr>
+                        <th>Менеджер</th>
+                        <th>Звонков</th>
+                        <th>Оставит</th>
+                        <th>%</th>
+                      </tr>
+                    </thead>
+                    <tbody id="reviews-managers-tbody">
+                      <tr><td colspan="4" class="quality-empty">—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <section class="reviews-admin-panel reviews-admin-panel-main">
+                <div class="vyrobotka-side-head reviews-admin-table-head">
+                  <div>
+                    <h3>Журнал звонков</h3>
+                    <p class="vyrobotka-chart-sub" style="margin:0" id="reviews-calls-meta">—</p>
+                  </div>
+                  <div class="reviews-filter-chips" id="reviews-filter-chips" role="group" aria-label="Фильтр исходов"></div>
+                </div>
+                <div class="vyrobotka-table-wrap">
+                  <table class="quality-table vyrobotka-table" id="reviews-calls-table">
+                    <thead>
+                      <tr>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="called_at">
+                          <button type="button" class="vyrobotka-th-btn">Когда<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="ticket">
+                          <button type="button" class="vyrobotka-th-btn">Кв.<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="manager">
+                          <button type="button" class="vyrobotka-th-btn">Менеджер<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="outcome">
+                          <button type="button" class="vyrobotka-th-btn">Исход<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="client">
+                          <button type="button" class="vyrobotka-th-btn">Клиент<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-reviews-sort="comment">
+                          <button type="button" class="vyrobotka-th-btn">Комментарий<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="reviews-calls-tbody">
+                      <tr><td colspan="7" class="quality-empty">—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
           </article>
         </div>
@@ -689,6 +743,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261023-reviews2"></script>
+  <script src="/static/app.js?v=20261023-reviews4"></script>
 </body>
 </html>
