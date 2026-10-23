@@ -2,6 +2,8 @@
 
 Inbox сбора отзывов: витрина `POST /result`, `POST /google-stats`; Jarvis `GET /inbox` + `POST /inbox/ack`.
 
+Очередь из 10 квитанций собирается **на витрине** из опубликованного пула кандидатов (`data.json`): обработали одну — подтягивается следующая из пула. Cloudflare хранит только результаты (KV), не CRM.
+
 ## Деплой
 
 1. Workers & Pages → Create Worker **jarvis-reviews-inbox**.

@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261023-reviews1" />
-  <link rel="stylesheet" href="./styles.css?v=20261023-reviews1" />
-  <script src="../shared/auth.js?v=20261023-reviews1"></script>
-  <script src="./app.js?v=20261023-reviews1" defer></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261023-reviews2" />
+  <link rel="stylesheet" href="./styles.css?v=20261023-reviews2" />
+  <script src="../shared/auth.js?v=20261023-reviews2"></script>
+  <script src="./app.js?v=20261023-reviews2" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -35,7 +35,7 @@
     <header class="mod-top">
       <div>
         <h1>Сбор отзывов</h1>
-        <p class="mod-sub">Прозвон после короткого ремонта · рейтинг Google по филиалам</p>
+        <p class="mod-sub">Сначала рейтинг Google · затем очередь из 10 квитанций</p>
       </div>
       <div class="mod-meta" id="export-meta">Загрузка data.json…</div>
     </header>
@@ -46,24 +46,41 @@
 
     <main class="stack">
       <section id="reviews-gate" class="stack">
-        <article class="card">
-          <h2>Шаг 1 · Рейтинг Google по филиалам</h2>
-          <p class="card-sub">
-            Перед прозвоном откройте карточки трёх филиалов в Google и введите актуальный рейтинг и число отзывов.
-          </p>
+        <article class="card reviews-gate-card">
+          <div class="reviews-gate-head">
+            <div>
+              <p class="reviews-step-badge">Шаг 1 из 2</p>
+              <h2>Рейтинг Google по филиалам</h2>
+              <p class="card-sub">
+                При каждом входе откройте три карточки в Maps, перенесите сюда рейтинг и число отзывов — после сохранения откроется очередь.
+              </p>
+            </div>
+            <ol class="reviews-gate-hint" aria-label="Как заполнить">
+              <li>Откройте филиал в Google</li>
+              <li>Скопируйте ★ и число отзывов</li>
+              <li>Нажмите «Начать прозвон»</li>
+            </ol>
+          </div>
           <div class="reviews-gate" id="reviews-gate-branches"></div>
-          <div class="reviews-actions">
-            <button type="button" class="reviews-btn is-primary" id="reviews-start-btn">Сохранить и начать прозвон</button>
-            <span class="reviews-status" id="reviews-gate-status"></span>
+          <div class="reviews-gate-footer">
+            <p class="reviews-status" id="reviews-gate-status"></p>
+            <button type="button" class="reviews-btn is-primary reviews-btn-lg" id="reviews-start-btn">
+              Сохранить и начать прозвон
+            </button>
           </div>
         </article>
       </section>
 
       <section id="reviews-work" class="stack" hidden>
         <article class="card">
-          <h2>Очередь на сегодня</h2>
-          <p class="card-sub" id="reviews-queue-meta">—</p>
-          <p class="card-sub">Последние рейтинги в снимке: <span id="reviews-google-latest"></span></p>
+          <div class="reviews-work-head">
+            <div>
+              <p class="reviews-step-badge">Шаг 2 из 2</p>
+              <h2>Очередь прозвона</h2>
+              <p class="card-sub" id="reviews-queue-meta">—</p>
+            </div>
+            <div class="reviews-session-google" id="reviews-session-google"></div>
+          </div>
           <div class="reviews-queue" id="reviews-queue"></div>
         </article>
       </section>

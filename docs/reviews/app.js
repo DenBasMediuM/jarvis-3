@@ -1,12 +1,11 @@
-/* global Chart */
-
 const $ = (sel) => document.querySelector(sel);
-const LS_GOOGLE = "jarvis.reviews.googleDay";
 const LS_DONE = "jarvis.reviews.doneTickets";
 const LS_DEFER = "jarvis.reviews.deferred";
+const SS_GATE = "jarvis.reviews.gateOk";
 
 let DATA = null;
-let googleChart = null;
+/** Рейтинги, введённые в текущей сессии (после гейта). */
+let sessionGoogle = [];
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -29,6 +28,11 @@ function vitrineLogin() {
   } catch {
     return "";
   }
+}
+
+function queueSize() {
+  const n = Number(DATA?.queue_size ?? DATA?.counts?.queue_size ?? 10);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
 }
 
 function loadDone() {
@@ -55,18 +59,6 @@ function saveDeferred(set) {
   localStorage.setItem(LS_DEFER, JSON.stringify([...set]));
 }
 
-function googleGateDoneToday() {
-  try {
-    return localStorage.getItem(LS_GOOGLE) === todayISO();
-  } catch {
-    return false;
-  }
-}
-
-function markGoogleGateDone() {
-  localStorage.setItem(LS_GOOGLE, todayISO());
-}
-
 function inboxBase() {
   return String(DATA?.inbox?.url || "").replace(/\/$/, "");
 }
@@ -81,6 +73,35 @@ function fmtWhen(issuedAt) {
   const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return ` (${d})`;
   return ` ${m[3]}.${m[2]}.${m[1]}`;
+}
+
+function poolCards() {
+  return Array.isArray(DATA?.cards) ? DATA.cards : [];
+}
+
+/** Окно из QUEUE_SIZE: активные + при нехватке — отложенные. */
+function visibleQueue() {
+  const done = loadDone();
+  const deferred = loadDeferred();
+  const pool = poolCards();
+  const active = pool.filter((c) => {
+    const t = String(c.ticket);
+    return !done.has(t) && !deferred.has(t);
+  });
+  const deferredCards = pool.filter((c) => {
+    const t = String(c.ticket);
+    return deferred.has(t) && !done.has(t);
+  });
+  const size = queueSize();
+  const windowCards = [...active, ...deferredCards].slice(0, size);
+  return {
+    windowCards,
+    activeCount: active.length,
+    deferredCount: deferredCards.length,
+    doneCount: [...done].filter((t) => pool.some((c) => String(c.ticket) === t)).length,
+    poolLeft: active.length + deferredCards.length,
+    poolTotal: pool.length,
+  };
 }
 
 function renderScript(card) {
@@ -101,45 +122,111 @@ function renderScript(card) {
     .join("");
 }
 
+function latestHint(branchId) {
+  const rows = DATA?.google_latest || [];
+  const hit = rows.find((r) => r.branch_id === branchId);
+  if (!hit) return null;
+  return { rating: hit.rating, review_count: hit.review_count, day: hit.day };
+}
+
 function showGate() {
   const gate = $("#reviews-gate");
   const work = $("#reviews-work");
   if (gate) gate.hidden = false;
   if (work) work.hidden = true;
+  try {
+    sessionStorage.removeItem(SS_GATE);
+  } catch {
+    /* ignore */
+  }
   const branches = DATA?.branches || [];
   const box = $("#reviews-gate-branches");
   if (!box) return;
   box.innerHTML = branches
-    .map(
-      (b) => `<article class="reviews-branch-card" data-branch="${escapeHtml(b.id)}">
-        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-          <h3>${escapeHtml(b.name)}</h3>
-          <a class="reviews-btn" href="${escapeHtml(b.maps_url)}" target="_blank" rel="noopener">Открыть в Google ↗</a>
+    .map((b, i) => {
+      const hint = latestHint(b.id);
+      const hintHtml = hint
+        ? `<p class="reviews-branch-hint">В прошлом снимке: ★ ${escapeHtml(hint.rating)} · ${escapeHtml(hint.review_count)} отз. (${escapeHtml(String(hint.day || ""))})</p>`
+        : `<p class="reviews-branch-hint">Откройте карточку в Google Maps и перенесите значения.</p>`;
+      return `<article class="reviews-branch-card" data-branch="${escapeHtml(b.id)}">
+        <div class="reviews-branch-top">
+          <h3><span class="reviews-branch-num">${i + 1}</span>${escapeHtml(b.name)}</h3>
+          <a class="reviews-btn is-primary" href="${escapeHtml(b.maps_url)}" target="_blank" rel="noopener">Открыть в Google ↗</a>
         </div>
-        <p class="card-sub">Откройте карточку, посмотрите рейтинг и число отзывов, введите сюда.</p>
+        ${hintHtml}
         <div class="reviews-branch-fields">
-          <label>Рейтинг (1–5)<input type="number" min="1" max="5" step="0.1" data-rating required /></label>
-          <label>Число отзывов<input type="number" min="0" step="1" data-count required /></label>
+          <label>Рейтинг ★ (1–5)
+            <input type="number" min="1" max="5" step="0.1" inputmode="decimal" data-rating placeholder="4.5" required />
+          </label>
+          <label>Число отзывов
+            <input type="number" min="0" step="1" inputmode="numeric" data-count placeholder="128" required />
+          </label>
         </div>
-      </article>`,
-    )
+      </article>`;
+    })
     .join("");
+
+  box.querySelectorAll("[data-branch]").forEach((el) => {
+    const mark = () => {
+      const rating = Number(el.querySelector("[data-rating]")?.value);
+      const count = Number(el.querySelector("[data-count]")?.value);
+      const ok =
+        Number.isFinite(rating) &&
+        rating >= 1 &&
+        rating <= 5 &&
+        Number.isFinite(count) &&
+        count >= 0 &&
+        Number.isInteger(count);
+      el.classList.toggle("is-filled", ok);
+    };
+    el.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("input", mark);
+      inp.addEventListener("change", mark);
+    });
+  });
+}
+
+function collectGateBranches() {
+  const branches = [];
+  const errors = [];
+  document.querySelectorAll("#reviews-gate-branches [data-branch]").forEach((el) => {
+    const id = el.getAttribute("data-branch");
+    const name = el.querySelector("h3")?.textContent?.replace(/^\d+/, "").trim() || id;
+    const rawRating = String(el.querySelector("[data-rating]")?.value ?? "").trim();
+    const rawCount = String(el.querySelector("[data-count]")?.value ?? "").trim();
+    const rating = Number(rawRating);
+    const review_count = Number(rawCount);
+    if (!rawRating || !Number.isFinite(rating) || rating < 1 || rating > 5) {
+      errors.push(`${name}: укажите рейтинг 1–5`);
+      return;
+    }
+    if (!rawCount || !Number.isFinite(review_count) || review_count < 0 || !Number.isInteger(review_count)) {
+      errors.push(`${name}: укажите целое число отзывов`);
+      return;
+    }
+    branches.push({ id, rating, review_count });
+  });
+  return { branches, errors };
 }
 
 async function submitGoogleGate() {
   const status = $("#reviews-gate-status");
-  const branches = [];
-  document.querySelectorAll("#reviews-gate-branches [data-branch]").forEach((el) => {
-    const id = el.getAttribute("data-branch");
-    const rating = Number(el.querySelector("[data-rating]")?.value);
-    const review_count = Number(el.querySelector("[data-count]")?.value);
-    branches.push({ id, rating, review_count });
-  });
+  const btn = $("#reviews-start-btn");
+  const { branches, errors } = collectGateBranches();
+  if (errors.length) {
+    if (status) status.textContent = errors[0];
+    return;
+  }
+  if (branches.length < (DATA?.branches || []).length) {
+    if (status) status.textContent = "Заполните все три филиала.";
+    return;
+  }
   if (!inboxBase() || !writeKey()) {
-    if (status) status.textContent = "Inbox не настроен — экспортируйте модуль из Jarvis после деплоя Worker.";
+    if (status) status.textContent = "Inbox не настроен — опубликуйте витрину из Jarvis после деплоя Worker.";
     return;
   }
   if (status) status.textContent = "Отправка…";
+  if (btn) btn.disabled = true;
   try {
     const res = await fetch(`${inboxBase()}/google-stats`, {
       method: "POST",
@@ -155,11 +242,18 @@ async function submitGoogleGate() {
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.error || res.statusText);
-    markGoogleGateDone();
-    if (status) status.textContent = "Сохранено. Можно начинать прозвон.";
+    sessionGoogle = branches;
+    try {
+      sessionStorage.setItem(SS_GATE, "1");
+    } catch {
+      /* ignore */
+    }
+    if (status) status.textContent = "Сохранено.";
     showWork();
   } catch (err) {
     if (status) status.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -168,54 +262,61 @@ function showWork() {
   const work = $("#reviews-work");
   if (gate) gate.hidden = true;
   if (work) work.hidden = false;
+  renderSessionGoogle();
   renderQueue();
-  renderGoogleLatest();
 }
 
-function renderGoogleLatest() {
-  const el = $("#reviews-google-latest");
+function renderSessionGoogle() {
+  const el = $("#reviews-session-google");
   if (!el) return;
-  const rows = DATA?.google_latest || [];
+  const byId = Object.fromEntries((DATA?.branches || []).map((b) => [b.id, b.name]));
+  const rows = sessionGoogle.length
+    ? sessionGoogle
+    : (DATA?.google_latest || []).map((r) => ({
+        id: r.branch_id,
+        rating: r.rating,
+        review_count: r.review_count,
+      }));
   if (!rows.length) {
-    el.textContent = "В снимке ещё нет сохранённых рейтингов (появятся после ingest в Jarvis).";
+    el.innerHTML = "";
     return;
   }
-  const byId = Object.fromEntries((DATA?.branches || []).map((b) => [b.id, b.name]));
   el.innerHTML = rows
     .map(
-      (r) => `<span class="chip">${escapeHtml(byId[r.branch_id] || r.branch_id)}:
-        <strong>${escapeHtml(r.rating)}</strong> · ${escapeHtml(r.review_count)} отз.
-        · ${escapeHtml(String(r.day || ""))}</span>`,
+      (r) =>
+        `<span class="chip">${escapeHtml(byId[r.id] || r.id)}: <strong>★ ${escapeHtml(r.rating)}</strong> · ${escapeHtml(r.review_count)}</span>`,
     )
-    .join(" ");
+    .join("");
 }
 
 function renderQueue() {
   const list = $("#reviews-queue");
   const meta = $("#reviews-queue-meta");
-  const cards = Array.isArray(DATA?.cards) ? DATA.cards : [];
-  const done = loadDone();
-  const deferred = loadDeferred();
-  const active = cards.filter((c) => !done.has(String(c.ticket)) && !deferred.has(String(c.ticket)));
-  const deferredCards = cards.filter((c) => deferred.has(String(c.ticket)) && !done.has(String(c.ticket)));
+  const q = visibleQueue();
   if (meta) {
-    meta.textContent = `Очередь на ${DATA?.batch?.day || "—"} · осталось ${active.length} · отложено ${deferredCards.length} · сделано ${done.size}`;
+    meta.textContent =
+      `В окне ${q.windowCards.length} из ${queueSize()} · в пуле ещё ${q.poolLeft} · сделано ${q.doneCount}` +
+      (q.deferredCount ? ` · отложено ${q.deferredCount}` : "") +
+      ` · снимок ${DATA?.batch?.day || "—"} (${q.poolTotal} кандидатов)`;
   }
   if (!list) return;
-  if (!cards.length) {
-    list.innerHTML = `<p class="empty">Нет карточек в снимке. В админке Jarvis: Сбор отзывов → «Собрать очередь» → экспорт/публикация.</p>`;
+  if (!q.poolTotal) {
+    list.innerHTML = `<p class="empty">Пул пуст. В админке Jarvis: «Собрать пул кандидатов» → опубликовать витрину.</p>`;
     return;
   }
-  const ordered = [...active, ...deferredCards];
-  list.innerHTML = ordered
-    .map((c) => {
+  if (!q.windowCards.length) {
+    list.innerHTML = `<p class="empty">Все кандидаты из пула обработаны. Соберите новый пул в Jarvis и опубликуйте витрину.</p>`;
+    return;
+  }
+  const deferred = loadDeferred();
+  list.innerHTML = q.windowCards
+    .map((c, i) => {
       const t = String(c.ticket);
       const isDef = deferred.has(t);
-      const isDone = done.has(t);
-      return `<button type="button" class="reviews-queue-item${isDone ? " is-done" : ""}" data-ticket="${escapeHtml(t)}">
-        <span><strong>№${escapeHtml(t)}</strong> · ${escapeHtml(c.client_name || "клиент")}
+      return `<button type="button" class="reviews-queue-item${isDef ? " is-deferred" : ""}" data-ticket="${escapeHtml(t)}">
+        <span><span class="pos">${i + 1}.</span><strong>№${escapeHtml(t)}</strong> · ${escapeHtml(c.client_name || "клиент")}
           <br><span class="card-sub">${escapeHtml(c.device || "—")} · ${escapeHtml(c.branch_name || c.location || "—")}</span></span>
-        <span class="card-sub">${isDef ? "отложено" : isDone ? "готово" : "открыть"}</span>
+        <span class="card-sub">${isDef ? "отложено" : "открыть"}</span>
       </button>`;
     })
     .join("");
@@ -229,7 +330,7 @@ function closeModal() {
 }
 
 function openCard(ticket) {
-  const card = (DATA?.cards || []).find((c) => String(c.ticket) === String(ticket));
+  const card = poolCards().find((c) => String(c.ticket) === String(ticket));
   if (!card) return;
   closeModal();
   const outcomes = DATA?.outcomes || {};
@@ -331,6 +432,7 @@ function openCard(ticket) {
         def.delete(String(ticket));
         saveDeferred(def);
         closeModal();
+        // Сразу доливается следующая из пула (окно из 10).
         renderQueue();
       } catch (err) {
         if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
@@ -353,14 +455,14 @@ async function boot() {
   }
   if (meta) {
     const when = DATA.exported_at ? new Date(DATA.exported_at).toLocaleString("ru-RU") : "—";
-    meta.textContent = `Снимок: ${when} · карточек ${DATA.cards?.length ?? 0}`;
+    meta.textContent = `Снимок: ${when} · пул ${DATA.cards?.length ?? 0} · окно ${queueSize()}`;
   }
   if (!DATA.branches?.length) {
     DATA.branches = [];
   }
   $("#reviews-start-btn")?.addEventListener("click", () => submitGoogleGate());
-  if (googleGateDoneToday()) showWork();
-  else showGate();
+  // Каждый заход — сначала гейт рейтинга (не пропускаем по localStorage).
+  showGate();
 }
 
 boot();

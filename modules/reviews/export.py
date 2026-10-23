@@ -25,21 +25,25 @@ def build_reviews_pages_payload(
     cards: list[dict[str, Any]],
     inbox: dict[str, Any] | None = None,
     google_latest: list[dict[str, Any]] | None = None,
+    queue_size: int = 10,
 ) -> dict[str, Any]:
     inbox_out = dict(inbox or {})
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "source": "jarvis-reviews",
         "branches": branches_public(),
         "outcomes": dict(CALL_OUTCOMES),
         "call_script": dict(DEFAULT_CALL_SCRIPT),
         "inbox": inbox_out,
+        "queue_size": int(queue_size),
         "batch": batch or {"day": None, "tickets": [], "cards": []},
         "cards": cards,
         "google_latest": google_latest or [],
         "counts": {
+            "pool": len(cards),
             "batch": len(cards),
+            "queue_size": int(queue_size),
             "branches": len(branches_public()),
         },
     }

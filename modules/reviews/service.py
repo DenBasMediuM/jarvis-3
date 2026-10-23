@@ -31,7 +31,9 @@ GincoreFactory = Callable[[], Awaitable[Any]]
 
 MAX_REPAIR_DAYS = 10
 LOOKBACK_DAYS = 21
-BATCH_SIZE = 10
+# Пул кандидатов в снимке; витрина сама держит «окно» из QUEUE_SIZE и доливает при обработке.
+POOL_SIZE = 50
+QUEUE_SIZE = 10
 
 
 def _now() -> str:
@@ -247,13 +249,14 @@ class ReviewsService:
                     "phone_norm": phone_norm or None,
                 }
             )
-            if len(candidates) >= BATCH_SIZE * 4:
+            if len(candidates) >= POOL_SIZE * 2:
                 break
 
-        # Обогатить до BATCH_SIZE карточек (телефон, лента, срок ремонта ≤ MAX_REPAIR_DAYS)
+        # Обогатить пул (телефон, лента, срок ремонта ≤ MAX_REPAIR_DAYS).
+        # Уже прозвоненные ticket/phone из reviews_calls не попадают в пул.
         cards: list[dict[str, Any]] = []
         for cand in candidates:
-            if len(cards) >= BATCH_SIZE:
+            if len(cards) >= POOL_SIZE:
                 break
             try:
                 card = await self._enrich_card(client, cand)
@@ -266,17 +269,26 @@ class ReviewsService:
             if pn and (pn in called_phones or any(c.get("phone_norm") == pn for c in cards)):
                 continue
             if not pn and not card.get("phone"):
-                # без телефона звонить некому — пропускаем
                 continue
             if pn:
                 card["phone_norm"] = pn
             cards.append(card)
 
         tickets = [str(c["ticket"]) for c in cards]
-        msg = f"Батч {today}: {len(cards)} клиентов (окно {LOOKBACK_DAYS}д, ремонт ≤{MAX_REPAIR_DAYS}д)"
+        msg = (
+            f"Пул {today}: {len(cards)} кандидатов "
+            f"(витрина держит {QUEUE_SIZE} в очереди; окно {LOOKBACK_DAYS}д, ремонт ≤{MAX_REPAIR_DAYS}д)"
+        )
         await self.db.reviews_set_batch(day=today, tickets=tickets, cards=cards, message=msg)
         await self._safe_export()
-        return {"ok": True, "day": today, "count": len(cards), "message": msg, "tickets": tickets}
+        return {
+            "ok": True,
+            "day": today,
+            "count": len(cards),
+            "queue_size": QUEUE_SIZE,
+            "message": msg,
+            "tickets": tickets,
+        }
 
     async def _enrich_card(self, client: Any, cand: dict[str, Any]) -> dict[str, Any] | None:
         from modules.gincore.quality import parse_order_page_meta
@@ -383,6 +395,7 @@ class ReviewsService:
                 "write_key": app_settings.reviews_inbox_write_key or None,
             },
             google_latest=await self.db.reviews_latest_google_stats(),
+            queue_size=QUEUE_SIZE,
         )
         # call_script уже в builder
         out = write_reviews_pages(payload, path=path)  # type: ignore[arg-type]

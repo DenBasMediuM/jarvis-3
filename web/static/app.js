@@ -6350,8 +6350,8 @@ async function loadReviewsStats() {
     if (meta) {
       const b = data.batch;
       meta.textContent = b
-        ? `Батч ${b.day || "—"} · ${b.count ?? 0} карточек · ${b.message || ""}`
-        : "Очереди ещё нет — нажмите «Собрать очередь».";
+        ? `Пул ${b.day || "—"} · ${b.count ?? 0} кандидатов · ${b.message || ""}`
+        : "Пула ещё нет — нажмите «Собрать пул кандидатов».";
     }
     const oc = data.outcome_counts || {};
     if (kpis) {
@@ -6453,11 +6453,11 @@ $("#reviews-batch-btn")?.addEventListener("click", async () => {
   const statusEl = $("#reviews-sync-status");
   const btn = $("#reviews-batch-btn");
   if (btn) btn.disabled = true;
-  if (statusEl) statusEl.textContent = "Сборка очереди из CRM…";
+  if (statusEl) statusEl.textContent = "Сборка пула из CRM (долго: открываем карточки)…";
   try {
     const data = await reviewsPost("/api/reviews/batch", { force: true });
     if (statusEl) statusEl.textContent = data.message || `Готово: ${data.count ?? 0}`;
-    alert(data.message || `Очередь: ${data.count ?? 0}`);
+    alert(data.message || `Пул: ${data.count ?? 0} кандидатов`);
     await loadReviewsStats();
   } catch (err) {
     alert(err.message || err);
