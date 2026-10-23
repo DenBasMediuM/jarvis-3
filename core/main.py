@@ -31,6 +31,7 @@ from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
+from modules.reviews.service import ReviewsService
 
 
 db = Database(settings.resolved_db_path())
@@ -41,6 +42,7 @@ quality_service: QualityService | None = None
 vyrobotka_service: VyrobotkaService | None = None
 branch_kpi_service: BranchKpiService | None = None
 masters_kpi_service: MastersKpiService | None = None
+reviews_service: ReviewsService | None = None
 
 
 class ChatRequest(BaseModel):
@@ -145,7 +147,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
-    global masters_kpi_service
+    global masters_kpi_service, reviews_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -181,10 +183,22 @@ async def lifespan(_: FastAPI):
     masters_kpi_service = MastersKpiService(
         db, lambda: get_module_settings("vyrobotka")
     )
+
+    async def _reviews_gincore():
+        client = await _gincore_client()
+        await client.ensure_login()
+        return client
+
+    reviews_service = ReviewsService(db, gincore_client_factory=_reviews_gincore)
     # Подтянуть решения витрины из Cloudflare KV (если настроено)
     if vyrobotka_service is not None:
         try:
             await vyrobotka_service.ingest_debt_decisions()
+        except Exception:  # noqa: BLE001
+            pass
+    if reviews_service is not None:
+        try:
+            await reviews_service.ingest_inbox()
         except Exception:  # noqa: BLE001
             pass
     yield
@@ -458,6 +472,67 @@ async def vyrobotka_publish_pages() -> dict[str, Any]:
         raise HTTPException(503, "Сервис Выработка не готов")
     try:
         return await vyrobotka_service.publish_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+class ReviewsBatchBody(BaseModel):
+    force: bool = False
+
+
+@app.get("/api/reviews/stats")
+async def reviews_stats() -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    return await reviews_service.get_stats()
+
+
+@app.post("/api/reviews/batch")
+async def reviews_build_batch(body: ReviewsBatchBody | None = None) -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.build_batch(force=bool(body.force if body else False))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/reviews/card/{ticket}")
+async def reviews_card(ticket: str) -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.get_card(ticket)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/reviews/ingest")
+async def reviews_ingest() -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.ingest_inbox()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.post("/api/reviews/export-pages")
+async def reviews_export_pages() -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.post("/api/reviews/publish-pages")
+async def reviews_publish_pages() -> dict[str, Any]:
+    if not reviews_service:
+        raise HTTPException(503, "Сервис сбора отзывов не готов")
+    try:
+        return await reviews_service.publish_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 

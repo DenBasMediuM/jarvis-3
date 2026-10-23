@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261022-debt-decisions2" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261023-reviews1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -30,6 +30,7 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="debt">Дебиторка</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="branch_kpi">КПД филиалов</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="masters_kpi">КПД мастеров</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="reviews">Сбор отзывов</button>
           </div>
         </div>
         <button class="nav-btn" data-view="finance">Финансы</button>
@@ -263,6 +264,14 @@
               <button type="button" id="masters-kpi-export-pages-btn" class="cj-import-btn is-muted" title="Записать docs/masters-kpi/data.json">Экспорт в Pages</button>
               <span id="masters-kpi-sync-status" class="quality-sync-status">—</span>
             </div>
+            <div class="quality-toolbar" id="reviews-toolbar" hidden>
+              <span class="quality-toolbar-label">Сбор отзывов</span>
+              <button type="button" id="reviews-batch-btn" class="cj-import-open">Собрать очередь</button>
+              <button type="button" id="reviews-ingest-btn" class="secondary">Inbox CF</button>
+              <button type="button" id="reviews-export-btn" class="cj-import-btn is-muted">Экспорт в Pages</button>
+              <button type="button" id="reviews-publish-btn" class="cj-import-btn">Опубликовать витрину</button>
+              <span id="reviews-sync-status" class="quality-sync-status">—</span>
+            </div>
           </div>
         </div>
         <nav class="quality-tabs" role="tablist" aria-label="Процессы">
@@ -270,6 +279,7 @@
           <button type="button" class="quality-tab" data-processes-tab="debt" role="tab" aria-selected="false">Дебиторка</button>
           <button type="button" class="quality-tab" data-processes-tab="branch_kpi" role="tab" aria-selected="false">КПД филиалов</button>
           <button type="button" class="quality-tab" data-processes-tab="masters_kpi" role="tab" aria-selected="false">КПД мастеров</button>
+          <button type="button" class="quality-tab" data-processes-tab="reviews" role="tab" aria-selected="false">Сбор отзывов</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
@@ -523,6 +533,42 @@
               <div class="masters-kpi-cards" id="masters-kpi-cards" aria-label="Карточки мастеров"></div>
             </div>
           </article>
+
+          <article id="reviews-body" class="vyrobotka-section" hidden>
+            <header class="vyrobotka-section-head">
+              <h2>Сбор отзывов</h2>
+              <p id="reviews-meta">
+                Очередь прозвона и отчёт по менеджерам. Рейтинг Google вводит менеджер на витрине перед работой.
+                Квоты CF: Dashboard → Workers → Metrics / Plans.
+              </p>
+            </header>
+            <div class="vyrobotka-kpis" id="reviews-kpis" aria-label="Сводка отзывов"></div>
+            <div class="vyrobotka-charts" style="margin-top:12px">
+              <section class="vyrobotka-chart-panel">
+                <h3>Исходы звонков</h3>
+                <div class="vyrobotka-chart-box"><canvas id="reviews-chart-outcomes"></canvas></div>
+              </section>
+              <section class="vyrobotka-chart-panel">
+                <h3>Рейтинг Google по филиалам</h3>
+                <div class="vyrobotka-chart-box"><canvas id="reviews-chart-google"></canvas></div>
+              </section>
+            </div>
+            <div class="table-wrap" style="margin-top:14px">
+              <table class="quality-table">
+                <thead>
+                  <tr>
+                    <th>Когда</th>
+                    <th>Кв.</th>
+                    <th>Менеджер</th>
+                    <th>Исход</th>
+                    <th>Клиент</th>
+                    <th>Комментарий</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-calls-tbody"></tbody>
+              </table>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -643,6 +689,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261022-debt-publish1"></script>
+  <script src="/static/app.js?v=20261023-reviews1"></script>
 </body>
 </html>

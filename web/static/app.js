@@ -75,6 +75,7 @@ function setProcessesTab(tab) {
     tab === "debt" ||
     tab === "branch_kpi" ||
     tab === "masters_kpi" ||
+    tab === "reviews" ||
     tab === "upsell"
       ? tab
       : "upsell";
@@ -98,18 +99,23 @@ function setProcessesTab(tab) {
   const debt = $("#vyrobotka-debt-body");
   const branchKpi = $("#branch-kpi-body");
   const mastersKpi = $("#masters-kpi-body");
+  const reviewsBody = $("#reviews-body");
   const empty = $("#vyrobotka-empty");
   const sheetsToolbar = $("#vyrobotka-toolbar");
   const kpiToolbar = $("#branch-kpi-toolbar");
   const mastersToolbar = $("#masters-kpi-toolbar");
+  const reviewsToolbar = $("#reviews-toolbar");
   const isBranchKpi = id === "branch_kpi";
   const isMastersKpi = id === "masters_kpi";
-  const isStandalone = isBranchKpi || isMastersKpi;
+  const isReviews = id === "reviews";
+  const isStandalone = isBranchKpi || isMastersKpi || isReviews;
   if (sheetsToolbar) sheetsToolbar.hidden = isStandalone;
   if (kpiToolbar) kpiToolbar.hidden = !isBranchKpi;
   if (mastersToolbar) mastersToolbar.hidden = !isMastersKpi;
+  if (reviewsToolbar) reviewsToolbar.hidden = !isReviews;
   if (branchKpi) branchKpi.hidden = !isBranchKpi;
   if (mastersKpi) mastersKpi.hidden = !isMastersKpi;
+  if (reviewsBody) reviewsBody.hidden = !isReviews;
   if (isBranchKpi) {
     if (upsell) upsell.hidden = true;
     if (debt) debt.hidden = true;
@@ -124,6 +130,13 @@ function setProcessesTab(tab) {
     if (empty) empty.hidden = true;
     loadMastersKpiStats();
     requestAnimationFrame(() => resizeMastersKpiCharts());
+    return;
+  }
+  if (isReviews) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadReviewsStats();
     return;
   }
   const hasData = (typeof vyrobotkaSheetsCache !== "undefined" ? vyrobotkaSheetsCache : []).length > 0;
@@ -154,6 +167,7 @@ function initProcessesTabs() {
     saved !== "debt" &&
     saved !== "branch_kpi" &&
     saved !== "masters_kpi" &&
+    saved !== "reviews" &&
     saved !== "upsell"
   ) {
     saved = "upsell";
@@ -6313,6 +6327,190 @@ async function runUpdatesAction(actionId) {
 }
 
 $("#updates-refresh-btn")?.addEventListener("click", () => loadUpdatesStatus());
+
+let reviewsOutcomesChart = null;
+let reviewsGoogleChart = null;
+let reviewsStatsCache = null;
+
+async function loadReviewsStats() {
+  const statusEl = $("#reviews-sync-status");
+  const meta = $("#reviews-meta");
+  const kpis = $("#reviews-kpis");
+  const tbody = $("#reviews-calls-tbody");
+  try {
+    const res = await fetch("/api/reviews/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    reviewsStatsCache = data;
+    if (statusEl) {
+      statusEl.textContent = data.inbox_configured
+        ? `Inbox CF · звонков ${data.calls_total ?? 0}`
+        : "Inbox CF не настроен (.env)";
+    }
+    if (meta) {
+      const b = data.batch;
+      meta.textContent = b
+        ? `Батч ${b.day || "—"} · ${b.count ?? 0} карточек · ${b.message || ""}`
+        : "Очереди ещё нет — нажмите «Собрать очередь».";
+    }
+    const oc = data.outcome_counts || {};
+    if (kpis) {
+      kpis.innerHTML = [
+        ["Всего звонков", String(data.calls_total ?? 0), ""],
+        ["Оставит отзыв", String(oc.will_review ?? 0), ""],
+        ["Не дозвон", String(oc.no_answer ?? 0), ""],
+        ["Не оставит", String(oc.wont_review ?? 0), ""],
+        ["Недоволен", String(oc.unhappy ?? 0), ""],
+        ["Менеджеров", String((data.managers || []).length), ""],
+      ]
+        .map(
+          ([l, v, h]) => `<div class="vyrobotka-kpi"><span class="vyrobotka-kpi-label">${escapeHtml(l)}</span>
+          <span class="vyrobotka-kpi-value">${escapeHtml(v)}</span>
+          <span class="vyrobotka-kpi-hint">${escapeHtml(h)}</span></div>`,
+        )
+        .join("");
+    }
+    if (tbody) {
+      const calls = data.calls || [];
+      tbody.innerHTML = calls.length
+        ? calls
+            .slice(0, 100)
+            .map((c) => {
+              const label = (data.outcomes && data.outcomes[c.outcome]) || c.outcome || "—";
+              return `<tr>
+                <td>${escapeHtml(String(c.called_at || "").slice(0, 19).replace("T", " "))}</td>
+                <td>${escapeHtml(c.ticket || "—")}</td>
+                <td>${escapeHtml(c.manager || "—")}</td>
+                <td>${escapeHtml(label)}</td>
+                <td>${escapeHtml(c.client_name || c.phone || "—")}</td>
+                <td>${escapeHtml(c.comment || "—")}</td>
+              </tr>`;
+            })
+            .join("")
+        : `<tr><td colspan="6" class="quality-empty">Звонков пока нет</td></tr>`;
+    }
+    const canvasOc = $("#reviews-chart-outcomes");
+    if (canvasOc && typeof Chart !== "undefined") {
+      reviewsOutcomesChart?.destroy();
+      const labels = Object.keys(data.outcomes || {});
+      reviewsOutcomesChart = new Chart(canvasOc, {
+        type: "bar",
+        data: {
+          labels: labels.map((k) => data.outcomes[k] || k),
+          datasets: [
+            {
+              label: "Звонки",
+              data: labels.map((k) => oc[k] || 0),
+              backgroundColor: "rgba(26, 79, 134, 0.45)",
+            },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+      });
+    }
+    const canvasG = $("#reviews-chart-google");
+    if (canvasG && typeof Chart !== "undefined") {
+      reviewsGoogleChart?.destroy();
+      const latest = data.google_latest || [];
+      const nameBy = Object.fromEntries((data.branches || []).map((b) => [b.id, b.name]));
+      reviewsGoogleChart = new Chart(canvasG, {
+        type: "bar",
+        data: {
+          labels: latest.map((r) => nameBy[r.branch_id] || r.branch_id),
+          datasets: [
+            {
+              label: "Рейтинг",
+              data: latest.map((r) => r.rating),
+              backgroundColor: "rgba(70, 150, 220, 0.45)",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 1, max: 5 } },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = err.message || String(err);
+  }
+}
+
+async function reviewsPost(path, body) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+  return data;
+}
+
+$("#reviews-batch-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#reviews-sync-status");
+  const btn = $("#reviews-batch-btn");
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.textContent = "Сборка очереди из CRM…";
+  try {
+    const data = await reviewsPost("/api/reviews/batch", { force: true });
+    if (statusEl) statusEl.textContent = data.message || `Готово: ${data.count ?? 0}`;
+    alert(data.message || `Очередь: ${data.count ?? 0}`);
+    await loadReviewsStats();
+  } catch (err) {
+    alert(err.message || err);
+    if (statusEl) statusEl.textContent = err.message || String(err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+
+$("#reviews-ingest-btn")?.addEventListener("click", async () => {
+  const btn = $("#reviews-ingest-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const data = await reviewsPost("/api/reviews/ingest");
+    alert(
+      data.skipped
+        ? "Inbox CF не настроен (.env)"
+        : `Inbox: получено ${data.fetched ?? 0}, применено ${data.applied ?? 0}`,
+    );
+    await loadReviewsStats();
+  } catch (err) {
+    alert(err.message || err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+
+$("#reviews-export-btn")?.addEventListener("click", async () => {
+  try {
+    const data = await reviewsPost("/api/reviews/export-pages");
+    alert(`Экспорт: ${data.path || "ok"} · карточек ${data.batch ?? 0}`);
+  } catch (err) {
+    alert(err.message || err);
+  }
+});
+
+$("#reviews-publish-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#reviews-sync-status");
+  if (statusEl) statusEl.textContent = "Публикация…";
+  try {
+    const data = await reviewsPost("/api/reviews/publish-pages");
+    const pub = data.publish || {};
+    const msg = pub.pushed
+      ? "Витрина отзывов опубликована (git push)"
+      : pub.skipped
+        ? "Изменений нет / push пропущен"
+        : "Экспорт готов";
+    alert(msg);
+    if (statusEl) statusEl.textContent = msg;
+  } catch (err) {
+    alert(err.message || err);
+  }
+});
 
 initQualityPanelToggle();
 initQualityTabs();

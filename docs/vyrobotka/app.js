@@ -542,6 +542,10 @@ function lineDefaults() {
 }
 
 function setTab(tab) {
+  if (tab === "reviews") {
+    location.href = "../reviews/";
+    return;
+  }
   document.querySelectorAll(".mod-tab").forEach((btn) => {
     const on = btn.getAttribute("data-tab") === tab;
     btn.classList.toggle("is-active", on);
@@ -1250,7 +1254,7 @@ async function boot() {
   } catch {
     tab = "upsell";
   }
-  const allowed = new Set(["upsell", "debt", "branch_kpi", "masters_kpi"]);
+  const allowed = new Set(["upsell", "debt", "branch_kpi", "masters_kpi", "reviews"]);
   setTab(allowed.has(tab) ? tab : "upsell");
 
   const meta = $("#export-meta");

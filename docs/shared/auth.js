@@ -55,6 +55,7 @@
     if (id === "processes.debt") return hasAccess(accessList, "processes.debt");
     if (id === "processes.branch_kpi") return hasAccess(accessList, "processes.branch_kpi");
     if (id === "processes.masters_kpi") return hasAccess(accessList, "processes.masters_kpi");
+    if (id === "processes.reviews") return hasAccess(accessList, "processes.reviews");
     if (id === "finance") return hasAccess(accessList, "finance");
     return false;
   }
@@ -175,6 +176,7 @@
       debt: "processes.debt",
       branch_kpi: "processes.branch_kpi",
       masters_kpi: "processes.masters_kpi",
+      reviews: "processes.reviews",
     };
     document.querySelectorAll(".mod-tab[data-tab]").forEach((btn) => {
       const tab = btn.getAttribute("data-tab");

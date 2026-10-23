@@ -1,0 +1,7 @@
+name = "jarvis-reviews-inbox"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "INBOX"
+id = "97e7c2fd650f42998249e90ce3c04bf2"

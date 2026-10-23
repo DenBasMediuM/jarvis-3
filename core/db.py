@@ -318,6 +318,44 @@ CREATE TABLE IF NOT EXISTS masters_kpi_sync_state (
   started_at TEXT,
   finished_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS reviews_calls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket TEXT NOT NULL,
+  phone TEXT,
+  phone_norm TEXT,
+  client_name TEXT,
+  manager TEXT,
+  outcome TEXT NOT NULL,
+  comment TEXT,
+  device TEXT,
+  branch_id TEXT,
+  issued_at TEXT,
+  repair_days REAL,
+  called_at TEXT NOT NULL,
+  source TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS reviews_google_stats (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day TEXT NOT NULL,
+  branch_id TEXT NOT NULL,
+  rating REAL NOT NULL,
+  review_count INTEGER NOT NULL,
+  noted_by TEXT,
+  noted_at TEXT NOT NULL,
+  UNIQUE (day, branch_id)
+);
+
+CREATE TABLE IF NOT EXISTS reviews_batch (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  day TEXT,
+  tickets_json TEXT NOT NULL DEFAULT '[]',
+  cards_json TEXT NOT NULL DEFAULT '[]',
+  built_at TEXT,
+  message TEXT
+);
 """
 
 
@@ -332,6 +370,7 @@ class Database:
         self._conn.row_factory = aiosqlite.Row
         await self._conn.executescript(SCHEMA)
         await self._migrate_vyrobotka_schema()
+        await self._migrate_reviews_schema()
         await self._conn.commit()
 
     async def _migrate_vyrobotka_schema(self) -> None:
@@ -1746,3 +1785,194 @@ class Database:
             """
         )
         return [dict(r) for r in await cur.fetchall()]
+
+    async def _migrate_reviews_schema(self) -> None:
+        await self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reviews_calls (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              ticket TEXT NOT NULL,
+              phone TEXT,
+              phone_norm TEXT,
+              client_name TEXT,
+              manager TEXT,
+              outcome TEXT NOT NULL,
+              comment TEXT,
+              device TEXT,
+              branch_id TEXT,
+              issued_at TEXT,
+              repair_days REAL,
+              called_at TEXT NOT NULL,
+              source TEXT,
+              created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            """
+        )
+        await self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reviews_google_stats (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              day TEXT NOT NULL,
+              branch_id TEXT NOT NULL,
+              rating REAL NOT NULL,
+              review_count INTEGER NOT NULL,
+              noted_by TEXT,
+              noted_at TEXT NOT NULL,
+              UNIQUE (day, branch_id)
+            )
+            """
+        )
+        await self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reviews_batch (
+              id INTEGER PRIMARY KEY CHECK (id = 1),
+              day TEXT,
+              tickets_json TEXT NOT NULL DEFAULT '[]',
+              cards_json TEXT NOT NULL DEFAULT '[]',
+              built_at TEXT,
+              message TEXT
+            )
+            """
+        )
+        await self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_reviews_calls_phone ON reviews_calls(phone_norm)"
+        )
+        await self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_reviews_calls_ticket ON reviews_calls(ticket)"
+        )
+
+    async def reviews_insert_call(self, row: dict[str, Any]) -> int:
+        cur = await self.conn.execute(
+            """
+            INSERT INTO reviews_calls(
+              ticket, phone, phone_norm, client_name, manager, outcome, comment,
+              device, branch_id, issued_at, repair_days, called_at, source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(row["ticket"]),
+                row.get("phone"),
+                row.get("phone_norm"),
+                row.get("client_name"),
+                row.get("manager"),
+                str(row["outcome"]),
+                row.get("comment"),
+                row.get("device"),
+                row.get("branch_id"),
+                row.get("issued_at"),
+                row.get("repair_days"),
+                str(row["called_at"]),
+                row.get("source") or "cf",
+            ),
+        )
+        await self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    async def reviews_list_calls(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM reviews_calls
+            ORDER BY called_at DESC, id DESC
+            LIMIT ?
+            """,
+            (int(limit),),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def reviews_called_phones(self) -> set[str]:
+        cur = await self.conn.execute(
+            "SELECT DISTINCT phone_norm FROM reviews_calls WHERE phone_norm IS NOT NULL AND phone_norm != ''"
+        )
+        return {str(r[0]) for r in await cur.fetchall() if r[0]}
+
+    async def reviews_called_tickets(self) -> set[str]:
+        cur = await self.conn.execute("SELECT DISTINCT ticket FROM reviews_calls")
+        return {str(r[0]) for r in await cur.fetchall() if r[0]}
+
+    async def reviews_upsert_google_stats(self, rows: list[dict[str, Any]]) -> None:
+        for row in rows:
+            await self.conn.execute(
+                """
+                INSERT INTO reviews_google_stats(
+                  day, branch_id, rating, review_count, noted_by, noted_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(day, branch_id) DO UPDATE SET
+                  rating = excluded.rating,
+                  review_count = excluded.review_count,
+                  noted_by = excluded.noted_by,
+                  noted_at = excluded.noted_at
+                """,
+                (
+                    str(row["day"]),
+                    str(row["branch_id"]),
+                    float(row["rating"]),
+                    int(row["review_count"]),
+                    row.get("noted_by"),
+                    str(row["noted_at"]),
+                ),
+            )
+        await self.conn.commit()
+
+    async def reviews_list_google_stats(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM reviews_google_stats
+            ORDER BY day DESC, branch_id ASC
+            LIMIT ?
+            """,
+            (int(limit),),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def reviews_latest_google_stats(self) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT g.* FROM reviews_google_stats g
+            INNER JOIN (
+              SELECT branch_id, MAX(day) AS day
+              FROM reviews_google_stats
+              GROUP BY branch_id
+            ) t ON g.branch_id = t.branch_id AND g.day = t.day
+            ORDER BY g.branch_id ASC
+            """
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def reviews_get_batch(self) -> dict[str, Any] | None:
+        cur = await self.conn.execute("SELECT * FROM reviews_batch WHERE id = 1")
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def reviews_set_batch(
+        self,
+        *,
+        day: str,
+        tickets: list[str],
+        cards: list[dict[str, Any]],
+        message: str | None = None,
+        built_at: str | None = None,
+    ) -> None:
+        import json as _json
+        from datetime import datetime, timezone
+
+        at = built_at or datetime.now(timezone.utc).isoformat()
+        await self.conn.execute(
+            """
+            INSERT INTO reviews_batch(id, day, tickets_json, cards_json, built_at, message)
+            VALUES (1, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              day = excluded.day,
+              tickets_json = excluded.tickets_json,
+              cards_json = excluded.cards_json,
+              built_at = excluded.built_at,
+              message = excluded.message
+            """,
+            (
+                day,
+                _json.dumps(tickets, ensure_ascii=False),
+                _json.dumps(cards, ensure_ascii=False),
+                at,
+                message,
+            ),
+        )
+        await self.conn.commit()

@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     debt_inbox_write_key: str = ""
     debt_inbox_read_key: str = ""
 
+    # Cloudflare Worker inbox сбора отзывов
+    reviews_inbox_url: str = ""
+    reviews_inbox_write_key: str = ""
+    reviews_inbox_read_key: str = ""
+
     def resolved_db_path(self) -> Path:
         return self.db_path or (self.data_dir / "jarvis.db")
 
