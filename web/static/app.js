@@ -4002,10 +4002,23 @@ function resolveVyrobotkaDisplayVerdict(verify) {
   return raw;
 }
 
-let vyrobotkaDebtSort = { key: "flag", dir: 1 };
+let vyrobotkaDebtSort = { key: "closed_at", dir: -1 };
+/** visible | hidden — какой список закрытых показывать в таблице */
+let vyrobotkaDebtClosedView = "visible";
+const DEBT_MANAGER_COLORS = [
+  "rgba(26, 79, 134, 0.55)",
+  "rgba(15, 110, 86, 0.55)",
+  "rgba(196, 92, 38, 0.55)",
+  "rgba(110, 70, 180, 0.5)",
+  "rgba(138, 90, 0, 0.5)",
+  "rgba(70, 150, 220, 0.5)",
+];
 
 function vyrobotkaDebtSortValue(row, key) {
   if (key === "ticket") return String(row.ticket || "");
+  if (key === "closed_at") return String(row.closed_at || "");
+  if (key === "decision_by") return String(row.decision_by || "").toLowerCase();
+  if (key === "decision_code") return String(row.decision_label || row.decision_code || "").toLowerCase();
   if (key === "crm_status") return String(row.crm_status || "").toLowerCase();
   if (key === "flag" || key === "flag_reason") return vyrobotkaDebtFlagRank(row.flag);
   if (key === "sheet_debt") return Number(row.sheet_debt) || 0;
@@ -4849,22 +4862,29 @@ async function openDebtOrderModal(orderId, { mode } = {}) {
 }
 
 function renderVyrobotkaDebt() {
-  const body = $("#vyrobotka-debt-body");
   const meta = $("#vyrobotka-debt-meta");
   const kpis = $("#vyrobotka-debt-kpis");
   const tbody = $("#vyrobotka-debt-tbody");
   const canvas = $("#vyrobotka-chart-debt");
-  const sheets = vyrobotkaDebtCache.sheets || [];
+  const closedMeta = $("#vyrobotka-debt-closed-meta");
   if (Array.isArray(vyrobotkaDebtCache.table)) {
     vyrobotkaDebtCache.table = vyrobotkaDebtCache.table.filter((r) => {
       const ds = String(r.decision_status || "");
       return ds !== "pending" && ds !== "closed";
     });
   }
-  const table = vyrobotkaDebtCache.table || [];
+  const activeTable = vyrobotkaDebtCache.table || [];
+  const closedVisible = vyrobotkaDebtCache.closed || [];
+  const closedHidden = vyrobotkaDebtCache.closed_hidden_rows || [];
+  const showingHidden = vyrobotkaDebtClosedView === "hidden";
+  const closed = showingHidden ? closedHidden : closedVisible;
   const counts = vyrobotkaDebtCache.table_counts || {};
   const verify = vyrobotkaDebtCache.verify || null;
-  const hasData = (vyrobotkaSheetsCache || []).length > 0 || table.length > 0;
+  const hasData =
+    (vyrobotkaSheetsCache || []).length > 0 ||
+    activeTable.length > 0 ||
+    closedVisible.length > 0 ||
+    closedHidden.length > 0;
 
   if (!hasData) {
     if (vyrobotkaDebtChart) {
@@ -4878,6 +4898,7 @@ function renderVyrobotkaDebt() {
   applyVyrobotkaVerifyUi(verify);
 
   const daily = vyrobotkaDebtCache.daily || [];
+  const decisionsSeries = vyrobotkaDebtCache.decisions_series || {};
   const lastDaily = daily.length ? daily[daily.length - 1] : null;
   const flags = {
     red: counts.red ?? 0,
@@ -4885,7 +4906,6 @@ function renderVyrobotkaDebt() {
     open: counts.open ?? 0,
     mismatch: counts.mismatch ?? 0,
   };
-  const tableCrmDebt = table.reduce((s, r) => s + (Number(r.crm_debt) || 0), 0);
 
   if (kpis) {
     const kpiRows = [
@@ -4894,11 +4914,11 @@ function renderVyrobotkaDebt() {
         fmtMoneyUa(lastDaily?.crm_debt_sum),
         lastDaily ? `other=pay · ${fmtQualityDate(lastDaily.day)}` : "после сверки",
       ],
-      ["Σ в таблице", fmtMoneyUa(tableCrmDebt), `${table.length} активных`],
-      ["Красных", String(flags.red || 0), "подозрение"],
-      ["Жёлтых", String(flags.yellow || 0), "совпадает"],
-      ["Только CRM", String(flags.open || 0), "без отчёта"],
-      ["Расхождение", String(flags.mismatch || 0), "отчёт ≠ CRM"],
+      ["Активных в сверке", String(activeTable.length), "ledger"],
+      ["Закрытых", String(vyrobotkaDebtCache.closed_count ?? closed.length), "в статистике"],
+      ["В таблице", String(closedVisible.length), "видимых"],
+      ["Скрыто", String(vyrobotkaDebtCache.closed_hidden || closedHidden.length || 0), "вкладка «Скрытые»"],
+      ["Красных (активные)", String(flags.red || 0), "подозрение"],
       ["На модерации", String(counts.pending || 0), "зелёные"],
       ["Доработать", String(counts.rework || 0), "фиолетовые"],
     ];
@@ -4915,19 +4935,34 @@ function renderVyrobotkaDebt() {
 
   if (meta) {
     const bl = vyrobotkaDebtCache.baseline;
-    const blNote = bl?.day
-      ? ` · отчёты мастеров с ${fmtQualityDate(bl.day)}`
-      : "";
-    meta.textContent = `Таблица дебиторки · ${table.length} активных${blNote}`;
+    const blNote = bl?.day ? ` · отчёты мастеров с ${fmtQualityDate(bl.day)}` : "";
+    meta.textContent = showingHidden
+      ? `Скрытые закрытые · ${closedHidden.length}${blNote}`
+      : `Закрытые квитанции · ${closedVisible.length} видимых · активных ${activeTable.length}${blNote}`;
   }
+  if (closedMeta) {
+    closedMeta.textContent = showingHidden
+      ? `Скрытые: ${closedHidden.length} · статистика сохранена · «Показать» вернёт в видимые`
+      : `Показано ${closedVisible.length} · скрыто ${vyrobotkaDebtCache.closed_hidden || closedHidden.length || 0} · всего закрытий ${vyrobotkaDebtCache.closed_count ?? closedVisible.length + closedHidden.length}`;
+  }
+  const hiddenCountEl = $("#vyrobotka-debt-hidden-count");
+  if (hiddenCountEl) {
+    hiddenCountEl.textContent = String(vyrobotkaDebtCache.closed_hidden || closedHidden.length || 0);
+  }
+  document.querySelectorAll("[data-debt-closed-view]").forEach((btn) => {
+    const mode = btn.getAttribute("data-debt-closed-view");
+    btn.classList.toggle("is-active", mode === vyrobotkaDebtClosedView);
+  });
 
   if (tbody) {
-    if (!table.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="quality-empty">Таблица пуста — запустите сверку</td></tr>`;
+    if (!closed.length) {
+      tbody.innerHTML = showingHidden
+        ? `<tr><td colspan="7" class="quality-empty">Скрытых квитанций нет</td></tr>`
+        : `<tr><td colspan="7" class="quality-empty">Закрытых квитанций пока нет</td></tr>`;
     } else {
-      const key = vyrobotkaDebtSort.key || "flag";
-      const dir = vyrobotkaDebtSort.dir || 1;
-      const ordered = [...table].sort((a, b) => {
+      const key = vyrobotkaDebtSort.key || "closed_at";
+      const dir = vyrobotkaDebtSort.dir || -1;
+      const ordered = [...closed].sort((a, b) => {
         const av = vyrobotkaDebtSortValue(a, key);
         const bv = vyrobotkaDebtSortValue(b, key);
         let cmp = 0;
@@ -4937,12 +4972,7 @@ function renderVyrobotkaDebt() {
           cmp = Number(av) - Number(bv);
         }
         if (cmp) return dir * cmp;
-        // вторичная сортировка: флаг → долг CRM → квитанция
-        const fr = vyrobotkaDebtFlagRank(a.flag) - vyrobotkaDebtFlagRank(b.flag);
-        if (fr) return fr;
-        const da = (Number(b.crm_debt) || 0) - (Number(a.crm_debt) || 0);
-        if (da) return da;
-        return String(a.ticket || "").localeCompare(String(b.ticket || ""), "ru");
+        return String(b.closed_at || "").localeCompare(String(a.closed_at || ""), "ru");
       });
       updateVyrobotkaSortHeaders("vyrobotka-debt-table", vyrobotkaDebtSort, "data-debt-sort");
       const btnNew = $("#vyrobotka-debt-verify-new-btn");
@@ -4952,34 +4982,85 @@ function renderVyrobotkaDebt() {
 
       tbody.innerHTML = ordered
         .map((r) => {
-          const metaF = vyrobotkaDebtFlagMeta(r.flag, r.decision_status);
-          const paid = r.crm_paid ?? r.sheet_paid;
-          const sheetDebtHtml = r.sheet_url
-            ? `<a class="vyrobotka-sheet-link" href="${escapeHtml(r.sheet_url)}" target="_blank" rel="noopener" title="${escapeHtml(
-                `${r.sheet_title || ""} · ${r.master || ""}`.trim(),
-              )}"><strong>${fmtMoneyUa(r.sheet_debt)}</strong></a>`
-            : `<strong>${fmtMoneyUa(r.sheet_debt)}</strong>`;
-          const crmDebtHtml = r.crm_url
-            ? `<a class="vyrobotka-ticket-link" href="${escapeHtml(r.crm_url)}" target="_blank" rel="noopener"><strong>${fmtMoneyUa(
-                r.crm_debt,
-              )}</strong></a>`
-            : `<strong>${fmtMoneyUa(r.crm_debt)}</strong>`;
+          const when = String(r.closed_at || "").slice(0, 19).replace("T", " ");
+          const label = r.decision_label || DEBT_DECISION_CODES[r.decision_code] || r.decision_code || "—";
+          const metaF = vyrobotkaDebtFlagMeta(r.flag, null);
           return `<tr class="${metaF.cls}" title="${escapeHtml(r.flag_reason || "")}">
-            <td><button type="button" class="vyrobotka-ticket-btn" data-debt-ticket="${escapeHtml(
-              r.ticket || "",
-            )}">${escapeHtml(r.ticket || "—")}</button></td>
-            <td>${sheetDebtHtml}</td>
-            <td>${crmDebtHtml}</td>
-            <td>${fmtMoneyUa(paid)}</td>
-            <td>${fmtMoneyUa(r.report_amount)}</td>
-            <td>${escapeHtml(r.crm_status || "—")}</td>
-            <td class="vyrobotka-flag-reason">${escapeHtml(r.flag_reason || "—")}</td>
+            <td>${escapeHtml(when || "—")}</td>
+            <td><strong>${escapeHtml(r.ticket || "—")}</strong></td>
+            <td>${escapeHtml(r.decision_by || "—")}</td>
+            <td>${escapeHtml(label)}</td>
+            <td>${fmtMoneyUa(r.crm_debt)}</td>
+            <td>${escapeHtml(metaF.label)}</td>
+            <td class="debt-closed-actions">
+              <button type="button" class="secondary" data-debt-reopen="${escapeHtml(r.ticket || "")}">В обработку</button>
+              ${
+                showingHidden
+                  ? `<button type="button" class="secondary" data-debt-unhide-row="${escapeHtml(r.ticket || "")}">Показать</button>`
+                  : `<button type="button" class="secondary" data-debt-hide="${escapeHtml(r.ticket || "")}">Скрыть</button>`
+              }
+            </td>
           </tr>`;
         })
         .join("");
-      tbody.querySelectorAll("[data-debt-ticket]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          openDebtOrderModal(btn.getAttribute("data-debt-ticket"));
+      tbody.querySelectorAll("[data-debt-reopen]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ticket = btn.getAttribute("data-debt-reopen");
+          if (!ticket || !confirm(`Вернуть №${ticket} в обработку?`)) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch("/api/vyrobotka/debt-closed/reopen", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ticket }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.detail || j.error || res.statusText);
+            await loadVyrobotkaStats();
+          } catch (err) {
+            alert(err.message || err);
+            btn.disabled = false;
+          }
+        });
+      });
+      tbody.querySelectorAll("[data-debt-hide]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ticket = btn.getAttribute("data-debt-hide");
+          if (!ticket || !confirm(`Скрыть №${ticket} из таблицы? Статистика сохранится.`)) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch("/api/vyrobotka/debt-closed/hide", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ticket }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.detail || j.error || res.statusText);
+            await loadVyrobotkaStats();
+          } catch (err) {
+            alert(err.message || err);
+            btn.disabled = false;
+          }
+        });
+      });
+      tbody.querySelectorAll("[data-debt-unhide-row]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const ticket = btn.getAttribute("data-debt-unhide-row");
+          if (!ticket) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch("/api/vyrobotka/debt-closed/unhide", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ticket }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.detail || j.error || res.statusText);
+            await loadVyrobotkaStats();
+          } catch (err) {
+            alert(err.message || err);
+            btn.disabled = false;
+          }
         });
       });
     }
@@ -4987,13 +5068,14 @@ function renderVyrobotkaDebt() {
 
   const dailyMeta = $("#vyrobotka-debt-daily-meta");
   if (dailyMeta) {
-    if (!daily.length) {
-      dailyMeta.textContent = "Точек динамики пока нет — появится после «Сверить новые» или «Перепроверить все».";
+    const closedDays = (decisionsSeries.days || []).length;
+    if (!daily.length && !closedDays) {
+      dailyMeta.textContent = "Точек динамики пока нет — появится после сверки / закрытий.";
     } else {
-      const tip = daily[daily.length - 1];
-      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${fmtQualityDate(tip.day)} · CRM ${fmtMoneyUa(
-        tip.crm_debt_sum,
-      )}`;
+      const tip = daily.length ? daily[daily.length - 1] : null;
+      dailyMeta.textContent = tip
+        ? `CRM точек: ${daily.length} · посл. ${fmtQualityDate(tip.day)} · ${fmtMoneyUa(tip.crm_debt_sum)} · закрытий по дням: ${closedDays}`
+        : `Закрытий по дням: ${closedDays}`;
     }
   }
 
@@ -5002,75 +5084,95 @@ function renderVyrobotkaDebt() {
     vyrobotkaDebtChart.destroy();
     vyrobotkaDebtChart = null;
   }
-  if (!daily.length) {
+  const daySet = new Set([
+    ...daily.map((d) => String(d.day || "").slice(0, 10)),
+    ...((decisionsSeries.days || []).map((d) => String(d).slice(0, 10))),
+  ]);
+  const dayList = [...daySet].filter((d) => d.length >= 8).sort();
+  if (!dayList.length) {
     resizeVyrobotkaCharts();
     return;
   }
-  const labels = daily.map((d) => {
-    const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
-    return m ? `${m[3]}.${m[2]}` : d.day;
+  const labels = dayList.map((d) => {
+    const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}` : d;
   });
+  const crmByDay = Object.fromEntries(
+    daily.map((d) => [String(d.day || "").slice(0, 10), d.crm_debt_sum]),
+  );
   const base = vyrobotkaLineDefaults();
-  const n = daily.length;
-  const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
-  const line = {
-    tension: 0.3,
-    spanGaps: true,
-    pointRadius: radii,
-    pointHoverRadius: 6,
-    borderWidth: 2.25,
-    backgroundColor: "transparent",
-  };
-
+  const mgrEntries = Object.entries(decisionsSeries.by_manager || {});
+  const barDatasets = mgrEntries.map(([mgr, points], i) => {
+    const map = Object.fromEntries((points || []).map((p) => [p.day, p.count]));
+    return {
+      type: "bar",
+      label: mgr,
+      data: dayList.map((d) => map[d] || 0),
+      backgroundColor: DEBT_MANAGER_COLORS[i % DEBT_MANAGER_COLORS.length],
+      yAxisID: "yCount",
+      order: 2,
+      stack: "closed",
+    };
+  });
   vyrobotkaDebtChart = new Chart(canvas, {
-    type: "line",
     data: {
       labels,
       datasets: [
         {
-          ...line,
+          type: "line",
           label: "CRM (ожидаемая оплата)",
-          data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
+          data: dayList.map((d) => (crmByDay[d] == null ? null : Number(crmByDay[d]))),
           borderColor: "#a12828",
+          backgroundColor: "transparent",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 3,
+          borderWidth: 2.25,
+          yAxisID: "y",
+          order: 1,
         },
+        ...barDatasets,
       ],
     },
     options: {
       ...base,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        ...base.scales,
+        x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 14 } },
+        y: {
+          position: "left",
+          title: { display: true, text: "₴ CRM", font: { size: 11 } },
+          ticks: {
+            callback: (v) => fmtMoneyUa(v).replace(/\s*₴\s*$/, ""),
+          },
+        },
+        yCount: {
+          position: "right",
+          stacked: true,
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: "закрыто, шт", font: { size: 11 } },
+          ticks: { precision: 0 },
+          beginAtZero: true,
+        },
+      },
       plugins: {
         ...base.plugins,
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
         tooltip: {
           callbacks: {
-            title: (items) => fmtQualityDate(daily[items[0]?.dataIndex]?.day),
+            title: (items) => fmtQualityDate(dayList[items[0]?.dataIndex]),
             label(ctx) {
               const v = ctx.parsed.y;
               if (v == null) return `${ctx.dataset.label}: —`;
+              if (ctx.dataset.yAxisID === "yCount") return `${ctx.dataset.label}: ${v} шт`;
               return `${ctx.dataset.label}: ${fmtMoneyUa(v)}`;
             },
           },
         },
       },
-      scales: {
-        ...base.scales,
-        x: {
-          ...base.scales?.x,
-          ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } },
-          grid: { color: "rgba(28,36,48,0.05)" },
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: "₴", color: "#5d6b7c", font: { size: 11 } },
-          grid: { color: "rgba(28,36,48,0.07)" },
-          ticks: {
-            color: "#5d6b7c",
-            font: { size: 10 },
-            callback: (v) => fmtMoneyUa(v),
-          },
-        },
-      },
     },
   });
-
   resizeVyrobotkaCharts();
 }
 
@@ -5091,9 +5193,21 @@ function renderVyrobotkaAll() {
   setProcessesTab(processesTab);
 }
 
+async function ingestDebtInboxQuiet() {
+  try {
+    const res = await fetch("/api/vyrobotka/debt-decision/ingest", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.skipped) return data;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 async function loadVyrobotkaStats() {
   const statusEl = $("#vyrobotka-sync-status");
   try {
+    await ingestDebtInboxQuiet();
     const res = await fetch("/api/vyrobotka/stats");
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
@@ -5107,9 +5221,15 @@ async function loadVyrobotkaStats() {
       daily: [],
       table: [],
       table_counts: null,
+      closed: [],
+      decisions_series: null,
     };
     if (!Array.isArray(vyrobotkaDebtCache.daily)) vyrobotkaDebtCache.daily = [];
     if (!Array.isArray(vyrobotkaDebtCache.table)) vyrobotkaDebtCache.table = [];
+    if (!Array.isArray(vyrobotkaDebtCache.closed)) vyrobotkaDebtCache.closed = [];
+    if (!Array.isArray(vyrobotkaDebtCache.closed_hidden_rows)) {
+      vyrobotkaDebtCache.closed_hidden_rows = [];
+    }
     if (statusEl) statusEl.textContent = formatVyrobotkaSync(data.sync);
     renderVyrobotkaAll();
     if (vyrobotkaDebtCache.verify?.status === "running") startVyrobotkaVerifyPoll();
@@ -5124,6 +5244,7 @@ async function loadVyrobotkaStats() {
       tickets_count: 0,
       verify: null,
       table: [],
+      closed: [],
     };
     renderVyrobotkaAll();
     return null;
@@ -5285,47 +5406,36 @@ $("#vyrobotka-debt-moderate-btn")?.addEventListener("click", async () => {
   }
 });
 
-$("#vyrobotka-debt-closed-btn")?.addEventListener("click", async () => {
+$("#vyrobotka-debt-unhide-form")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const input = $("#vyrobotka-debt-unhide-input");
+  const ticket = String(input?.value || "").trim();
+  if (!ticket) {
+    alert("Укажите номер квитанции");
+    return;
+  }
   try {
-    const res = await fetch("/api/vyrobotka/debt-closed");
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
-    const rows = data.rows || [];
-    if (!rows.length) {
-      alert("Архив пуст");
-      return;
-    }
-    const lines = rows
-      .slice(0, 80)
-      .map(
-        (r) =>
-          `${r.ticket} · ${r.decision_label || r.decision_code || "—"} · ${String(r.closed_at || "").slice(0, 19)} · CRM ${r.crm_debt ?? "—"}`,
-      )
-      .join("\n");
-    alert(`Закрытые (${rows.length}):\n\n${lines}${rows.length > 80 ? "\n…" : ""}`);
+    const res = await fetch("/api/vyrobotka/debt-closed/unhide", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticket }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.detail || j.error || res.statusText);
+    if (input) input.value = "";
+    vyrobotkaDebtClosedView = "visible";
+    await loadVyrobotkaStats();
   } catch (err) {
     alert(err.message || err);
   }
 });
 
-$("#vyrobotka-debt-ingest-btn")?.addEventListener("click", async () => {
-  const btn = $("#vyrobotka-debt-ingest-btn");
-  if (btn) btn.disabled = true;
-  try {
-    const res = await fetch("/api/vyrobotka/debt-decision/ingest", { method: "POST" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
-    await loadVyrobotkaStats();
-    alert(
-      data.skipped
-        ? "Inbox CF не настроен (.env)"
-        : `Inbox: получено ${data.fetched ?? 0}, применено ${data.applied ?? 0}`,
-    );
-  } catch (err) {
-    alert(err.message || err);
-  } finally {
-    if (btn) btn.disabled = false;
-  }
+document.querySelectorAll("[data-debt-closed-view]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const mode = btn.getAttribute("data-debt-closed-view") || "visible";
+    vyrobotkaDebtClosedView = mode === "hidden" ? "hidden" : "visible";
+    renderVyrobotkaDebt();
+  });
 });
 
 async function publishVyrobotkaPages() {
@@ -6331,6 +6441,7 @@ $("#updates-refresh-btn")?.addEventListener("click", () => loadUpdatesStatus());
 let reviewsOutcomesChart = null;
 let reviewsGoogleChart = null;
 let reviewsGoogleDynChart = null;
+let reviewsCallsDynChart = null;
 let reviewsStatsCache = null;
 let reviewsCallsSort = { key: "called_at", dir: -1 };
 let reviewsOutcomeFilter = "all";
@@ -6602,6 +6713,59 @@ function renderReviewsCharts(data) {
       },
     });
   }
+  const canvasCalls = $("#reviews-chart-calls-dyn");
+  if (canvasCalls && typeof Chart !== "undefined") {
+    reviewsCallsDynChart?.destroy();
+    const series = data.calls_series || {};
+    const days = series.days || [];
+    const byMgr = series.by_manager || {};
+    const mgrNames = Object.keys(byMgr);
+    const colors = [
+      "rgba(26, 79, 134, 0.7)",
+      "rgba(15, 110, 86, 0.7)",
+      "rgba(196, 92, 38, 0.7)",
+      "rgba(110, 70, 180, 0.65)",
+      "rgba(138, 90, 0, 0.65)",
+    ];
+    reviewsCallsDynChart = new Chart(canvasCalls, {
+      type: "bar",
+      data: {
+        labels: days.map((d) => {
+          const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+          return m ? `${m[3]}.${m[2]}` : d;
+        }),
+        datasets: mgrNames.map((mgr, i) => {
+          const map = Object.fromEntries((byMgr[mgr] || []).map((p) => [p.day, p.count]));
+          return {
+            label: mgr,
+            data: days.map((d) => map[d] || 0),
+            backgroundColor: colors[i % colors.length],
+            stack: "calls",
+          };
+        }),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 14 } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        },
+      },
+    });
+  }
+}
+
+async function ingestReviewsInboxQuiet() {
+  try {
+    const res = await fetch("/api/reviews/ingest", { method: "POST" });
+    return await res.json().catch(() => ({}));
+  } catch {
+    return null;
+  }
 }
 
 async function loadReviewsStats() {
@@ -6610,14 +6774,15 @@ async function loadReviewsStats() {
   const kpis = $("#reviews-kpis");
   initReviewsTableSort();
   try {
+    await ingestReviewsInboxQuiet();
     const res = await fetch("/api/reviews/stats");
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     reviewsStatsCache = data;
     if (statusEl) {
       statusEl.textContent = data.inbox_configured
-        ? `Inbox CF · звонков ${data.calls_total ?? 0}`
-        : "Inbox CF не настроен (.env)";
+        ? `Inbox · звонков ${data.calls_total ?? 0}`
+        : "Inbox не настроен (.env)";
     }
     if (meta) {
       const b = data.batch;
@@ -6677,24 +6842,6 @@ $("#reviews-batch-btn")?.addEventListener("click", async () => {
   } catch (err) {
     alert(err.message || err);
     if (statusEl) statusEl.textContent = err.message || String(err);
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-});
-
-$("#reviews-ingest-btn")?.addEventListener("click", async () => {
-  const btn = $("#reviews-ingest-btn");
-  if (btn) btn.disabled = true;
-  try {
-    const data = await reviewsPost("/api/reviews/ingest");
-    alert(
-      data.skipped
-        ? "Inbox CF не настроен (.env)"
-        : `Inbox: получено ${data.fetched ?? 0}, применено ${data.applied ?? 0}`,
-    );
-    await loadReviewsStats();
-  } catch (err) {
-    alert(err.message || err);
   } finally {
     if (btn) btn.disabled = false;
   }

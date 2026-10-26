@@ -167,6 +167,11 @@ class VyrobotkaService:
         )
         ledger = await self.db.vyrobotka_list_debt_ledger(active_only=True)
         table = self._enrich_debt_table(ledger, sheets, all_rows)
+        closed_all = await self.db.vyrobotka_list_debt_closed(limit=2000, include_hidden=True)
+        closed_visible = [r for r in closed_all if not int(r.get("ui_hidden") or 0)]
+        closed_hidden = [r for r in closed_all if int(r.get("ui_hidden") or 0)]
+        for r in closed_all:
+            r["decision_label"] = decision_label(r.get("decision_code"))
 
         return {
             "ok": True,
@@ -184,6 +189,11 @@ class VyrobotkaService:
                 "atypical": atypical,
                 "table": table,
                 "table_counts": self._debt_table_counts(table),
+                "closed": closed_visible,
+                "closed_hidden_rows": closed_hidden,
+                "closed_count": len(closed_all),
+                "closed_hidden": len(closed_hidden),
+                "decisions_series": self._debt_decisions_series(closed_all),
             },
         }
 
@@ -381,11 +391,50 @@ class VyrobotkaService:
             "count": len(rows),
         }
 
-    async def list_debt_closed(self) -> dict[str, Any]:
-        rows = await self.db.vyrobotka_list_debt_closed()
+    async def list_debt_closed(self, *, include_hidden: bool = False) -> dict[str, Any]:
+        rows = await self.db.vyrobotka_list_debt_closed(include_hidden=include_hidden)
         for r in rows:
             r["decision_label"] = decision_label(r.get("decision_code"))
         return {"ok": True, "rows": rows, "count": len(rows)}
+
+    async def hide_debt_closed(self, ticket: str, *, hidden: bool = True) -> dict[str, Any]:
+        ok = await self.db.vyrobotka_set_debt_closed_hidden(ticket, hidden=hidden)
+        if not ok:
+            raise ValueError("not_found")
+        await self._safe_export_pages()
+        return {"ok": True, "ticket": str(ticket).strip(), "hidden": bool(hidden)}
+
+    async def reopen_debt_closed(self, ticket: str) -> dict[str, Any]:
+        row = await self.db.vyrobotka_reopen_debt_closed(ticket)
+        if not row:
+            raise ValueError("not_found")
+        await self._safe_export_pages()
+        return {"ok": True, "ticket": str(ticket).strip(), "ledger": row}
+
+    @staticmethod
+    def _debt_decisions_series(closed_rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Обработанные (закрытые) квитанции по дням и менеджерам — для графика динамики."""
+        by_manager: dict[str, dict[str, int]] = {}
+        totals: dict[str, int] = {}
+        days: set[str] = set()
+        for r in closed_rows:
+            day = str(r.get("closed_at") or r.get("decision_at") or "")[:10]
+            if len(day) < 8:
+                continue
+            mgr = str(r.get("decision_by") or r.get("moderated_by") or "—").strip() or "—"
+            days.add(day)
+            totals[day] = totals.get(day, 0) + 1
+            bucket = by_manager.setdefault(mgr, {})
+            bucket[day] = bucket.get(day, 0) + 1
+        day_list = sorted(days)
+        return {
+            "days": day_list,
+            "total": [{"day": d, "count": totals.get(d, 0)} for d in day_list],
+            "by_manager": {
+                mgr: [{"day": d, "count": int(days_map.get(d, 0))} for d in day_list]
+                for mgr, days_map in sorted(by_manager.items(), key=lambda x: x[0].casefold())
+            },
+        }
 
     async def ensure_debt_baseline(
         self, underpaid: list[dict[str, Any]] | None = None
@@ -760,6 +809,7 @@ class VyrobotkaService:
                 "write_key": app_settings.debt_inbox_write_key or "",
                 "decision_codes": dict(DECISION_CODES),
             },
+            debt_decisions_series=debt.get("decisions_series"),
         )
         out = write_vyrobotka_pages_json(payload, Path(path) if path else None)
         return {

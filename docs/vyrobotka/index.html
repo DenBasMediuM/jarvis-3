@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261022-debt-decisions10" />
-  <link rel="stylesheet" href="./styles.css?v=20261022-debt-decisions10" />
-  <script src="../shared/auth.js?v=20261022-debt-decisions10"></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261026-reviews-stats1" />
+  <link rel="stylesheet" href="./styles.css?v=20261026-reviews-stats1" />
+  <script src="../shared/auth.js?v=20261026-reviews-stats1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261022-debt-decisions10" defer></script>
+  <script src="./app.js?v=20261026-reviews-stats1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -69,6 +69,7 @@
       <button type="button" class="mod-tab" data-tab="branch_kpi">КПД филиалов</button>
       <button type="button" class="mod-tab" data-tab="masters_kpi">КПД мастеров</button>
       <button type="button" class="mod-tab" data-tab="reviews">Сбор отзывов</button>
+      <button type="button" class="mod-tab" data-tab="reviews_stats">Статистика по сбору отзывов</button>
     </nav>
 
     <main>
@@ -125,8 +126,7 @@
           <article class="card">
             <h3>Динамика общей дебиторки</h3>
             <p class="card-sub">
-              CRM — «Ожидаемая сумма оплаты» по фильтру недоплат.
-              Точка при сверке в Jarvis (не чаще 1× в день).
+              Линия — CRM (ожидаемая оплата). Столбцы — закрытые квитанции по менеджерам (правая ось).
             </p>
             <div class="chart-box"><canvas id="chart-debt"></canvas></div>
             <p class="card-sub" id="debt-daily-meta"></p>
@@ -224,6 +224,51 @@
             </article>
           </div>
           <div class="masters-kpi-grid" id="masters-kpi-cards"></div>
+        </div>
+      </section>
+
+      <section id="panel-reviews_stats" class="panel" hidden>
+        <div id="reviews-stats-empty" class="empty" hidden>Нет снимка сбора отзывов. Опубликуйте витрину отзывов из Jarvis.</div>
+        <div id="reviews-stats-body" class="stack" hidden>
+          <div class="kpis" id="reviews-stats-kpis"></div>
+          <div class="charts-grid">
+            <article class="card">
+              <h3>Исходы звонков</h3>
+              <p class="card-sub">Распределение результатов прозвона.</p>
+              <div class="chart-box"><canvas id="chart-rs-outcomes"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Текущий рейтинг Google</h3>
+              <p class="card-sub">Последний снимок по филиалам.</p>
+              <div class="chart-box"><canvas id="chart-rs-google"></canvas></div>
+            </article>
+            <article class="card" style="grid-column:1/-1">
+              <h3>Динамика рейтинга Google</h3>
+              <p class="card-sub">Одна точка на день · при нескольких вводах берётся последний.</p>
+              <div class="chart-box chart-box--tall"><canvas id="chart-rs-google-dyn"></canvas></div>
+            </article>
+            <article class="card" style="grid-column:1/-1">
+              <h3>Обработка пула по дням</h3>
+              <p class="card-sub">Сколько квитанций обработал каждый менеджер.</p>
+              <div class="chart-box chart-box--tall"><canvas id="chart-rs-calls-dyn"></canvas></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Менеджеры</h3>
+            <div class="table-wrap">
+              <table class="vtable" id="table-rs-managers">
+                <thead>
+                  <tr>
+                    <th>Менеджер</th>
+                    <th>Звонков</th>
+                    <th>Оставит</th>
+                    <th>%</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-rs-managers"></tbody>
+              </table>
+            </div>
+          </article>
         </div>
       </section>
     </main>

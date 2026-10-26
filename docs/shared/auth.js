@@ -177,6 +177,7 @@
       branch_kpi: "processes.branch_kpi",
       masters_kpi: "processes.masters_kpi",
       reviews: "processes.reviews",
+      reviews_stats: "processes.reviews",
     };
     document.querySelectorAll(".mod-tab[data-tab]").forEach((btn) => {
       const tab = btn.getAttribute("data-tab");

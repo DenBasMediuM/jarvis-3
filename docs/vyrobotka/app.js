@@ -4,6 +4,11 @@ const $ = (sel) => document.querySelector(sel);
 let DATA = null;
 let BRANCH_KPI = null;
 let MASTERS_KPI = null;
+let REVIEWS_STATS = null;
+let rsOutcomesChart = null;
+let rsGoogleChart = null;
+let rsGoogleDynChart = null;
+let rsCallsDynChart = null;
 let moneyChart = null;
 let volumeChart = null;
 let debtChart = null;
@@ -555,6 +560,9 @@ function setTab(tab) {
     panel.hidden = !on;
     panel.classList.toggle("is-active", on);
   });
+  if (tab === "reviews_stats") {
+    requestAnimationFrame(() => renderReviewsStats(REVIEWS_STATS));
+  }
   try {
     localStorage.setItem("jarvis.pages.vyrobotka.tab", tab);
   } catch {
@@ -878,13 +886,17 @@ function renderDebt() {
     }
   }
 
+  const decisionsSeriesEarly = DATA?.debt_decisions_series || {};
   const dailyMeta = $("#debt-daily-meta");
   if (dailyMeta) {
-    if (!daily.length) {
+    const closedDays = (decisionsSeriesEarly.days || []).length;
+    if (!daily.length && !closedDays) {
       dailyMeta.textContent = "Точек динамики пока нет в снимке.";
     } else {
-      const tip = daily[daily.length - 1];
-      dailyMeta.textContent = `Точек: ${daily.length} · посл. ${fmtDay(tip.day)} · CRM ${fmtMoney(tip.crm_debt_sum)}`;
+      const tip = daily.length ? daily[daily.length - 1] : null;
+      dailyMeta.textContent = tip
+        ? `CRM точек: ${daily.length} · посл. ${fmtDay(tip.day)} · ${fmtMoney(tip.crm_debt_sum)} · закрытий по дням: ${closedDays}`
+        : `Закрытий по дням: ${closedDays}`;
     }
   }
 
@@ -892,44 +904,89 @@ function renderDebt() {
   if (!canvas || typeof Chart === "undefined") return;
   debtChart?.destroy();
   debtChart = null;
-  if (!daily.length) return;
+  if (!daily.length && !(decisionsSeriesEarly.days || []).length) return;
   const labels = daily.map((d) => {
     const m = String(d.day || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m ? `${m[3]}.${m[2]}` : d.day;
   });
   const base = lineDefaults();
-  const n = daily.length;
-  const radii = Array.from({ length: n }, (_, i) => (i === n - 1 ? 5 : 3));
-  const line = {
-    tension: 0.3,
-    spanGaps: true,
-    pointRadius: radii,
-    pointHoverRadius: 6,
-    borderWidth: 2.25,
-    backgroundColor: "transparent",
-  };
+  const decisionsSeries = decisionsSeriesEarly;
+  const daySet = new Set([
+    ...daily.map((d) => String(d.day || "").slice(0, 10)),
+    ...((decisionsSeries.days || []).map((d) => String(d).slice(0, 10))),
+  ]);
+  const dayList = [...daySet].filter((d) => d.length >= 8).sort();
+  const labels2 = dayList.map((d) => {
+    const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}` : d;
+  });
+  const crmByDay = Object.fromEntries(daily.map((d) => [String(d.day || "").slice(0, 10), d.crm_debt_sum]));
+  const mgrColors = [
+    "rgba(26, 79, 134, 0.55)",
+    "rgba(15, 110, 86, 0.55)",
+    "rgba(196, 92, 38, 0.55)",
+    "rgba(110, 70, 180, 0.5)",
+    "rgba(138, 90, 0, 0.5)",
+  ];
+  const barDatasets = Object.entries(decisionsSeries.by_manager || {}).map(([mgr, points], i) => {
+    const map = Object.fromEntries((points || []).map((p) => [p.day, p.count]));
+    return {
+      type: "bar",
+      label: mgr,
+      data: dayList.map((d) => map[d] || 0),
+      backgroundColor: mgrColors[i % mgrColors.length],
+      yAxisID: "yCount",
+      stack: "closed",
+      order: 2,
+    };
+  });
   debtChart = new Chart(canvas, {
-    type: "line",
     data: {
-      labels,
+      labels: labels2.length ? labels2 : labels,
       datasets: [
         {
-          ...line,
+          type: "line",
           label: "CRM (ожидаемая оплата)",
-          data: daily.map((d) => (d.crm_debt_sum == null ? null : Number(d.crm_debt_sum))),
+          data: (dayList.length ? dayList : daily.map((d) => d.day)).map((d) => {
+            const key = String(d).slice(0, 10);
+            const v = crmByDay[key];
+            return v == null ? null : Number(v);
+          }),
           borderColor: "#a12828",
+          backgroundColor: "transparent",
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 3,
+          borderWidth: 2.25,
+          yAxisID: "y",
+          order: 1,
         },
+        ...barDatasets,
       ],
     },
     options: {
       ...base,
+      interaction: { mode: "index", intersect: false },
       scales: {
         ...base.scales,
-        x: { ticks: { maxRotation: 0, autoSkip: false, color: "#5d6b7c", font: { size: 10 } } },
+        x: {
+          stacked: true,
+          ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 14, color: "#5d6b7c", font: { size: 10 } },
+        },
         y: {
+          position: "left",
           beginAtZero: true,
+          title: { display: true, text: "₴ CRM", color: "#5d6b7c", font: { size: 11 } },
           ticks: { callback: (v) => fmtMoney(v), color: "#5d6b7c", font: { size: 10 } },
           grid: { color: "rgba(28,36,48,0.07)" },
+        },
+        yCount: {
+          position: "right",
+          stacked: true,
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: "закрыто, шт", color: "#5d6b7c", font: { size: 11 } },
+          ticks: { precision: 0, color: "#5d6b7c" },
         },
       },
     },
@@ -1244,6 +1301,178 @@ function renderAll() {
   renderMastersKpi(MASTERS_KPI);
 }
 
+
+function renderReviewsStats(data) {
+  const empty = $("#reviews-stats-empty");
+  const body = $("#reviews-stats-body");
+  if (!data || !(data.calls_total || data.cards?.length || data.google_latest?.length)) {
+    if (empty) empty.hidden = false;
+    if (body) body.hidden = true;
+    return;
+  }
+  if (empty) empty.hidden = true;
+  if (body) body.hidden = false;
+  const oc = data.outcome_counts || {};
+  const rate = Math.round((data.will_review_rate || 0) * 100);
+  const kpis = $("#reviews-stats-kpis");
+  if (kpis) {
+    kpis.innerHTML = [
+      ["Всего звонков", String(data.calls_total ?? 0), "в журнале"],
+      ["Оставит отзыв", String(oc.will_review ?? 0), `${rate}%`],
+      ["Не дозвон", String(oc.no_answer ?? 0), ""],
+      ["Пул", String(data.cards?.length ?? data.counts?.pool ?? 0), `окно ${data.queue_size ?? 10}`],
+      ["Менеджеров", String((data.managers || []).length), ""],
+    ]
+      .map(([l, v, h]) => `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
+        <span class="kpi-value">${escapeHtml(v)}</span>
+        <span class="kpi-hint">${escapeHtml(h)}</span></div>`)
+      .join("");
+  }
+  const tbody = $("#tbody-rs-managers");
+  if (tbody) {
+    const rows = data.managers || [];
+    tbody.innerHTML = rows.length
+      ? rows
+          .map((m) => {
+            const r = Math.round((m.will_review_rate || 0) * 100);
+            return `<tr><td>${escapeHtml(m.manager || "—")}</td><td>${escapeHtml(String(m.total ?? 0))}</td>
+              <td>${escapeHtml(String(m.will_review ?? 0))}</td><td>${escapeHtml(String(r))}%</td></tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="4" class="empty-cell">Пока нет звонков</td></tr>`;
+  }
+  if (typeof Chart === "undefined") return;
+  const outcomes = data.outcomes || {};
+  const labels = Object.keys(outcomes);
+  rsOutcomesChart?.destroy();
+  const c1 = $("#chart-rs-outcomes");
+  if (c1) {
+    rsOutcomesChart = new Chart(c1, {
+      type: "doughnut",
+      data: {
+        labels: labels.map((k) => outcomes[k] || k),
+        datasets: [{
+          data: labels.map((k) => oc[k] || 0),
+          backgroundColor: [
+            "rgba(15, 110, 86, 0.75)",
+            "rgba(138, 90, 0, 0.65)",
+            "rgba(26, 79, 134, 0.55)",
+            "rgba(161, 40, 40, 0.7)",
+          ],
+          borderWidth: 0,
+        }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } },
+    });
+  }
+  const latest = data.google_latest || [];
+  const nameBy = Object.fromEntries((data.branches || []).map((b) => [b.id, b.name]));
+  const colors = {
+    karetnaya: "rgba(26, 79, 134, 0.95)",
+    segedskaya: "rgba(15, 110, 86, 0.95)",
+    levitana: "rgba(196, 92, 38, 0.95)",
+  };
+  rsGoogleChart?.destroy();
+  const c2 = $("#chart-rs-google");
+  if (c2) {
+    rsGoogleChart = new Chart(c2, {
+      type: "bar",
+      data: {
+        labels: latest.map((r) => nameBy[r.branch_id] || r.branch_id),
+        datasets: [{
+          label: "Рейтинг",
+          data: latest.map((r) => r.rating),
+          backgroundColor: latest.map((r) => colors[r.branch_id] || "rgba(70,150,220,0.55)"),
+          borderRadius: 8,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 1, max: 5 } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+  const gSeries = data.google_series || {};
+  const gDays = gSeries.days || [];
+  const byBranch = gSeries.by_branch || {};
+  rsGoogleDynChart?.destroy();
+  const c3 = $("#chart-rs-google-dyn");
+  if (c3) {
+    rsGoogleDynChart = new Chart(c3, {
+      type: "line",
+      data: {
+        labels: gDays.map((d) => {
+          const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+          return m ? `${m[3]}.${m[2]}` : d;
+        }),
+        datasets: Object.keys(byBranch).map((bid) => {
+          const map = Object.fromEntries((byBranch[bid] || []).map((p) => [p.day, p.rating]));
+          return {
+            label: nameBy[bid] || bid,
+            data: gDays.map((d) => (map[d] != null ? map[d] : null)),
+            borderColor: colors[bid] || "rgba(26,79,134,0.8)",
+            backgroundColor: "transparent",
+            spanGaps: true,
+            tension: 0.25,
+            pointRadius: 3,
+            borderWidth: 2,
+          };
+        }),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: { y: { min: 1, max: 5 } },
+        plugins: { legend: { position: "bottom" } },
+      },
+    });
+  }
+  const cSeries = data.calls_series || {};
+  const cDays = cSeries.days || [];
+  const byMgr = cSeries.by_manager || {};
+  rsCallsDynChart?.destroy();
+  const c4 = $("#chart-rs-calls-dyn");
+  if (c4) {
+    const mgrColors = [
+      "rgba(26, 79, 134, 0.7)",
+      "rgba(15, 110, 86, 0.7)",
+      "rgba(196, 92, 38, 0.7)",
+      "rgba(110, 70, 180, 0.65)",
+    ];
+    rsCallsDynChart = new Chart(c4, {
+      type: "bar",
+      data: {
+        labels: cDays.map((d) => {
+          const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+          return m ? `${m[3]}.${m[2]}` : d;
+        }),
+        datasets: Object.keys(byMgr).map((mgr, i) => {
+          const map = Object.fromEntries((byMgr[mgr] || []).map((p) => [p.day, p.count]));
+          return {
+            label: mgr,
+            data: cDays.map((d) => map[d] || 0),
+            backgroundColor: mgrColors[i % mgrColors.length],
+            stack: "calls",
+          };
+        }),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+        },
+        plugins: { legend: { position: "bottom" } },
+      },
+    });
+  }
+}
+
+
 async function boot() {
   document.querySelectorAll(".mod-tab").forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.getAttribute("data-tab")));
@@ -1254,7 +1483,7 @@ async function boot() {
   } catch {
     tab = "upsell";
   }
-  const allowed = new Set(["upsell", "debt", "branch_kpi", "masters_kpi", "reviews"]);
+  const allowed = new Set(["upsell", "debt", "branch_kpi", "masters_kpi", "reviews", "reviews_stats"]);
   setTab(allowed.has(tab) ? tab : "upsell");
 
   const meta = $("#export-meta");
@@ -1275,6 +1504,13 @@ async function boot() {
   } catch {
     BRANCH_KPI = null;
   }
+  try {
+    const res = await fetch(`../reviews/data.json?t=${Date.now()}`);
+    if (res.ok) REVIEWS_STATS = await res.json();
+  } catch {
+    REVIEWS_STATS = null;
+  }
+  renderReviewsStats(REVIEWS_STATS);
   if (!BRANCH_KPI?.months?.length) {
     const empty = $("#branch-kpi-empty");
     if (empty) empty.hidden = false;

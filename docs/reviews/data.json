@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "exported_at": "2026-10-26T06:58:00.025898+00:00",
+  "schema_version": 3,
+  "exported_at": "2026-10-26T07:29:20.647100+00:00",
   "source": "jarvis-reviews",
   "branches": [
     {
@@ -4260,10 +4260,108 @@
       "noted_at": "2026-10-24T16:28:19.037Z"
     }
   ],
+  "google_series": {
+    "days": [
+      "2026-10-23",
+      "2026-10-24"
+    ],
+    "by_branch": {
+      "karetnaya": [
+        {
+          "day": "2026-10-23",
+          "rating": 3.9,
+          "review_count": 834,
+          "noted_at": "2026-10-23T07:38:23.056Z"
+        },
+        {
+          "day": "2026-10-24",
+          "rating": 3.9,
+          "review_count": 834,
+          "noted_at": "2026-10-24T16:28:19.037Z"
+        }
+      ],
+      "levitana": [
+        {
+          "day": "2026-10-23",
+          "rating": 3.0,
+          "review_count": 10,
+          "noted_at": "2026-10-23T07:38:23.056Z"
+        },
+        {
+          "day": "2026-10-24",
+          "rating": 3.0,
+          "review_count": 10,
+          "noted_at": "2026-10-24T16:28:19.037Z"
+        }
+      ],
+      "segedskaya": [
+        {
+          "day": "2026-10-23",
+          "rating": 4.3,
+          "review_count": 236,
+          "noted_at": "2026-10-23T07:38:23.056Z"
+        },
+        {
+          "day": "2026-10-24",
+          "rating": 4.3,
+          "review_count": 236,
+          "noted_at": "2026-10-24T16:28:19.037Z"
+        }
+      ]
+    }
+  },
+  "calls_series": {
+    "days": [
+      "2026-10-23",
+      "2026-10-24"
+    ],
+    "total": [
+      {
+        "day": "2026-10-23",
+        "count": 1
+      },
+      {
+        "day": "2026-10-24",
+        "count": 2
+      }
+    ],
+    "by_manager": {
+      "demo": [
+        {
+          "day": "2026-10-23",
+          "count": 1
+        },
+        {
+          "day": "2026-10-24",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "outcome_counts": {
+    "will_review": 1,
+    "no_answer": 2,
+    "wont_review": 0,
+    "unhappy": 0
+  },
+  "managers": [
+    {
+      "manager": "demo",
+      "total": 3,
+      "will_review": 1,
+      "no_answer": 2,
+      "wont_review": 0,
+      "unhappy": 0,
+      "will_review_rate": 0.333
+    }
+  ],
+  "calls_total": 3,
+  "will_review_rate": 0.333,
   "counts": {
     "pool": 50,
     "batch": 50,
     "queue_size": 10,
-    "branches": 3
+    "branches": 3,
+    "calls": 3
   }
 }

@@ -125,6 +125,7 @@ def build_vyrobotka_pages_payload(
     sync: dict[str, Any] | None = None,
     spreadsheet_title: str | None = None,
     debt_inbox: dict[str, Any] | None = None,
+    debt_decisions_series: dict[str, Any] | None = None,
     # legacy kwargs — игнорируем, чтобы не ломать старые вызовы
     debt_sheets: list[dict[str, Any]] | None = None,
     debt_tickets: list[dict[str, Any]] | None = None,
@@ -178,6 +179,8 @@ def build_vyrobotka_pages_payload(
         "debt_baseline": baseline,
         "debt_verify_message": live_msg or debt_verify_message,
         "debt_inbox": inbox,
+        "debt_decisions_series": debt_decisions_series
+        or {"days": [], "total": [], "by_manager": {}},
         "counts": {
             "upsell_sheets": len(upsell_sheets),
             "debt_table": len(table),

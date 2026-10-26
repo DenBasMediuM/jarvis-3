@@ -3208,3 +3208,32 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
   background: rgba(161, 40, 40, 0.08);
 }
 /* журнал звонков: без горизонтального скролла, текст переносится */
+.debt-closed-view-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.debt-unhide-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.debt-unhide-form input {
+  width: 140px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+}
+.debt-closed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.debt-closed-actions button {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+}

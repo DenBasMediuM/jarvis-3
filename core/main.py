@@ -443,6 +443,46 @@ async def vyrobotka_debt_closed() -> dict[str, Any]:
     return await vyrobotka_service.list_debt_closed()
 
 
+class DebtClosedTicketBody(BaseModel):
+    ticket: str = Field(..., min_length=3, max_length=32)
+
+
+@app.post("/api/vyrobotka/debt-closed/hide")
+async def vyrobotka_debt_closed_hide(body: DebtClosedTicketBody) -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.hide_debt_closed(body.ticket, hidden=True)
+    except ValueError as exc:
+        raise HTTPException(404, "Закрытая квитанция не найдена") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.post("/api/vyrobotka/debt-closed/unhide")
+async def vyrobotka_debt_closed_unhide(body: DebtClosedTicketBody) -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.hide_debt_closed(body.ticket, hidden=False)
+    except ValueError as exc:
+        raise HTTPException(404, "Закрытая квитанция не найдена") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.post("/api/vyrobotka/debt-closed/reopen")
+async def vyrobotka_debt_closed_reopen(body: DebtClosedTicketBody) -> dict[str, Any]:
+    if not vyrobotka_service:
+        raise HTTPException(503, "Сервис Выработка не готов")
+    try:
+        return await vyrobotka_service.reopen_debt_closed(body.ticket)
+    except ValueError as exc:
+        raise HTTPException(404, "Закрытая квитанция не найдена") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
 @app.post("/api/vyrobotka/debt-decision/ingest")
 async def vyrobotka_debt_decision_ingest() -> dict[str, Any]:
     """Забрать решения из Cloudflare KV inbox."""

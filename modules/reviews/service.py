@@ -114,18 +114,23 @@ class ReviewsService:
         latest = await self.db.reviews_latest_google_stats()
         will = by_outcome.get("will_review") or 0
         total = len(calls) or 0
+        managers = sorted(
+            by_manager.values(),
+            key=lambda x: (-x["will_review"], -x["total"], x["manager"]),
+        )
         return {
             "ok": True,
             "outcomes": CALL_OUTCOMES,
             "outcome_counts": by_outcome,
             "will_review_rate": round(will / total, 3) if total else 0,
-            "managers": sorted(by_manager.values(), key=lambda x: (-x["will_review"], -x["total"], x["manager"])),
+            "managers": managers,
             "calls_total": total,
             "calls": calls[:500],
             "batch": batch_out,
             "google_stats": google,
             "google_latest": latest,
             "google_series": self._google_series(google),
+            "calls_series": self._calls_series(calls),
             "branches": branches_public(),
             "inbox_configured": self.inbox_client().configured,
             "queue_size": QUEUE_SIZE,
@@ -152,7 +157,6 @@ class ReviewsService:
                 }
             )
         for bid, series in by_branch.items():
-            # на всякий случай: если дубли дня — берём по noted_at / порядку
             best: dict[str, dict[str, Any]] = {}
             for p in series:
                 prev = best.get(p["day"])
@@ -162,6 +166,31 @@ class ReviewsService:
         return {
             "days": sorted(days),
             "by_branch": by_branch,
+        }
+
+    @staticmethod
+    def _calls_series(calls: list[dict[str, Any]]) -> dict[str, Any]:
+        """Сколько квитанций обработано по дням и менеджерам."""
+        by_manager: dict[str, dict[str, int]] = {}
+        totals: dict[str, int] = {}
+        days: set[str] = set()
+        for c in calls:
+            day = str(c.get("called_at") or "")[:10]
+            if len(day) < 8:
+                continue
+            mgr = str(c.get("manager") or "—").strip() or "—"
+            days.add(day)
+            totals[day] = totals.get(day, 0) + 1
+            bucket = by_manager.setdefault(mgr, {})
+            bucket[day] = bucket.get(day, 0) + 1
+        day_list = sorted(days)
+        return {
+            "days": day_list,
+            "total": [{"day": d, "count": totals.get(d, 0)} for d in day_list],
+            "by_manager": {
+                mgr: [{"day": d, "count": int(days_map.get(d, 0))} for d in day_list]
+                for mgr, days_map in sorted(by_manager.items(), key=lambda x: x[0].casefold())
+            },
         }
 
     async def delete_call(self, call_id: int) -> dict[str, Any]:
@@ -434,6 +463,7 @@ class ReviewsService:
             except json.JSONDecodeError:
                 tickets, cards = [], []
         inbox = self.inbox_client()
+        stats = await self.get_stats()
         payload = build_reviews_pages_payload(
             batch={"day": day, "tickets": tickets, "built_at": (batch_row or {}).get("built_at")},
             cards=cards if isinstance(cards, list) else [],
@@ -441,7 +471,13 @@ class ReviewsService:
                 "url": inbox.base_url or None,
                 "write_key": app_settings.reviews_inbox_write_key or None,
             },
-            google_latest=await self.db.reviews_latest_google_stats(),
+            google_latest=stats.get("google_latest") or [],
+            google_series=stats.get("google_series"),
+            calls_series=stats.get("calls_series"),
+            outcome_counts=stats.get("outcome_counts"),
+            managers=stats.get("managers"),
+            calls_total=int(stats.get("calls_total") or 0),
+            will_review_rate=float(stats.get("will_review_rate") or 0),
             queue_size=QUEUE_SIZE,
         )
         # call_script уже в builder

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261023-reviews7" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261026-debt-hidden1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -267,7 +267,6 @@
             <div class="quality-toolbar" id="reviews-toolbar" hidden>
               <span class="quality-toolbar-label">Сбор отзывов</span>
               <button type="button" id="reviews-batch-btn" class="cj-import-open">Собрать пул кандидатов</button>
-              <button type="button" id="reviews-ingest-btn" class="secondary">Inbox CF</button>
               <button type="button" id="reviews-export-btn" class="cj-import-btn is-muted">Экспорт в Pages</button>
               <button type="button" id="reviews-publish-btn" class="cj-import-btn">Опубликовать витрину</button>
               <span id="reviews-sync-status" class="quality-sync-status">—</span>
@@ -366,12 +365,6 @@
                   <button type="button" id="vyrobotka-debt-moderate-btn" class="secondary">
                     Модерировать решения
                   </button>
-                  <button type="button" id="vyrobotka-debt-closed-btn" class="secondary">
-                    Закрытые
-                  </button>
-                  <button type="button" id="vyrobotka-debt-ingest-btn" class="secondary" title="Забрать решения с витрины (Cloudflare)">
-                    Inbox CF
-                  </button>
                   <button
                     type="button"
                     id="vyrobotka-debt-publish-btn"
@@ -393,8 +386,7 @@
                 <section class="vyrobotka-chart-panel">
                   <h3>Динамика общей дебиторки</h3>
                   <p class="vyrobotka-chart-sub">
-                    CRM — «Ожидаемая сумма оплаты» по фильтру недоплат.
-                    Точка при «Сверить новые» / «Перепроверить все» (не чаще 1× в день).
+                    CRM — «Ожидаемая сумма оплаты». Столбцы — закрытые квитанции по менеджерам (правая ось).
                   </p>
                   <div class="vyrobotka-chart-box">
                     <canvas id="vyrobotka-chart-debt"></canvas>
@@ -403,40 +395,45 @@
                 </section>
               </div>
               <div class="vyrobotka-stack-table">
-                <div class="vyrobotka-side-head">
-                  <h3>Таблица дебиторки</h3>
-                  <p class="vyrobotka-chart-sub" style="margin:0">
-                    Жёлтый — долг совпадает в отчёте и CRM.
-                    Красный — подозрение на скрытие дебиторки.
-                    Без цвета (open) — долг только в CRM.
-                    Обновляется при сверке.
-                  </p>
+                <div class="vyrobotka-side-head reviews-admin-table-head">
+                  <div>
+                    <h3>Закрытые квитанции</h3>
+                    <p class="vyrobotka-chart-sub" style="margin:0" id="vyrobotka-debt-closed-meta">
+                      Можно вернуть в обработку или скрыть из таблицы (статистика сохранится).
+                    </p>
+                    <div class="debt-closed-view-toggle" role="group" aria-label="Вид таблицы">
+                      <button type="button" class="reviews-filter-chip is-active" id="vyrobotka-debt-view-visible" data-debt-closed-view="visible">Видимые</button>
+                      <button type="button" class="reviews-filter-chip" id="vyrobotka-debt-view-hidden" data-debt-closed-view="hidden">Скрытые <em id="vyrobotka-debt-hidden-count">0</em></button>
+                    </div>
+                  </div>
+                  <form class="debt-unhide-form" id="vyrobotka-debt-unhide-form">
+                    <input type="text" id="vyrobotka-debt-unhide-input" placeholder="№ квитанции" inputmode="numeric" autocomplete="off" />
+                    <button type="submit" class="secondary">Показать снова</button>
+                  </form>
                 </div>
                 <div class="vyrobotka-table-wrap">
                   <table class="quality-table vyrobotka-table" id="vyrobotka-debt-table">
                     <thead>
                       <tr>
+                        <th class="vyrobotka-th-sort" data-debt-sort="closed_at">
+                          <button type="button" class="vyrobotka-th-btn">Закрыта<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
                         <th class="vyrobotka-th-sort" data-debt-sort="ticket">
                           <button type="button" class="vyrobotka-th-btn">Кв.<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
                         </th>
-                        <th class="vyrobotka-th-sort" data-debt-sort="sheet_debt">
-                          <button type="button" class="vyrobotka-th-btn">Долг отчёт<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        <th class="vyrobotka-th-sort" data-debt-sort="decision_by">
+                          <button type="button" class="vyrobotka-th-btn">Менеджер<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                        </th>
+                        <th class="vyrobotka-th-sort" data-debt-sort="decision_code">
+                          <button type="button" class="vyrobotka-th-btn">Решение<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
                         </th>
                         <th class="vyrobotka-th-sort" data-debt-sort="crm_debt">
                           <button type="button" class="vyrobotka-th-btn">Долг CRM<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
                         </th>
-                        <th class="vyrobotka-th-sort" data-debt-sort="crm_paid">
-                          <button type="button" class="vyrobotka-th-btn">Оплачено<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
-                        </th>
-                        <th class="vyrobotka-th-sort" data-debt-sort="report_amount">
-                          <button type="button" class="vyrobotka-th-btn">ЗП мастеру<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
-                        </th>
-                        <th class="vyrobotka-th-sort" data-debt-sort="crm_status">
-                          <button type="button" class="vyrobotka-th-btn">Статус CRM<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
-                        </th>
                         <th class="vyrobotka-th-sort" data-debt-sort="flag">
-                          <button type="button" class="vyrobotka-th-btn">Причина<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
+                          <button type="button" class="vyrobotka-th-btn">Флаг<span class="vyrobotka-sort-ind" aria-hidden="true"></span></button>
                         </th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody id="vyrobotka-debt-tbody">
@@ -621,6 +618,11 @@
                 <p class="vyrobotka-chart-sub">Одна точка на день · при нескольких вводах за день берётся последний</p>
                 <div class="vyrobotka-chart-box reviews-admin-chart-tall"><canvas id="reviews-chart-google-dyn"></canvas></div>
               </section>
+              <section class="vyrobotka-chart-panel reviews-admin-chart-wide">
+                <h3>Обработка пула по дням</h3>
+                <p class="vyrobotka-chart-sub">Сколько квитанций обработал каждый менеджер · по дням</p>
+                <div class="vyrobotka-chart-box reviews-admin-chart-tall"><canvas id="reviews-chart-calls-dyn"></canvas></div>
+              </section>
             </div>
           </article>
         </div>
@@ -743,6 +745,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261023-reviews7"></script>
+  <script src="/static/app.js?v=20261026-debt-hidden1"></script>
 </body>
 </html>

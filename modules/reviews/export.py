@@ -25,11 +25,17 @@ def build_reviews_pages_payload(
     cards: list[dict[str, Any]],
     inbox: dict[str, Any] | None = None,
     google_latest: list[dict[str, Any]] | None = None,
+    google_series: dict[str, Any] | None = None,
+    calls_series: dict[str, Any] | None = None,
+    outcome_counts: dict[str, int] | None = None,
+    managers: list[dict[str, Any]] | None = None,
+    calls_total: int = 0,
+    will_review_rate: float = 0,
     queue_size: int = 10,
 ) -> dict[str, Any]:
     inbox_out = dict(inbox or {})
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "source": "jarvis-reviews",
         "branches": branches_public(),
@@ -40,11 +46,18 @@ def build_reviews_pages_payload(
         "batch": batch or {"day": None, "tickets": [], "cards": []},
         "cards": cards,
         "google_latest": google_latest or [],
+        "google_series": google_series or {"days": [], "by_branch": {}},
+        "calls_series": calls_series or {"days": [], "total": [], "by_manager": {}},
+        "outcome_counts": outcome_counts or {k: 0 for k in CALL_OUTCOMES},
+        "managers": managers or [],
+        "calls_total": int(calls_total),
+        "will_review_rate": float(will_review_rate or 0),
         "counts": {
             "pool": len(cards),
             "batch": len(cards),
             "queue_size": int(queue_size),
             "branches": len(branches_public()),
+            "calls": int(calls_total),
         },
     }
 

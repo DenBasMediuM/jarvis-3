@@ -240,7 +240,8 @@ CREATE TABLE IF NOT EXISTS vyrobotka_debt_closed (
   sheet_debt REAL,
   crm_status TEXT,
   master TEXT,
-  sheet_title TEXT
+  sheet_title TEXT,
+  ui_hidden INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS vitrine_users (
@@ -423,10 +424,21 @@ class Database:
               sheet_debt REAL,
               crm_status TEXT,
               master TEXT,
-              sheet_title TEXT
+              sheet_title TEXT,
+              ui_hidden INTEGER NOT NULL DEFAULT 0
             )
             """
         )
+        closed_cols = {
+            r[1]
+            for r in await (
+                await self.conn.execute("PRAGMA table_info(vyrobotka_debt_closed)")
+            ).fetchall()
+        }
+        if "ui_hidden" not in closed_cols:
+            await self.conn.execute(
+                "ALTER TABLE vyrobotka_debt_closed ADD COLUMN ui_hidden INTEGER NOT NULL DEFAULT 0"
+            )
 
     async def close(self) -> None:
         if self._conn:
@@ -1264,19 +1276,127 @@ class Database:
             "moderated_by": moderated_by,
         }
 
-    async def vyrobotka_list_debt_closed(self, *, limit: int = 500) -> list[dict[str, Any]]:
-        cur = await self.conn.execute(
-            """
-            SELECT ticket, closed_at, decision_code, decision_by, decision_at,
-                   moderated_by, flag, flag_reason, crm_debt, sheet_debt,
-                   crm_status, master, sheet_title
-            FROM vyrobotka_debt_closed
-            ORDER BY closed_at DESC
-            LIMIT ?
-            """,
-            (int(limit),),
-        )
+    async def vyrobotka_list_debt_closed(
+        self, *, limit: int = 500, include_hidden: bool = False
+    ) -> list[dict[str, Any]]:
+        if include_hidden:
+            cur = await self.conn.execute(
+                """
+                SELECT ticket, closed_at, decision_code, decision_by, decision_at,
+                       moderated_by, flag, flag_reason, crm_debt, sheet_debt,
+                       crm_status, master, sheet_title, ui_hidden
+                FROM vyrobotka_debt_closed
+                ORDER BY closed_at DESC
+                LIMIT ?
+                """,
+                (int(limit),),
+            )
+        else:
+            cur = await self.conn.execute(
+                """
+                SELECT ticket, closed_at, decision_code, decision_by, decision_at,
+                       moderated_by, flag, flag_reason, crm_debt, sheet_debt,
+                       crm_status, master, sheet_title, ui_hidden
+                FROM vyrobotka_debt_closed
+                WHERE COALESCE(ui_hidden, 0) = 0
+                ORDER BY closed_at DESC
+                LIMIT ?
+                """,
+                (int(limit),),
+            )
         return [dict(r) for r in await cur.fetchall()]
+
+    async def vyrobotka_set_debt_closed_hidden(self, ticket: str, *, hidden: bool) -> bool:
+        oid = str(ticket or "").strip()
+        if not oid:
+            return False
+        cur = await self.conn.execute(
+            "UPDATE vyrobotka_debt_closed SET ui_hidden = ? WHERE ticket = ?",
+            (1 if hidden else 0, oid),
+        )
+        await self.conn.commit()
+        return cur.rowcount > 0
+
+    async def vyrobotka_get_debt_closed(self, ticket: str) -> dict[str, Any] | None:
+        oid = str(ticket or "").strip()
+        if not oid:
+            return None
+        cur = await self.conn.execute(
+            "SELECT * FROM vyrobotka_debt_closed WHERE ticket = ?", (oid,)
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def vyrobotka_reopen_debt_closed(self, ticket: str) -> dict[str, Any] | None:
+        """Вернуть закрытую квитанцию в активный ledger; запись в closed остаётся для статистики."""
+        import json as _json
+
+        oid = str(ticket or "").strip()
+        closed = await self.vyrobotka_get_debt_closed(oid)
+        if not closed:
+            return None
+        now = datetime.now(timezone.utc).isoformat()
+        snap: dict[str, Any] = {}
+        try:
+            snap = _json.loads(closed.get("snapshot_json") or "{}")
+        except Exception:  # noqa: BLE001
+            snap = {}
+        existing = await self.vyrobotka_get_debt_ledger_ticket(oid)
+        if existing:
+            await self.conn.execute(
+                """
+                UPDATE vyrobotka_debt_ledger
+                SET active = 1,
+                    decision_status = NULL,
+                    decision_code = NULL,
+                    decision_by = NULL,
+                    decision_at = NULL,
+                    moderated_by = NULL,
+                    moderated_at = NULL,
+                    updated_at = ?
+                WHERE ticket = ?
+                """,
+                (now, oid),
+            )
+        else:
+            await self.conn.execute(
+                """
+                INSERT INTO vyrobotka_debt_ledger(
+                  ticket, active, flag, flag_reason,
+                  sheet_title, master, sheet_total, sheet_paid, sheet_debt,
+                  report_amount, crm_total, crm_paid, crm_debt, crm_status,
+                  on_pay_list, crm_url, crm_checked_at, crm_feed_json, crm_feed_at,
+                  updated_at
+                ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    oid,
+                    snap.get("flag") or closed.get("flag"),
+                    snap.get("flag_reason") or closed.get("flag_reason"),
+                    snap.get("sheet_title") or closed.get("sheet_title"),
+                    snap.get("master") or closed.get("master"),
+                    snap.get("sheet_total"),
+                    snap.get("sheet_paid"),
+                    snap.get("sheet_debt") if snap.get("sheet_debt") is not None else closed.get("sheet_debt"),
+                    snap.get("report_amount"),
+                    snap.get("crm_total"),
+                    snap.get("crm_paid"),
+                    snap.get("crm_debt") if snap.get("crm_debt") is not None else closed.get("crm_debt"),
+                    snap.get("crm_status") or closed.get("crm_status"),
+                    int(snap.get("on_pay_list") or 0),
+                    snap.get("crm_url"),
+                    snap.get("crm_checked_at"),
+                    snap.get("crm_feed_json"),
+                    snap.get("crm_feed_at"),
+                    now,
+                ),
+            )
+        await self.conn.execute(
+            "UPDATE vyrobotka_debt_closed SET ui_hidden = 1 WHERE ticket = ?",
+            (oid,),
+        )
+        await self.conn.commit()
+        return await self.vyrobotka_get_debt_ledger_ticket(oid)
 
     async def vyrobotka_list_sheet_stats(self) -> list[dict[str, Any]]:
         cur = await self.conn.execute(
