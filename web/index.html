@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261026-debt-hidden1" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261026-no-masters-kpi1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -29,7 +29,6 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="upsell">Досогласования</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="debt">Дебиторка</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="branch_kpi">КПД филиалов</button>
-            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="masters_kpi">КПД мастеров</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="reviews">Сбор отзывов</button>
           </div>
         </div>
@@ -242,7 +241,7 @@
           <div id="vyrobotka-panel-body" class="quality-panel-body">
             <header class="view-header quality-header">
               <p>
-                Операционные процессы: досогласования, дебиторка, КПД филиалов и КПД мастеров
+                Операционные процессы: досогласования, дебиторка, КПД филиалов, сбор отзывов
                 (отчёты Drive / Sheets).
               </p>
             </header>
@@ -258,12 +257,6 @@
               <button type="button" id="branch-kpi-export-pages-btn" class="cj-import-btn is-muted" title="Записать docs/branch-kpi/data.json">Экспорт в Pages</button>
               <span id="branch-kpi-sync-status" class="quality-sync-status">—</span>
             </div>
-            <div class="quality-toolbar" id="masters-kpi-toolbar" hidden>
-              <span class="quality-toolbar-label">КПД мастеров</span>
-              <button type="button" id="masters-kpi-sync-btn" class="cj-import-open">Обновить из Drive</button>
-              <button type="button" id="masters-kpi-export-pages-btn" class="cj-import-btn is-muted" title="Записать docs/masters-kpi/data.json">Экспорт в Pages</button>
-              <span id="masters-kpi-sync-status" class="quality-sync-status">—</span>
-            </div>
             <div class="quality-toolbar" id="reviews-toolbar" hidden>
               <span class="quality-toolbar-label">Сбор отзывов</span>
               <button type="button" id="reviews-batch-btn" class="cj-import-open">Собрать пул кандидатов</button>
@@ -277,7 +270,6 @@
           <button type="button" class="quality-tab is-active" data-processes-tab="upsell" role="tab" aria-selected="true">Досогласования</button>
           <button type="button" class="quality-tab" data-processes-tab="debt" role="tab" aria-selected="false">Дебиторка</button>
           <button type="button" class="quality-tab" data-processes-tab="branch_kpi" role="tab" aria-selected="false">КПД филиалов</button>
-          <button type="button" class="quality-tab" data-processes-tab="masters_kpi" role="tab" aria-selected="false">КПД мастеров</button>
           <button type="button" class="quality-tab" data-processes-tab="reviews" role="tab" aria-selected="false">Сбор отзывов</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
@@ -501,36 +493,6 @@
             </div>
           </article>
 
-          <article id="masters-kpi-body" class="vyrobotka-section" hidden>
-            <header class="vyrobotka-section-head">
-              <h2>КПД мастеров</h2>
-              <p id="masters-kpi-meta">
-                Выработка с 2025-W31. КПД = сумма работ × (средний чек / 1000).
-              </p>
-            </header>
-            <div class="vyrobotka-stack-layout masters-kpi-layout">
-              <div class="vyrobotka-stack-top">
-                <div class="vyrobotka-kpis" id="masters-kpi-kpis" aria-label="Сводка мастеров"></div>
-                <section class="vyrobotka-chart-panel masters-kpi-compare-panel">
-                  <h3>Сравнение КПД</h3>
-                  <p class="vyrobotka-chart-sub">
-                    Индекс: сумма работ × (ср. чек / 1000) по ISO-неделям с датой готовности.
-                  </p>
-                  <div class="vyrobotka-chart-box masters-kpi-compare-box">
-                    <canvas id="masters-kpi-chart-compare"></canvas>
-                  </div>
-                </section>
-                <section class="vyrobotka-chart-panel">
-                  <h3>Сумма работ по неделям</h3>
-                  <div class="vyrobotka-chart-box masters-kpi-compare-box">
-                    <canvas id="masters-kpi-chart-work"></canvas>
-                  </div>
-                </section>
-              </div>
-              <div class="masters-kpi-cards" id="masters-kpi-cards" aria-label="Карточки мастеров"></div>
-            </div>
-          </article>
-
           <article id="reviews-body" class="vyrobotka-section reviews-admin" hidden>
             <header class="vyrobotka-section-head reviews-admin-head">
               <div>
@@ -745,6 +707,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261026-debt-hidden1"></script>
+  <script src="/static/app.js?v=20261026-no-masters-kpi1"></script>
 </body>
 </html>

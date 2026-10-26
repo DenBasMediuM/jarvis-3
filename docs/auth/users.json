@@ -14,7 +14,6 @@
         "processes.upsell",
         "processes.debt",
         "processes.branch_kpi",
-        "processes.masters_kpi",
         "processes.reviews",
         "finance"
       ]

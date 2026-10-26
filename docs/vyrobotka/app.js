@@ -3,7 +3,6 @@
 const $ = (sel) => document.querySelector(sel);
 let DATA = null;
 let BRANCH_KPI = null;
-let MASTERS_KPI = null;
 let REVIEWS_STATS = null;
 let rsOutcomesChart = null;
 let rsGoogleChart = null;
@@ -13,7 +12,6 @@ let moneyChart = null;
 let volumeChart = null;
 let debtChart = null;
 let bkCharts = {};
-let mkCharts = {};
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -579,13 +577,6 @@ function setTab(tab) {
         /* ignore */
       }
     });
-    Object.values(mkCharts).forEach((c) => {
-      try {
-        c.resize();
-      } catch {
-        /* ignore */
-      }
-    });
   });
 }
 
@@ -1111,168 +1102,6 @@ function renderBranchKpi(data) {
   bkCharts.ret = bkLine($("#chart-bk-return"), charts.return_rate_pct, labels, { pct: true });
 }
 
-function destroyMkCharts() {
-  Object.values(mkCharts).forEach((c) => {
-    try {
-      c.destroy();
-    } catch {
-      /* ignore */
-    }
-  });
-  mkCharts = {};
-}
-
-function mkLine(canvas, series, labels, { money = false } = {}) {
-  if (!canvas || typeof Chart === "undefined") return null;
-  const base = lineDefaults();
-  const line = {
-    tension: 0.28,
-    spanGaps: true,
-    pointRadius: 2,
-    pointHoverRadius: 4,
-    borderWidth: 2.1,
-    backgroundColor: "transparent",
-  };
-  return new Chart(canvas, {
-    type: "line",
-    data: {
-      labels,
-      datasets: (series || []).map((s) => ({
-        ...line,
-        label: s.label,
-        data: s.data,
-        borderColor: s.color || "#0f6e56",
-      })),
-    },
-    options: {
-      ...base,
-      scales: {
-        ...base.scales,
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: (v) => (money ? fmtMoney(v) : Number(v).toLocaleString("uk-UA")),
-            color: "#5d6b7c",
-            font: { size: 10 },
-          },
-          grid: { color: "rgba(28,36,48,0.07)" },
-        },
-      },
-    },
-  });
-}
-
-function mkMini(canvas, labels, data, color) {
-  if (!canvas || typeof Chart === "undefined" || !labels.length) return null;
-  return new Chart(canvas, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          data,
-          borderColor: color || "#0f6e56",
-          backgroundColor: "transparent",
-          tension: 0.3,
-          spanGaps: true,
-          pointRadius: 0,
-          pointHoverRadius: 3,
-          borderWidth: 2,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-      scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
-    },
-  });
-}
-
-function renderMastersKpi(data) {
-  const empty = $("#masters-kpi-empty");
-  const body = $("#masters-kpi-body");
-  const masters = data?.masters || [];
-  const charts = data?.charts || {};
-  destroyMkCharts();
-  if (!masters.length) {
-    if (empty) empty.hidden = false;
-    if (body) body.hidden = true;
-    return;
-  }
-  if (empty) empty.hidden = true;
-  if (body) body.hidden = false;
-
-  const totalWork = masters.reduce((s, m) => s + (Number(m.work_sum) || 0), 0);
-  const totalTickets = masters.reduce((s, m) => s + (Number(m.tickets) || 0), 0);
-  const withEff = masters.filter((m) => m.efficiency != null);
-  const best = withEff.slice().sort((a, b) => Number(b.efficiency) - Number(a.efficiency))[0];
-  const kpis = $("#masters-kpi-kpis");
-  if (kpis) {
-    kpis.innerHTML = [
-      ["Σ работ", fmtMoney(totalWork), `${totalTickets} кв. · ${masters.length} мастеров`],
-      [
-        "Лучший КПД",
-        best ? best.display_name : "—",
-        best?.efficiency != null ? Number(best.efficiency).toLocaleString("uk-UA") : "",
-      ],
-      ...masters.slice(0, 4).map((m) => [
-        m.display_name,
-        fmtMoney(m.work_sum),
-        `${m.tickets ?? "—"} кв. · КПД ${
-          m.efficiency == null ? "—" : Number(m.efficiency).toLocaleString("uk-UA")
-        }`,
-      ]),
-    ]
-      .map(
-        ([l, v, h]) => `<div class="kpi"><span class="kpi-label">${escapeHtml(l)}</span>
-        <span class="kpi-value">${escapeHtml(v)}</span>
-        <span class="kpi-hint">${escapeHtml(h)}</span></div>`,
-      )
-      .join("");
-  }
-
-  const labels = charts.labels || [];
-  mkCharts.eff = mkLine($("#chart-mk-eff"), charts.efficiency, labels);
-  mkCharts.work = mkLine($("#chart-mk-work"), charts.work_sum, labels, { money: true });
-
-  const cards = $("#masters-kpi-cards");
-  const per = charts.per_master || {};
-  if (cards) {
-    cards.innerHTML = masters
-      .map((m) => {
-        const id = `mk-mini-${escapeHtml(m.master_key)}`;
-        return `<article class="masters-kpi-card">
-          <h3><span class="mk-dot" style="background:${escapeHtml(m.color || "#334155")}"></span>${escapeHtml(m.display_name)}</h3>
-          <p class="mk-sub">${m.crm_orders || 0} в CRM · ${m.files || 0} отчётов</p>
-          <div class="mk-metrics">
-            <div><span>Σ работ</span><strong>${fmtMoney(m.work_sum)}</strong></div>
-            <div><span>Квитанции</span><strong>${m.tickets ?? "—"}</strong></div>
-            <div><span>КПД</span><strong>${m.efficiency == null ? "—" : Number(m.efficiency).toLocaleString("uk-UA")}</strong></div>
-            <div><span>Ср. квит.</span><strong>${m.avg_ticket == null ? "—" : fmtMoney(m.avg_ticket)}</strong></div>
-          </div>
-          <div class="mk-mini"><canvas id="${id}"></canvas></div>
-        </article>`;
-      })
-      .join("");
-    masters.forEach((m) => {
-      const pm = per[m.master_key] || {};
-      const rawLabels = pm.labels || [];
-      const rawVals = pm.work_sum || [];
-      const pairs = rawLabels
-        .map((lab, i) => ({ lab, v: rawVals[i] }))
-        .filter((p) => p.v != null && Number(p.v) !== 0);
-      mkCharts[`mini_${m.master_key}`] = mkMini(
-        document.getElementById(`mk-mini-${m.master_key}`),
-        pairs.map((p) => p.lab),
-        pairs.map((p) => p.v),
-        m.color,
-      );
-    });
-  }
-}
-
 function renderAll() {
   destroyCharts();
   if (DATA) {
@@ -1289,16 +1118,12 @@ function renderAll() {
       if (BRANCH_KPI?.exported_at) {
         line += ` · КПД фил. ${new Date(BRANCH_KPI.exported_at).toLocaleString("ru-RU")}`;
       }
-      if (MASTERS_KPI?.exported_at) {
-        line += ` · КПД маст. ${new Date(MASTERS_KPI.exported_at).toLocaleString("ru-RU")}`;
-      }
       meta.textContent = line;
     }
     renderUpsell(DATA.upsell_sheets || []);
     renderDebt();
   }
   renderBranchKpi(BRANCH_KPI);
-  renderMastersKpi(MASTERS_KPI);
 }
 
 
@@ -1483,7 +1308,7 @@ async function boot() {
   } catch {
     tab = "upsell";
   }
-  const allowed = new Set(["upsell", "debt", "branch_kpi", "masters_kpi", "reviews", "reviews_stats"]);
+  const allowed = new Set(["upsell", "debt", "branch_kpi", "reviews", "reviews_stats"]);
   setTab(allowed.has(tab) ? tab : "upsell");
 
   const meta = $("#export-meta");
@@ -1513,16 +1338,6 @@ async function boot() {
   renderReviewsStats(REVIEWS_STATS);
   if (!BRANCH_KPI?.months?.length) {
     const empty = $("#branch-kpi-empty");
-    if (empty) empty.hidden = false;
-  }
-  try {
-    const res = await fetch(`../masters-kpi/data.json?t=${Date.now()}`);
-    if (res.ok) MASTERS_KPI = await res.json();
-  } catch {
-    MASTERS_KPI = null;
-  }
-  if (!MASTERS_KPI?.masters?.length) {
-    const empty = $("#masters-kpi-empty");
     if (empty) empty.hidden = false;
   }
   renderAll();

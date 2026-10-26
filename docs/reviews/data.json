@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "exported_at": "2026-10-26T07:29:20.647100+00:00",
+  "exported_at": "2026-10-26T07:42:37.053242+00:00",
   "source": "jarvis-reviews",
   "branches": [
     {
@@ -4233,37 +4233,38 @@
   ],
   "google_latest": [
     {
-      "id": 13,
-      "day": "2026-10-24",
+      "id": 16,
+      "day": "2026-10-26",
       "branch_id": "karetnaya",
       "rating": 3.9,
       "review_count": 834,
       "noted_by": "demo",
-      "noted_at": "2026-10-24T16:28:19.037Z"
+      "noted_at": "2026-10-26T07:42:21.830Z"
     },
     {
-      "id": 15,
-      "day": "2026-10-24",
+      "id": 18,
+      "day": "2026-10-26",
       "branch_id": "levitana",
       "rating": 3.0,
       "review_count": 10,
       "noted_by": "demo",
-      "noted_at": "2026-10-24T16:28:19.037Z"
+      "noted_at": "2026-10-26T07:42:21.830Z"
     },
     {
-      "id": 14,
-      "day": "2026-10-24",
+      "id": 17,
+      "day": "2026-10-26",
       "branch_id": "segedskaya",
       "rating": 4.3,
       "review_count": 236,
       "noted_by": "demo",
-      "noted_at": "2026-10-24T16:28:19.037Z"
+      "noted_at": "2026-10-26T07:42:21.830Z"
     }
   ],
   "google_series": {
     "days": [
       "2026-10-23",
-      "2026-10-24"
+      "2026-10-24",
+      "2026-10-26"
     ],
     "by_branch": {
       "karetnaya": [
@@ -4278,6 +4279,12 @@
           "rating": 3.9,
           "review_count": 834,
           "noted_at": "2026-10-24T16:28:19.037Z"
+        },
+        {
+          "day": "2026-10-26",
+          "rating": 3.9,
+          "review_count": 834,
+          "noted_at": "2026-10-26T07:42:21.830Z"
         }
       ],
       "levitana": [
@@ -4292,6 +4299,12 @@
           "rating": 3.0,
           "review_count": 10,
           "noted_at": "2026-10-24T16:28:19.037Z"
+        },
+        {
+          "day": "2026-10-26",
+          "rating": 3.0,
+          "review_count": 10,
+          "noted_at": "2026-10-26T07:42:21.830Z"
         }
       ],
       "segedskaya": [
@@ -4306,6 +4319,12 @@
           "rating": 4.3,
           "review_count": 236,
           "noted_at": "2026-10-24T16:28:19.037Z"
+        },
+        {
+          "day": "2026-10-26",
+          "rating": 4.3,
+          "review_count": 236,
+          "noted_at": "2026-10-26T07:42:21.830Z"
         }
       ]
     }
@@ -4313,7 +4332,8 @@
   "calls_series": {
     "days": [
       "2026-10-23",
-      "2026-10-24"
+      "2026-10-24",
+      "2026-10-26"
     ],
     "total": [
       {
@@ -4323,6 +4343,10 @@
       {
         "day": "2026-10-24",
         "count": 2
+      },
+      {
+        "day": "2026-10-26",
+        "count": 1
       }
     ],
     "by_manager": {
@@ -4334,34 +4358,38 @@
         {
           "day": "2026-10-24",
           "count": 2
+        },
+        {
+          "day": "2026-10-26",
+          "count": 1
         }
       ]
     }
   },
   "outcome_counts": {
     "will_review": 1,
-    "no_answer": 2,
+    "no_answer": 3,
     "wont_review": 0,
     "unhappy": 0
   },
   "managers": [
     {
       "manager": "demo",
-      "total": 3,
+      "total": 4,
       "will_review": 1,
-      "no_answer": 2,
+      "no_answer": 3,
       "wont_review": 0,
       "unhappy": 0,
-      "will_review_rate": 0.333
+      "will_review_rate": 0.25
     }
   ],
-  "calls_total": 3,
-  "will_review_rate": 0.333,
+  "calls_total": 4,
+  "will_review_rate": 0.25,
   "counts": {
     "pool": 50,
     "batch": 50,
     "queue_size": 10,
     "branches": 3,
-    "calls": 3
+    "calls": 4
   }
 }

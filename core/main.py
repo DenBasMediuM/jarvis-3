@@ -1165,7 +1165,6 @@ async def updates_status() -> dict[str, Any]:
     debt_daily = await db.vyrobotka_list_debt_daily(limit=1)
     last_daily = debt_daily[-1] if debt_daily else None
     branch_kpi_sync = await db.branch_kpi_get_sync_state()
-    masters_kpi_sync = await db.masters_kpi_get_sync_state()
     modules = [
         {
             "id": "quality",
@@ -1245,25 +1244,6 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
-        },
-        {
-            "id": "processes-masters-kpi",
-            "block": "Процессы",
-            "title": "КПД мастеров",
-            "description": "Выработка и КПД (грн/час) по отчётам Google Drive / Sheets.",
-            "status": masters_kpi_sync.get("status") or "idle",
-            "message": masters_kpi_sync.get("message"),
-            "started_at": masters_kpi_sync.get("started_at"),
-            "finished_at": masters_kpi_sync.get("finished_at"),
-            "progress": {
-                "done": int(masters_kpi_sync.get("done") or 0),
-                "total": int(masters_kpi_sync.get("total") or 0),
-            },
-            "actions": [
-                {"id": "masters-kpi-sync", "label": "Обновить из Drive", "kind": "primary"},
-                {"id": "masters-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
-            ],
-            "pages": _read_pages_export_meta("docs/masters-kpi/data.json"),
         },
         {
             "id": "vitrine-users",
