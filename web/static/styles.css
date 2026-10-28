@@ -477,6 +477,11 @@ body:has(.app--processes) {
   color: inherit;
   box-shadow: 0 0 0 1px #1976d2;
 }
+.cj-btn-parts.active {
+  background: #efebe9;
+  border-color: #6d4c41;
+  box-shadow: 0 0 0 1px #6d4c41;
+}
 .cash-journal-toolbar {
   display: flex;
   justify-content: center;

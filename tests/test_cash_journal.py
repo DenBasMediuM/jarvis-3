@@ -609,6 +609,25 @@ def test_parts_attach_journal_line():
     assert is_parts_attach_line(zp) is False
 
 
+def test_parts_manual_force_attach():
+    """Нестандартный текст («457 грн 124663 подсветка») — вручную как ЗЧ."""
+    from modules.cash_journal.parser import is_parts_attach_line
+
+    out = reconcile_cash_journal(
+        "Касса: 3000\nКарта: 0\n457 грн 124663 подсветка\n"
+    )
+    line = next(
+        l
+        for l in out["cash_journal"]["lines"]
+        if not l.get("is_checkpoint") and "подсветка" in (l.get("raw") or "")
+    )
+    assert line["order_id"] == "124663"
+    assert line["amount"] == 457
+    assert is_parts_attach_line(line) is False
+    forced = {**line, "action": "cash_out", "parts_manual": True}
+    assert is_parts_attach_line(forced) is True
+
+
 SAMPLE_05_10 = """
 [05.10.2026 08:01] Денис Исаев: Касса: 925 (-75 получается по записям в ТГ)
 Карта: 1121

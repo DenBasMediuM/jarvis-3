@@ -535,6 +535,7 @@ const CJ_ACTION_ICONS = {
   cash_to_card: `<svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="9" cy="22" rx="6" ry="4.5" fill="#c4a574" stroke="#8a6b3d" stroke-width="1"/><path d="M5.5 19c0-3.5 1.6-7 3.5-7s3.5 3.5 3.5 7" fill="#d4b896" stroke="#8a6b3d" stroke-width="1"/><path d="M15 16h4M17.5 13.5L21 16l-3.5 2.5" fill="none" stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="20" y="12" width="10" height="8" rx="1.2" fill="#5c6bc0" stroke="#3949ab" stroke-width="1"/><path d="M20 15h10" stroke="#fff" stroke-width="1.4"/></svg>`,
   card_to_cash: `<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="12" width="10" height="8" rx="1.2" fill="#5c6bc0" stroke="#3949ab" stroke-width="1"/><path d="M2 15h10" stroke="#fff" stroke-width="1.4"/><path d="M13 16h4M15.5 13.5L19 16l-3.5 2.5" fill="none" stroke="#2e7d32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="24" cy="22" rx="6" ry="4.5" fill="#c4a574" stroke="#8a6b3d" stroke-width="1"/><path d="M20.5 19c0-3.5 1.6-7 3.5-7s3.5 3.5 3.5 7" fill="#d4b896" stroke="#8a6b3d" stroke-width="1"/></svg>`,
   ignore: `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 10l12 12M22 10L10 22" stroke="#c62828" stroke-width="3.2" stroke-linecap="round"/></svg>`,
+  parts: `<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="5.5" fill="#6d4c41" stroke="#4e342e" stroke-width="1.2"/><path d="M16 4.5v3.2M16 24.3v3.2M4.5 16h3.2M24.3 16h3.2M8.2 8.2l2.3 2.3M21.5 21.5l2.3 2.3M8.2 23.8l2.3-2.3M21.5 10.5l2.3-2.3" stroke="#8d6e63" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="16" r="2.2" fill="#efebe9"/></svg>`,
 };
 
 const CJ_LAST_CASHBOX_KEY = "jarvis_cj_last_cashbox_id";
@@ -579,12 +580,21 @@ function isPaymentLabel(label) {
   );
 }
 
+function extractOrderIdFromText(raw) {
+  const s = String(raw || "").replace(/\u00a0/g, " ");
+  const m = s.match(/\b(\d{5,})\b/);
+  return m ? m[1] : "";
+}
+
 function isPartsAttachLine(line) {
   if (!line || line.action !== "cash_out" || !line.order_id) return false;
   if (line.is_breakdown_total) return false;
+  // false — явно снято кнопкой; true — принудительно ЗЧ
+  if (line.parts_manual === false) return false;
+  if (line.parts_manual === true || line.force_parts) return true;
   const raw = String(line.raw || line.note || "").trim();
   const core = raw.replace(/^зч\.?\s+/i, "").trim();
-  // приход «+2500 …» / «… грн» — не ЗЧ
+  // приход «+2500 …» / «… грн» — не ЗЧ (кроме ручной отметки выше)
   if (/[+]|\bгрн\b|\buah\b|₴/i.test(core)) return false;
   const oid = String(line.order_id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const n = core.toLowerCase().replace(/ё/g, "е");
@@ -732,6 +742,7 @@ async function runCashImportStep(queue, index, { onUpdate } = {}) {
         line_id: line.id,
         cashbox_id: getLastCashboxId() || null,
         note: line.raw || line.note || "",
+        parts_manual: !!(line.parts_manual || line.force_parts),
       }),
     });
     const data = await resp.json().catch(() => ({}));
@@ -1438,12 +1449,65 @@ function renderCashJournal(journal) {
           b.disabled = !!line.posted;
           b.innerHTML = CJ_ACTION_ICONS[act.id] || "";
           b.addEventListener("click", () => {
-            data.lines[idx].action = act.id;
+            const row = data.lines[idx];
+            row.action = act.id;
+            // смена типа операции снимает ручную ЗЧ, если ушли с «из кассы»
+            if (act.id !== "cash_out" && row.parts_manual) {
+              row.parts_manual = false;
+              row.is_breakdown = false;
+            }
             renderLines();
             refreshSummary();
           });
           btns.appendChild(b);
         });
+        if (!line.is_breakdown_total) {
+          const partsOn =
+            line.parts_manual === true ||
+            (line.parts_manual !== false &&
+              !!(line.is_breakdown || isPartsAttachLine(line)));
+          const pb = document.createElement("button");
+          pb.type = "button";
+          pb.className = `cj-btn cj-btn-icon cj-btn-parts${partsOn ? " active" : ""}`;
+          pb.title = partsOn ? "Снять отметку «запчасть»" : "Отметить как запчасть";
+          pb.setAttribute("aria-label", pb.title);
+          pb.disabled = !!line.posted;
+          pb.innerHTML = CJ_ACTION_ICONS.parts;
+          pb.addEventListener("click", () => {
+            const row = data.lines[idx];
+            const on =
+              row.parts_manual === true ||
+              (row.parts_manual !== false &&
+                !!(row.is_breakdown || isPartsAttachLine(row)));
+            if (on) {
+              row.parts_manual = false;
+              row.is_breakdown = false;
+              renderLines();
+              refreshSummary();
+              return;
+            }
+            let oid = row.order_id ? String(row.order_id) : "";
+            if (!oid) {
+              oid = extractOrderIdFromText(row.raw || row.note || "");
+              if (oid) row.order_id = oid;
+            }
+            if (!oid) {
+              alert("Для запчасти нужен номер квитанции в тексте строки.");
+              return;
+            }
+            const amt = Math.abs(Number(row.amount) || 0);
+            if (amt <= 0) {
+              alert("Для запчасти нужна сумма больше 0.");
+              return;
+            }
+            row.parts_manual = true;
+            row.is_breakdown = true;
+            row.action = "cash_out";
+            renderLines();
+            refreshSummary();
+          });
+          btns.appendChild(pb);
+        }
         main.appendChild(btns);
       }
 

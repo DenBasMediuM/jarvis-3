@@ -1005,7 +1005,10 @@ def _guess_action(op: JournalOp) -> str:
 
 
 def is_parts_attach_line(line: dict[str, Any]) -> bool:
-    """Привязка запчасти в CRM: «123956 -256 …», «122361 акб 700», «121985 - Шлейфы…, 2000»."""
+    """Привязка запчасти в CRM: «123956 -256 …», «122361 акб 700», «121985 - Шлейфы…, 2000».
+
+    Ручная отметка в UI: parts_manual / force_parts — обходит шаблон текста.
+    """
     if str(line.get("action") or "") != "cash_out":
         return False
     order_id = line.get("order_id")
@@ -1013,6 +1016,8 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
         return False
     if line.get("is_breakdown_total"):
         return False
+    if line.get("parts_manual") or line.get("force_parts"):
+        return True
     # позиции под итогом ЗЧ уже учтены в кассе; в CRM тоже привязываем каждую
     raw = (line.get("raw") or line.get("note") or "").strip()
     core = ZCH_LINE_PREFIX.sub("", raw).strip()

@@ -67,6 +67,7 @@ class CashJournalImportPreview(BaseModel):
     line_id: str | None = None
     cashbox_id: str | None = None
     note: str | None = None
+    parts_manual: bool = False
 
 
 class CashJournalImportAccept(BaseModel):
@@ -699,12 +700,14 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
                     "order_id": body.order_id,
                     "raw": body.note or "",
                     "note": body.note or "",
+                    "parts_manual": bool(body.parts_manual),
                 }
             ):
                 raise HTTPException(
                     400,
                     "Эта строка «из кассы» с номером — не привязка запчасти "
-                    "(нужен вид «123956 -256 …» или «122361 акб 700»)",
+                    "(нужен вид «123956 -256 …» / «122361 акб 700» "
+                    "или кнопка «запчасть» в журнале)",
                 )
             preview = await client.preview_parts_attach(
                 body.order_id,
