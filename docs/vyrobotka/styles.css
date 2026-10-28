@@ -356,3 +356,22 @@
   height: 72px;
   position: relative;
 }
+
+.bq-zone,
+.bq-assign {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.bq-zone-low { background: #e8f5e9; color: #2e7d32; }
+.bq-zone-ok { background: #fff3e0; color: #ef6c00; }
+.bq-zone-high { background: #ffebee; color: #c62828; }
+.bq-assign-good { background: #e8f5e9; color: #2e7d32; }
+.bq-assign-ok { background: #fff3e0; color: #ef6c00; }
+.bq-assign-bad { background: #ffebee; color: #c62828; }
+.bq-assign-unknown { background: #eceff1; color: #546e7a; }
+

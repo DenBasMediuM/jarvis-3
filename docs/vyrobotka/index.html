@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261026-reviews-stats-acl1" />
-  <link rel="stylesheet" href="./styles.css?v=20261026-reviews-stats-acl1" />
-  <script src="../shared/auth.js?v=20261026-reviews-stats-acl1"></script>
+  <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
+  <link rel="stylesheet" href="./styles.css?v=20261028-buffer-quality-vitrine1" />
+  <script src="../shared/auth.js?v=20261028-buffer-quality-vitrine1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261026-reviews-stats-acl1" defer></script>
+  <script src="./app.js?v=20261028-buffer-quality-vitrine1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -25,18 +25,27 @@
       else if (want === "reviews" && auth.hasAccess(s.access, "processes.reviews")) active = "processes.reviews";
       else if (want === "reviews_stats" && auth.hasAccess(s.access, "processes.reviews_stats")) {
         active = "processes.reviews_stats";
+      } else if (want === "buffer_quality" && auth.hasAccess(s.access, "processes.buffer_quality")) {
+        active = "processes.buffer_quality";
       } else if (auth.hasAccess(s.access, "processes.upsell")) active = "processes.upsell";
       else if (auth.hasAccess(s.access, "processes.debt")) active = "processes.debt";
       else if (auth.hasAccess(s.access, "processes.branch_kpi")) active = "processes.branch_kpi";
       else if (auth.hasAccess(s.access, "processes.reviews")) active = "processes.reviews";
       else if (auth.hasAccess(s.access, "processes.reviews_stats")) active = "processes.reviews_stats";
+      else if (auth.hasAccess(s.access, "processes.buffer_quality")) active = "processes.buffer_quality";
       auth.applyShellNav(active);
       auth.filterProcessesTabs(s.access);
       if (want === "reviews" && auth.hasAccess(s.access, "processes.reviews")) {
         location.href = "../reviews/";
         return;
       }
-      if (want === "debt" || want === "upsell" || want === "branch_kpi" || want === "reviews_stats") {
+      if (
+        want === "debt" ||
+        want === "upsell" ||
+        want === "branch_kpi" ||
+        want === "reviews_stats" ||
+        want === "buffer_quality"
+      ) {
         const btn = document.querySelector(`.mod-tab[data-tab="${want}"]`);
         if (btn && !btn.hidden) btn.click();
       }
@@ -59,7 +68,7 @@
     <header class="mod-top">
       <div>
         <h1>Процессы</h1>
-        <p class="mod-sub">Досогласования, дебиторка, КПД филиалов, сбор отзывов · снимок из локального Jarvis</p>
+        <p class="mod-sub">Досогласования, дебиторка, КПД филиалов, отзывы, буфер · снимок из локального Jarvis</p>
       </div>
       <div class="mod-meta" id="export-meta">Загрузка data.json…</div>
     </header>
@@ -70,6 +79,7 @@
       <button type="button" class="mod-tab" data-tab="branch_kpi">КПД филиалов</button>
       <button type="button" class="mod-tab" data-tab="reviews">Сбор отзывов</button>
       <button type="button" class="mod-tab" data-tab="reviews_stats">Статистика по сбору отзывов</button>
+      <button type="button" class="mod-tab" data-tab="buffer_quality">Качество буфера</button>
     </nav>
 
     <main>
@@ -201,6 +211,51 @@
                   </tr>
                 </thead>
                 <tbody id="tbody-branch-kpi"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-buffer_quality" class="panel" hidden>
+        <div id="buffer-quality-empty" class="empty" hidden>Нет снимка буфера. Пересчитайте и экспортируйте из Jarvis.</div>
+        <div id="buffer-quality-body" class="stack" hidden>
+          <div class="kpis" id="buffer-quality-kpis"></div>
+          <div class="charts-grid">
+            <article class="card">
+              <h3>Динамика буфера</h3>
+              <p class="card-sub">Без мастера · старше 3 дней · роздано за день.</p>
+              <div class="chart-box"><canvas id="chart-bq-buffer"></canvas></div>
+            </article>
+            <article class="card">
+              <h3>Качество раздачи</h3>
+              <p class="card-sub">На high / ok / low и оценка дня менеджера.</p>
+              <div class="chart-box"><canvas id="chart-bq-dispatch"></canvas></div>
+            </article>
+            <article class="card" style="grid-column:1/-1">
+              <h3>Раздача из буфера по мастерам</h3>
+              <p class="card-sub">Цвет столбца = зона загрузки мастера.</p>
+              <div class="chart-box chart-box--tall"><canvas id="chart-bq-masters"></canvas></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Мастера · загрузка</h3>
+            <div class="table-wrap">
+              <table class="vtable" id="table-buffer-quality">
+                <thead>
+                  <tr>
+                    <th>Мастер</th>
+                    <th>В работе</th>
+                    <th>Σ дней</th>
+                    <th>Дораб.</th>
+                    <th>Без диагн.</th>
+                    <th>Load</th>
+                    <th>Зона</th>
+                    <th>Из буфера</th>
+                    <th>Раздача</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-buffer-quality"></tbody>
               </table>
             </div>
           </article>

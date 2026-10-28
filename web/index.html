@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/styles.css?v=20261028-parts-manual1" />
+  <link rel="stylesheet" href="/static/styles.css?v=20261028-buffer-quality-vitrine1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -30,6 +30,7 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="debt">Дебиторка</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="branch_kpi">КПД филиалов</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="reviews">Сбор отзывов</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="buffer_quality">Качество буфера</button>
           </div>
         </div>
         <button class="nav-btn" data-view="finance">Финансы</button>
@@ -241,8 +242,8 @@
           <div id="vyrobotka-panel-body" class="quality-panel-body">
             <header class="view-header quality-header">
               <p>
-                Операционные процессы: досогласования, дебиторка, КПД филиалов, сбор отзывов
-                (отчёты Drive / Sheets).
+                Операционные процессы: досогласования, дебиторка, КПД филиалов, сбор отзывов,
+                качество обработки буфера.
               </p>
             </header>
             <div class="quality-toolbar" id="vyrobotka-toolbar">
@@ -264,6 +265,12 @@
               <button type="button" id="reviews-publish-btn" class="cj-import-btn">Опубликовать витрину</button>
               <span id="reviews-sync-status" class="quality-sync-status">—</span>
             </div>
+            <div class="quality-toolbar" id="buffer-quality-toolbar" hidden>
+              <span class="quality-toolbar-label">Качество буфера</span>
+              <button type="button" id="buffer-quality-sync-btn" class="cj-import-open" title="Сначала подтянет мастеров из CRM-списка, затем пересчитает снимок">Пересчитать снимок</button>
+              <button type="button" id="buffer-quality-export-btn" class="cj-import-btn is-muted" title="Записать docs/buffer-quality/data.json">Экспорт в Pages</button>
+              <span id="buffer-quality-sync-status" class="quality-sync-status">—</span>
+            </div>
           </div>
         </div>
         <nav class="quality-tabs" role="tablist" aria-label="Процессы">
@@ -271,6 +278,7 @@
           <button type="button" class="quality-tab" data-processes-tab="debt" role="tab" aria-selected="false">Дебиторка</button>
           <button type="button" class="quality-tab" data-processes-tab="branch_kpi" role="tab" aria-selected="false">КПД филиалов</button>
           <button type="button" class="quality-tab" data-processes-tab="reviews" role="tab" aria-selected="false">Сбор отзывов</button>
+          <button type="button" class="quality-tab" data-processes-tab="buffer_quality" role="tab" aria-selected="false">Качество буфера</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
@@ -587,6 +595,64 @@
               </section>
             </div>
           </article>
+
+          <article id="buffer-quality-body" class="vyrobotka-section" hidden>
+            <header class="vyrobotka-section-head">
+              <h2>Качество обработки буфера</h2>
+              <p id="buffer-quality-meta">
+                Буфер = техника без мастера. Оценка, насколько правильно менеджер уже раздал
+                технику из буфера относительно загрузки мастеров (снимок раз в день).
+              </p>
+            </header>
+            <div class="vyrobotka-stack-layout">
+              <div class="vyrobotka-stack-top">
+                <div class="vyrobotka-kpis" id="buffer-quality-kpis" aria-label="Сводка буфера"></div>
+                <div class="vyrobotka-charts buffer-quality-charts">
+                  <section class="vyrobotka-chart-panel">
+                    <h3>Динамика буфера</h3>
+                    <p class="vyrobotka-chart-sub">Без мастера · старше 3 дней · роздано за день</p>
+                    <div class="vyrobotka-chart-box"><canvas id="buffer-quality-chart-buffer"></canvas></div>
+                  </section>
+                  <section class="vyrobotka-chart-panel">
+                    <h3>Качество раздачи</h3>
+                    <p class="vyrobotka-chart-sub">На low / ok / high и оценка дня менеджера</p>
+                    <div class="vyrobotka-chart-box"><canvas id="buffer-quality-chart-dispatch"></canvas></div>
+                  </section>
+                  <section class="vyrobotka-chart-panel buffer-quality-chart-wide">
+                    <h3>Раздача из буфера по мастерам</h3>
+                    <p class="vyrobotka-chart-sub">Сколько получил каждый · цвет = зона загрузки на момент оценки</p>
+                    <div class="vyrobotka-chart-box"><canvas id="buffer-quality-chart-masters"></canvas></div>
+                  </section>
+                </div>
+              </div>
+              <div class="vyrobotka-stack-table">
+                <div class="vyrobotka-side-head">
+                  <h3>Мастера · загрузка</h3>
+                  <p class="vyrobotka-chart-sub" style="margin:0" id="buffer-quality-masters-meta">Текущий WIP и раздача за последний снимок</p>
+                </div>
+                <div class="vyrobotka-table-wrap">
+                  <table class="quality-table vyrobotka-table" id="buffer-quality-table">
+                    <thead>
+                      <tr>
+                        <th>Мастер</th>
+                        <th>В работе</th>
+                        <th>Σ дней</th>
+                        <th>Дораб.</th>
+                        <th>Без диагн.</th>
+                        <th>Load</th>
+                        <th>Зона</th>
+                        <th>Из буфера</th>
+                        <th>Раздача</th>
+                      </tr>
+                    </thead>
+                    <tbody id="buffer-quality-tbody">
+                      <tr><td colspan="9" class="quality-empty">Нет данных. Нажмите «Пересчитать снимок».</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -707,6 +773,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261028-parts-manual1"></script>
+  <script src="/static/app.js?v=20261028-buffer-quality-vitrine1"></script>
 </body>
 </html>

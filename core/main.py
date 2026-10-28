@@ -29,6 +29,7 @@ from core.telegram import send_telegram_messages, telegram_configured
 from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
+from modules.buffer_quality import BufferQualityService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
 from modules.reviews.service import ReviewsService
@@ -41,6 +42,7 @@ gincore_module: GincoreModule | None = None
 quality_service: QualityService | None = None
 vyrobotka_service: VyrobotkaService | None = None
 branch_kpi_service: BranchKpiService | None = None
+buffer_quality_service: BufferQualityService | None = None
 masters_kpi_service: MastersKpiService | None = None
 reviews_service: ReviewsService | None = None
 
@@ -148,7 +150,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
-    global masters_kpi_service, reviews_service
+    global buffer_quality_service, masters_kpi_service, reviews_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -181,6 +183,7 @@ async def lifespan(_: FastAPI):
         return client
 
     branch_kpi_service = BranchKpiService(db, gincore_client_factory=_branch_kpi_gincore)
+    buffer_quality_service = BufferQualityService(db, quality_service=quality_service)
     masters_kpi_service = MastersKpiService(
         db, lambda: get_module_settings("vyrobotka")
     )
@@ -620,6 +623,40 @@ async def branch_kpi_export_pages() -> dict[str, Any]:
         raise HTTPException(503, "Сервис КПД филиалов не готов")
     try:
         return await branch_kpi_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/buffer-quality/stats")
+async def buffer_quality_stats() -> dict[str, Any]:
+    if not buffer_quality_service:
+        raise HTTPException(503, "Сервис буфера не готов")
+    return await buffer_quality_service.get_stats()
+
+
+@app.get("/api/buffer-quality/sync")
+async def buffer_quality_sync_status() -> dict[str, Any]:
+    if not buffer_quality_service:
+        raise HTTPException(503, "Сервис буфера не готов")
+    return {"ok": True, "sync": await buffer_quality_service.get_sync_state()}
+
+
+@app.post("/api/buffer-quality/sync")
+async def buffer_quality_sync_start() -> dict[str, Any]:
+    if not buffer_quality_service:
+        raise HTTPException(503, "Сервис буфера не готов")
+    try:
+        return await buffer_quality_service.sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/buffer-quality/export-pages")
+async def buffer_quality_export_pages() -> dict[str, Any]:
+    if not buffer_quality_service:
+        raise HTTPException(503, "Сервис буфера не готов")
+    try:
+        return await buffer_quality_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 
@@ -1168,6 +1205,7 @@ async def updates_status() -> dict[str, Any]:
     debt_daily = await db.vyrobotka_list_debt_daily(limit=1)
     last_daily = debt_daily[-1] if debt_daily else None
     branch_kpi_sync = await db.branch_kpi_get_sync_state()
+    buffer_quality_sync = await db.buffer_quality_get_sync_state()
     modules = [
         {
             "id": "quality",
@@ -1247,6 +1285,36 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
+        },
+        {
+            "id": "processes-buffer-quality",
+            "block": "Процессы",
+            "title": "Качество обработки буфера",
+            "description": (
+                "Динамика буфера без мастера и ретроспектива раздачи: "
+                "насколько правильно менеджер распределял технику по загрузке мастеров."
+            ),
+            "status": buffer_quality_sync.get("status") or "idle",
+            "message": buffer_quality_sync.get("message"),
+            "started_at": buffer_quality_sync.get("started_at"),
+            "finished_at": buffer_quality_sync.get("finished_at"),
+            "progress": {
+                "done": int(buffer_quality_sync.get("done") or 0),
+                "total": int(buffer_quality_sync.get("total") or 0),
+            },
+            "actions": [
+                {
+                    "id": "buffer-quality-sync",
+                    "label": "Пересчитать снимок",
+                    "kind": "primary",
+                },
+                {
+                    "id": "buffer-quality-export",
+                    "label": "Экспорт в Pages",
+                    "kind": "muted",
+                },
+            ],
+            "pages": _read_pages_export_meta("docs/buffer-quality/data.json"),
         },
         {
             "id": "vitrine-users",

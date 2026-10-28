@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-26T08:03:56.166317+00:00",
+  "exported_at": "2026-10-28T07:47:05.102177+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -15,7 +15,9 @@
         "processes.debt",
         "processes.branch_kpi",
         "processes.reviews",
-        "processes.reviews_stats"
+        "processes.reviews_stats",
+        "processes.buffer_quality",
+        "finance"
       ]
     }
   ]

@@ -828,7 +828,8 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
   display: none !important;
 }
 #vyrobotka-debt-body.vyrobotka-section,
-#branch-kpi-body.vyrobotka-section {
+#branch-kpi-body.vyrobotka-section,
+#buffer-quality-body.vyrobotka-section {
   height: auto;
   min-height: 0;
   max-height: none;
@@ -836,10 +837,12 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 }
 #vyrobotka-upsell-body.vyrobotka-section:not([hidden]),
 #vyrobotka-debt-body.vyrobotka-section:not([hidden]),
-#branch-kpi-body.vyrobotka-section:not([hidden]) {
+#branch-kpi-body.vyrobotka-section:not([hidden]),
+#buffer-quality-body.vyrobotka-section:not([hidden]) {
   flex: 1 1 auto;
 }
-#branch-kpi-body .vyrobotka-stack-top {
+#branch-kpi-body .vyrobotka-stack-top,
+#buffer-quality-body .vyrobotka-stack-top {
   overflow: visible;
 }
 #branch-kpi-body .branch-kpi-charts {
@@ -848,6 +851,38 @@ input[type="text"], input[type="password"], input[type="url"], input[type="numbe
 }
 #branch-kpi-body .branch-kpi-charts .vyrobotka-chart-box {
   height: 220px;
+}
+#buffer-quality-body .buffer-quality-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+#buffer-quality-body .buffer-quality-chart-wide {
+  grid-column: 1 / -1;
+}
+#buffer-quality-body .buffer-quality-charts .vyrobotka-chart-box {
+  height: 220px;
+}
+.bq-zone,
+.bq-assign {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.bq-zone-low { background: #e8f5e9; color: #2e7d32; }
+.bq-zone-ok { background: #fff3e0; color: #ef6c00; }
+.bq-zone-high { background: #ffebee; color: #c62828; }
+.bq-assign-good { background: #e8f5e9; color: #2e7d32; }
+.bq-assign-ok { background: #fff3e0; color: #ef6c00; }
+.bq-assign-bad { background: #ffebee; color: #c62828; }
+.bq-assign-unknown { background: #eceff1; color: #546e7a; }
+@media (max-width: 960px) {
+  #buffer-quality-body .buffer-quality-charts { grid-template-columns: 1fr; }
 }
 #masters-kpi-body.vyrobotka-section,
 #reviews-body.vyrobotka-section {

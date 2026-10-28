@@ -58,6 +58,9 @@
     if (id === "processes.reviews_stats") {
       return hasAccess(accessList, "processes.reviews_stats");
     }
+    if (id === "processes.buffer_quality") {
+      return hasAccess(accessList, "processes.buffer_quality");
+    }
     if (id === "finance") return hasAccess(accessList, "finance");
     return false;
   }
@@ -179,6 +182,7 @@
       branch_kpi: "processes.branch_kpi",
       reviews: "processes.reviews",
       reviews_stats: "processes.reviews_stats",
+      buffer_quality: "processes.buffer_quality",
     };
     document.querySelectorAll(".mod-tab[data-tab]").forEach((btn) => {
       const tab = btn.getAttribute("data-tab");

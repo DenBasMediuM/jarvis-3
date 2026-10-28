@@ -279,6 +279,55 @@ CREATE TABLE IF NOT EXISTS branch_kpi_sync_state (
   finished_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS buffer_quality_daily (
+  day TEXT PRIMARY KEY,
+  buffer_count INTEGER NOT NULL DEFAULT 0,
+  buffer_over_3d INTEGER NOT NULL DEFAULT 0,
+  assigned_from_buffer INTEGER,
+  masters_high INTEGER NOT NULL DEFAULT 0,
+  masters_ok INTEGER NOT NULL DEFAULT 0,
+  masters_low INTEGER NOT NULL DEFAULT 0,
+  assign_to_high INTEGER NOT NULL DEFAULT 0,
+  assign_to_ok INTEGER NOT NULL DEFAULT 0,
+  assign_to_low INTEGER NOT NULL DEFAULT 0,
+  assign_unknown INTEGER NOT NULL DEFAULT 0,
+  avg_load_index REAL,
+  dispatch_score REAL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS buffer_quality_buffer_ids (
+  day TEXT NOT NULL,
+  order_id TEXT NOT NULL,
+  PRIMARY KEY (day, order_id)
+);
+
+CREATE TABLE IF NOT EXISTS buffer_quality_master_daily (
+  day TEXT NOT NULL,
+  master_key TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  open_count INTEGER NOT NULL DEFAULT 0,
+  age_sum_days REAL NOT NULL DEFAULT 0,
+  rework_orders INTEGER NOT NULL DEFAULT 0,
+  no_diag_count INTEGER NOT NULL DEFAULT 0,
+  load_index REAL NOT NULL DEFAULT 0,
+  zone TEXT NOT NULL DEFAULT 'low',
+  assigned_from_buffer INTEGER NOT NULL DEFAULT 0,
+  assign_quality TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (day, master_key)
+);
+
+CREATE TABLE IF NOT EXISTS buffer_quality_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  status TEXT NOT NULL DEFAULT 'idle',
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  message TEXT,
+  started_at TEXT,
+  finished_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS masters_kpi_masters (
   master_key TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
@@ -1782,6 +1831,198 @@ class Database:
             SELECT * FROM branch_kpi_months
             ORDER BY year ASC, month ASC, branch_id ASC
             """
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def buffer_quality_get_sync_state(self) -> dict[str, Any]:
+        cur = await self.conn.execute(
+            "SELECT * FROM buffer_quality_sync_state WHERE id = 1"
+        )
+        row = await cur.fetchone()
+        if not row:
+            await self.conn.execute(
+                "INSERT INTO buffer_quality_sync_state(id, status) VALUES (1, 'idle')"
+            )
+            await self.conn.commit()
+            return {
+                "status": "idle",
+                "total": 0,
+                "done": 0,
+                "message": None,
+                "started_at": None,
+                "finished_at": None,
+            }
+        return dict(row)
+
+    async def buffer_quality_set_sync_state(self, **fields: Any) -> dict[str, Any]:
+        current = await self.buffer_quality_get_sync_state()
+        current.update(fields)
+        await self.conn.execute(
+            """
+            INSERT INTO buffer_quality_sync_state(
+              id, status, total, done, message, started_at, finished_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              status = excluded.status,
+              total = excluded.total,
+              done = excluded.done,
+              message = excluded.message,
+              started_at = excluded.started_at,
+              finished_at = excluded.finished_at
+            """,
+            (
+                current.get("status") or "idle",
+                int(current.get("total") or 0),
+                int(current.get("done") or 0),
+                current.get("message"),
+                current.get("started_at"),
+                current.get("finished_at"),
+            ),
+        )
+        await self.conn.commit()
+        return await self.buffer_quality_get_sync_state()
+
+    async def buffer_quality_upsert_daily(self, row: dict[str, Any]) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO buffer_quality_daily(
+              day, buffer_count, buffer_over_3d, assigned_from_buffer,
+              masters_high, masters_ok, masters_low,
+              assign_to_high, assign_to_ok, assign_to_low, assign_unknown,
+              avg_load_index, dispatch_score, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ON CONFLICT(day) DO UPDATE SET
+              buffer_count = excluded.buffer_count,
+              buffer_over_3d = excluded.buffer_over_3d,
+              assigned_from_buffer = excluded.assigned_from_buffer,
+              masters_high = excluded.masters_high,
+              masters_ok = excluded.masters_ok,
+              masters_low = excluded.masters_low,
+              assign_to_high = excluded.assign_to_high,
+              assign_to_ok = excluded.assign_to_ok,
+              assign_to_low = excluded.assign_to_low,
+              assign_unknown = excluded.assign_unknown,
+              avg_load_index = excluded.avg_load_index,
+              dispatch_score = excluded.dispatch_score,
+              updated_at = excluded.updated_at
+            """,
+            (
+                row["day"],
+                int(row.get("buffer_count") or 0),
+                int(row.get("buffer_over_3d") or 0),
+                row.get("assigned_from_buffer"),
+                int(row.get("masters_high") or 0),
+                int(row.get("masters_ok") or 0),
+                int(row.get("masters_low") or 0),
+                int(row.get("assign_to_high") or 0),
+                int(row.get("assign_to_ok") or 0),
+                int(row.get("assign_to_low") or 0),
+                int(row.get("assign_unknown") or 0),
+                row.get("avg_load_index"),
+                row.get("dispatch_score"),
+            ),
+        )
+        await self.conn.commit()
+
+    async def buffer_quality_list_daily(self, *, limit: int = 365) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM (
+              SELECT * FROM buffer_quality_daily
+              ORDER BY day DESC
+              LIMIT ?
+            ) AS recent
+            ORDER BY day ASC
+            """,
+            (max(1, int(limit)),),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def buffer_quality_get_daily(self, day: str) -> dict[str, Any] | None:
+        cur = await self.conn.execute(
+            "SELECT * FROM buffer_quality_daily WHERE day = ?", (day,)
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+    async def buffer_quality_replace_buffer_ids(self, day: str, order_ids: list[str]) -> None:
+        await self.conn.execute(
+            "DELETE FROM buffer_quality_buffer_ids WHERE day = ?", (day,)
+        )
+        for oid in order_ids:
+            await self.conn.execute(
+                "INSERT INTO buffer_quality_buffer_ids(day, order_id) VALUES (?, ?)",
+                (day, str(oid)),
+            )
+        await self.conn.commit()
+
+    async def buffer_quality_list_buffer_ids(self, day: str) -> list[str]:
+        cur = await self.conn.execute(
+            "SELECT order_id FROM buffer_quality_buffer_ids WHERE day = ? ORDER BY order_id",
+            (day,),
+        )
+        return [str(r["order_id"]) for r in await cur.fetchall()]
+
+    async def buffer_quality_replace_masters_daily(
+        self, day: str, rows: list[dict[str, Any]]
+    ) -> None:
+        await self.conn.execute(
+            "DELETE FROM buffer_quality_master_daily WHERE day = ?", (day,)
+        )
+        for r in rows:
+            await self.conn.execute(
+                """
+                INSERT INTO buffer_quality_master_daily(
+                  day, master_key, display_name, open_count, age_sum_days,
+                  rework_orders, no_diag_count, load_index, zone,
+                  assigned_from_buffer, assign_quality, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    day,
+                    str(r["master_key"]),
+                    str(r.get("display_name") or r["master_key"]),
+                    int(r.get("open_count") or 0),
+                    float(r.get("age_sum_days") or 0),
+                    int(r.get("rework_orders") or 0),
+                    int(r.get("no_diag_count") or 0),
+                    float(r.get("load_index") or 0),
+                    str(r.get("zone") or "low"),
+                    int(r.get("assigned_from_buffer") or 0),
+                    r.get("assign_quality"),
+                ),
+            )
+        await self.conn.commit()
+
+    async def buffer_quality_list_masters_daily(
+        self, day: str
+    ) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT * FROM buffer_quality_master_daily
+            WHERE day = ?
+            ORDER BY load_index DESC, display_name COLLATE NOCASE ASC
+            """,
+            (day,),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+    async def buffer_quality_list_masters_range(
+        self, *, limit_days: int = 90
+    ) -> list[dict[str, Any]]:
+        cur = await self.conn.execute(
+            """
+            SELECT m.* FROM buffer_quality_master_daily m
+            WHERE m.day IN (
+              SELECT day FROM (
+                SELECT DISTINCT day FROM buffer_quality_master_daily
+                ORDER BY day DESC
+                LIMIT ?
+              )
+            )
+            ORDER BY m.day ASC, m.load_index DESC
+            """,
+            (max(1, int(limit_days)),),
         )
         return [dict(r) for r in await cur.fetchall()]
 

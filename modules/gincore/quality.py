@@ -1632,6 +1632,76 @@ class QualityService:
             )
         return {"ok": True, "orders": out, "sync": sync, "count": len(out)}
 
+    async def fetch_working_list(self) -> list[dict[str, Any]]:
+        """Актуальный CRM-список рабочих заказов (без лент)."""
+        client = await self._client_factory()
+        try:
+            params = quality_crm_params()
+            page = 1
+            listed: list[dict[str, Any]] = []
+            seen: set[str] = set()
+            total_count = None
+            while page <= 40:
+                meta = await client._repair_orders_page(page=page, crm_params=params)
+                if total_count is None:
+                    total_count = int(meta.get("count") or 0)
+                chunk = parse_quality_list_rows(meta.get("html") or "")
+                if not chunk:
+                    break
+                new = 0
+                for o in chunk:
+                    oid = o["order_id"]
+                    if oid in seen:
+                        continue
+                    seen.add(oid)
+                    listed.append(o)
+                    new += 1
+                if new == 0:
+                    break
+                if total_count and len(listed) >= total_count:
+                    break
+                page += 1
+                await asyncio.sleep(0.2)
+            return listed
+        finally:
+            try:
+                await client.aclose()
+            except Exception:  # noqa: BLE001
+                pass
+
+    async def refresh_list_fields(self) -> dict[str, Any]:
+        """Обновить engineer/status/location из CRM без пересборки лент.
+
+        Нужно модулям вроде буфера, где важна свежая привязка мастера.
+        """
+        listed = await self.fetch_working_list()
+        now = datetime.now(timezone.utc).isoformat()
+        updated = 0
+        for o in listed:
+            prev = await self.db.quality_get_order(o["order_id"])
+            await self.db.quality_upsert_order(
+                {
+                    **o,
+                    "list_synced_at": now,
+                    "accepted_at": o.get("accepted_at")
+                    or (prev or {}).get("accepted_at"),
+                    "repair_cost": (prev or {}).get("repair_cost"),
+                    "feed_json": (prev or {}).get("feed_json"),
+                    "metrics_json": (prev or {}).get("metrics_json"),
+                    "feed_synced_at": (prev or {}).get("feed_synced_at"),
+                }
+            )
+            updated += 1
+        removed = await self.db.quality_delete_missing(
+            {o["order_id"] for o in listed}
+        )
+        return {
+            "ok": True,
+            "listed": len(listed),
+            "updated": updated,
+            "removed": removed,
+        }
+
     async def start_sync(self, *, force: bool = False) -> dict[str, Any]:
         global _sync_task
         async with _sync_lock:
@@ -1790,6 +1860,17 @@ class QualityService:
             try:
                 exp = await self.export_pages_snapshot()
                 day_msg += f", pages {exp.get('orders', 0)} зак."
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                from modules.buffer_quality import BufferQualityService
+
+                bq = await BufferQualityService(self.db).sync()
+                if bq.get("ok"):
+                    day_msg += ", буфер"
+                    assigned = (bq.get("daily") or {}).get("assigned_from_buffer")
+                    if assigned is not None:
+                        day_msg += f" →{assigned}"
             except Exception:  # noqa: BLE001
                 pass
             await self.db.quality_set_sync_state(

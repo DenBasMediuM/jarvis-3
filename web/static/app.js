@@ -75,6 +75,7 @@ function setProcessesTab(tab) {
     tab === "debt" ||
     tab === "branch_kpi" ||
     tab === "reviews" ||
+    tab === "buffer_quality" ||
     tab === "upsell"
       ? tab
       : "upsell";
@@ -98,18 +99,23 @@ function setProcessesTab(tab) {
   const debt = $("#vyrobotka-debt-body");
   const branchKpi = $("#branch-kpi-body");
   const reviewsBody = $("#reviews-body");
+  const bufferBody = $("#buffer-quality-body");
   const empty = $("#vyrobotka-empty");
   const sheetsToolbar = $("#vyrobotka-toolbar");
   const kpiToolbar = $("#branch-kpi-toolbar");
   const reviewsToolbar = $("#reviews-toolbar");
+  const bufferToolbar = $("#buffer-quality-toolbar");
   const isBranchKpi = id === "branch_kpi";
   const isReviews = id === "reviews";
-  const isStandalone = isBranchKpi || isReviews;
+  const isBuffer = id === "buffer_quality";
+  const isStandalone = isBranchKpi || isReviews || isBuffer;
   if (sheetsToolbar) sheetsToolbar.hidden = isStandalone;
   if (kpiToolbar) kpiToolbar.hidden = !isBranchKpi;
   if (reviewsToolbar) reviewsToolbar.hidden = !isReviews;
+  if (bufferToolbar) bufferToolbar.hidden = !isBuffer;
   if (branchKpi) branchKpi.hidden = !isBranchKpi;
   if (reviewsBody) reviewsBody.hidden = !isReviews;
+  if (bufferBody) bufferBody.hidden = !isBuffer;
   if (isBranchKpi) {
     if (upsell) upsell.hidden = true;
     if (debt) debt.hidden = true;
@@ -123,6 +129,14 @@ function setProcessesTab(tab) {
     if (debt) debt.hidden = true;
     if (empty) empty.hidden = true;
     loadReviewsStats();
+    return;
+  }
+  if (isBuffer) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadBufferQualityStats();
+    requestAnimationFrame(() => resizeBufferQualityCharts());
     return;
   }
   const hasData = (typeof vyrobotkaSheetsCache !== "undefined" ? vyrobotkaSheetsCache : []).length > 0;
@@ -153,6 +167,7 @@ function initProcessesTabs() {
     saved !== "debt" &&
     saved !== "branch_kpi" &&
     saved !== "reviews" &&
+    saved !== "buffer_quality" &&
     saved !== "upsell"
   ) {
     saved = "upsell";
@@ -5977,6 +5992,343 @@ async function exportBranchKpiPages() {
 $("#branch-kpi-sync-btn")?.addEventListener("click", () => runBranchKpiSync());
 $("#branch-kpi-export-pages-btn")?.addEventListener("click", () => exportBranchKpiPages());
 
+/* —— Качество обработки буфера —— */
+let bufferQualityCache = null;
+let bufferQualityCharts = {};
+
+function destroyBufferQualityCharts() {
+  Object.values(bufferQualityCharts).forEach((c) => {
+    try {
+      c.destroy();
+    } catch {
+      /* ignore */
+    }
+  });
+  bufferQualityCharts = {};
+}
+
+function resizeBufferQualityCharts() {
+  Object.values(bufferQualityCharts).forEach((c) => {
+    try {
+      c.resize();
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+function bufferZoneLabel(zone) {
+  if (zone === "high") return "high";
+  if (zone === "ok") return "ok";
+  if (zone === "low") return "low";
+  return zone || "—";
+}
+
+function bufferAssignLabel(q) {
+  if (q === "good") return "хорошо";
+  if (q === "ok") return "норм";
+  if (q === "bad") return "плохо";
+  if (q === "unknown") return "н/д";
+  return "—";
+}
+
+function bufferZoneColor(zone) {
+  if (zone === "high") return "#c62828";
+  if (zone === "ok") return "#ef6c00";
+  if (zone === "low") return "#2e7d32";
+  return "#90a4ae";
+}
+
+function renderBufferQualityStats(data) {
+  bufferQualityCache = data;
+  const live = data?.live || {};
+  const latest = data?.latest || {};
+  const series = data?.series || {};
+  const masters = data?.masters || [];
+  const sync = data?.sync || {};
+  const meta = $("#buffer-quality-meta");
+  if (meta) {
+    const bits = [];
+    if (live.buffer_count != null) bits.push(`буфер сейчас ${live.buffer_count}`);
+    if (live.buffer_over_3d != null) bits.push(`>3д: ${live.buffer_over_3d}`);
+    if (latest.day) bits.push(`снимок ${latest.day}`);
+    if (sync.finished_at) bits.push(`обновлено ${fmtUpdatesWhen(sync.finished_at)}`);
+    if (data?.needs_quality_sync) bits.push("нужен синк Качества");
+    meta.textContent = bits.length
+      ? bits.join(" · ")
+      : "Буфер = без мастера. Ретроспектива раздачи по загрузке мастеров.";
+  }
+  const statusEl = $("#buffer-quality-sync-status");
+  if (statusEl) {
+    if (sync.status === "error") statusEl.textContent = `Ошибка: ${sync.message || "—"}`;
+    else statusEl.textContent = sync.message || "—";
+  }
+
+  const kpis = $("#buffer-quality-kpis");
+  if (kpis) {
+    const score = latest.dispatch_score;
+    const assigned = latest.assigned_from_buffer;
+    kpis.innerHTML = `
+      <div class="vyrobotka-kpi">
+        <span class="vyrobotka-kpi-label">Буфер сейчас</span>
+        <strong>${live.buffer_count ?? "—"}</strong>
+        <span class="vyrobotka-kpi-sub">без мастера</span>
+      </div>
+      <div class="vyrobotka-kpi">
+        <span class="vyrobotka-kpi-label">Старше 3 дней</span>
+        <strong>${live.buffer_over_3d ?? "—"}</strong>
+        <span class="vyrobotka-kpi-sub">в буфере</span>
+      </div>
+      <div class="vyrobotka-kpi">
+        <span class="vyrobotka-kpi-label">Роздано за день</span>
+        <strong>${assigned == null ? "—" : assigned}</strong>
+        <span class="vyrobotka-kpi-sub">${
+          assigned == null ? "нужен 2-й снимок" : `high ${latest.assign_to_high || 0} · ok ${latest.assign_to_ok || 0} · low ${latest.assign_to_low || 0}`
+        }</span>
+      </div>
+      <div class="vyrobotka-kpi">
+        <span class="vyrobotka-kpi-label">Оценка раздачи</span>
+        <strong>${score == null ? "—" : score}</strong>
+        <span class="vyrobotka-kpi-sub">dispatch score · снимок</span>
+      </div>
+      <div class="vyrobotka-kpi">
+        <span class="vyrobotka-kpi-label">Зоны мастеров</span>
+        <strong>${live.masters_high ?? 0} / ${live.masters_ok ?? 0} / ${live.masters_low ?? 0}</strong>
+        <span class="vyrobotka-kpi-sub">high / ok / low</span>
+      </div>`;
+  }
+
+  const tbody = $("#buffer-quality-tbody");
+  const mastersMeta = $("#buffer-quality-masters-meta");
+  if (mastersMeta) {
+    mastersMeta.textContent = masters.length
+      ? `${masters.length} мастеров · сортировка по load`
+      : "Текущий WIP и раздача за последний снимок";
+  }
+  if (tbody) {
+    if (!masters.length) {
+      tbody.innerHTML = `<tr><td colspan="9" class="quality-empty">Нет данных. Сначала обновите Качество, затем «Пересчитать снимок».</td></tr>`;
+    } else {
+      tbody.innerHTML = masters
+        .map((m) => {
+          const zone = m.zone || "low";
+          const aq = m.assign_quality;
+          return `<tr>
+            <td><strong>${escapeHtml(m.display_name || m.master_key || "—")}</strong></td>
+            <td>${m.open_count ?? "—"}</td>
+            <td>${m.age_sum_days ?? "—"}</td>
+            <td>${m.rework_orders ?? "—"}</td>
+            <td>${m.no_diag_count ?? "—"}</td>
+            <td>${m.load_index == null ? "—" : Number(m.load_index).toFixed(0)}</td>
+            <td><span class="bq-zone bq-zone-${escapeHtml(zone)}">${bufferZoneLabel(zone)}</span></td>
+            <td>${m.assigned_from_buffer ?? 0}</td>
+            <td>${
+              aq
+                ? `<span class="bq-assign bq-assign-${escapeHtml(aq)}">${bufferAssignLabel(aq)}</span>`
+                : "—"
+            }</td>
+          </tr>`;
+        })
+        .join("");
+    }
+  }
+
+  destroyBufferQualityCharts();
+  const labels = series.days || [];
+  const lineOpts = {
+    tension: 0.3,
+    spanGaps: true,
+    pointRadius: 2,
+    pointHoverRadius: 4,
+    borderWidth: 2.25,
+    backgroundColor: "transparent",
+  };
+  const bufCanvas = $("#buffer-quality-chart-buffer");
+  if (bufCanvas && typeof Chart !== "undefined") {
+    bufferQualityCharts.buffer = new Chart(bufCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { ...lineOpts, label: "В буфере", data: series.buffer_count || [], borderColor: "#5d6b7c" },
+          { ...lineOpts, label: "> 3 дней", data: series.buffer_over_3d || [], borderColor: "#c62828" },
+          {
+            ...lineOpts,
+            label: "Роздано",
+            data: series.assigned_from_buffer || [],
+            borderColor: "#0f6e56",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        },
+        scales: {
+          x: { ticks: { maxRotation: 40, autoSkip: true, maxTicksLimit: 12, font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+        },
+      },
+    });
+  }
+
+  const dispCanvas = $("#buffer-quality-chart-dispatch");
+  if (dispCanvas && typeof Chart !== "undefined") {
+    bufferQualityCharts.dispatch = new Chart(dispCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            ...lineOpts,
+            label: "На high (плохо)",
+            data: series.assign_to_high || [],
+            borderColor: "#c62828",
+          },
+          {
+            ...lineOpts,
+            label: "На ok",
+            data: series.assign_to_ok || [],
+            borderColor: "#ef6c00",
+          },
+          {
+            ...lineOpts,
+            label: "На low (хорошо)",
+            data: series.assign_to_low || [],
+            borderColor: "#2e7d32",
+          },
+          {
+            ...lineOpts,
+            label: "Оценка",
+            data: series.dispatch_score || [],
+            borderColor: "#1565c0",
+            yAxisID: "y1",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        },
+        scales: {
+          x: { ticks: { maxRotation: 40, autoSkip: true, maxTicksLimit: 12, font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } }, title: { display: true, text: "шт", font: { size: 10 } } },
+          y1: {
+            position: "right",
+            min: 0,
+            max: 100,
+            grid: { drawOnChartArea: false },
+            ticks: { font: { size: 10 } },
+            title: { display: true, text: "score", font: { size: 10 } },
+          },
+        },
+      },
+    });
+  }
+
+  const mastersWithAssign = masters.filter((m) => Number(m.assigned_from_buffer || 0) > 0);
+  const barMasters = mastersWithAssign.length
+    ? mastersWithAssign
+    : [...masters].sort((a, b) => Number(b.load_index || 0) - Number(a.load_index || 0)).slice(0, 12);
+  const mastersCanvas = $("#buffer-quality-chart-masters");
+  if (mastersCanvas && typeof Chart !== "undefined") {
+    bufferQualityCharts.masters = new Chart(mastersCanvas, {
+      type: "bar",
+      data: {
+        labels: barMasters.map((m) => {
+          const name = String(m.display_name || m.master_key || "");
+          const parts = name.split(/\s+/);
+          return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : name.slice(0, 16);
+        }),
+        datasets: [
+          {
+            label: mastersWithAssign.length ? "Из буфера" : "Load (пока без раздачи)",
+            data: barMasters.map((m) =>
+              mastersWithAssign.length
+                ? Number(m.assigned_from_buffer || 0)
+                : Number(m.load_index || 0),
+            ),
+            backgroundColor: barMasters.map((m) => bufferZoneColor(m.zone)),
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel(ctx) {
+                const m = barMasters[ctx.dataIndex];
+                if (!m) return "";
+                return `зона ${m.zone || "—"} · load ${m.load_index ?? "—"} · раздача ${bufferAssignLabel(m.assign_quality)}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { ticks: { maxRotation: 45, font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+        },
+      },
+    });
+  }
+}
+
+async function loadBufferQualityStats({ quiet = false } = {}) {
+  const statusEl = $("#buffer-quality-sync-status");
+  try {
+    const res = await fetch("/api/buffer-quality/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderBufferQualityStats(data);
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+async function runBufferQualitySync() {
+  const statusEl = $("#buffer-quality-sync-status");
+  const btn = $("#buffer-quality-sync-btn");
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch("/api/buffer-quality/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Готово";
+    await loadBufferQualityStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function exportBufferQualityPages() {
+  const statusEl = $("#buffer-quality-sync-status");
+  try {
+    const res = await fetch("/api/buffer-quality/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) {
+      statusEl.textContent = `Экспорт → ${data.path || "docs/buffer-quality/data.json"} (git push)`;
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+}
+
+$("#buffer-quality-sync-btn")?.addEventListener("click", () => runBufferQualitySync());
+$("#buffer-quality-export-btn")?.addEventListener("click", () => exportBufferQualityPages());
+
 /* —— Страница «Обновления» —— */
 let updatesPollTimer = null;
 let updatesBusy = false;
@@ -6158,6 +6510,10 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/branch-kpi/sync", { method: "POST" });
     } else if (actionId === "branch-kpi-export") {
       res = await fetch("/api/branch-kpi/export-pages", { method: "POST" });
+    } else if (actionId === "buffer-quality-sync") {
+      res = await fetch("/api/buffer-quality/sync", { method: "POST" });
+    } else if (actionId === "buffer-quality-export") {
+      res = await fetch("/api/buffer-quality/export-pages", { method: "POST" });
     } else {
       throw new Error(`Неизвестное действие: ${actionId}`);
     }
