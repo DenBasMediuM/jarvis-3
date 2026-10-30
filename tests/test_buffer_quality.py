@@ -261,3 +261,20 @@ def test_find_prev_day_skips_missing_days(tmp_path):
             await db.close()
 
     asyncio.run(run())
+
+
+def test_merge_snapshot_assignments_into_live():
+    from modules.buffer_quality.service import merge_snapshot_assignments
+
+    live = [
+        {"master_key": "a", "display_name": "A", "assigned_from_buffer": 0, "assign_quality": None},
+        {"master_key": "b", "display_name": "B", "assigned_from_buffer": 0, "assign_quality": None},
+    ]
+    snap = [
+        {"master_key": "a", "display_name": "A", "assigned_from_buffer": 3, "assign_quality": "bad"},
+        {"master_key": "c", "display_name": "C", "assigned_from_buffer": 1, "assign_quality": "ok"},
+    ]
+    out = {m["master_key"]: m for m in merge_snapshot_assignments(live, snap)}
+    assert out["a"]["assigned_from_buffer"] == 3 and out["a"]["assign_quality"] == "bad"
+    assert out["b"]["assigned_from_buffer"] == 0
+    assert out["c"]["assigned_from_buffer"] == 1

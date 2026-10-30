@@ -9,6 +9,29 @@ from typing import Any
 from modules.buffer_quality.compute import build_day_payload
 from modules.gincore.quality import compute_quality_metrics
 
+def merge_snapshot_assignments(
+    live_masters: list[dict[str, Any]],
+    snapshot_masters: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    snap = {str(m.get("master_key")): m for m in snapshot_masters or []}
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for m in live_masters:
+        row = dict(m)
+        key = str(row.get("master_key"))
+        seen.add(key)
+        s = snap.get(key)
+        if s:
+            row["assigned_from_buffer"] = int(s.get("assigned_from_buffer") or 0)
+            row["assign_quality"] = s.get("assign_quality")
+        out.append(row)
+    # мастер получил из буфера, но сейчас не в живом списке — не теряем раздачу
+    for key, s in snap.items():
+        if key not in seen and int(s.get("assigned_from_buffer") or 0) > 0:
+            out.append(dict(s))
+    return out
+
+
 # Максимальный разрыв между снимками, при котором ещё считаем раздачу.
 MAX_GAP_DAYS = 7
 
@@ -200,6 +223,9 @@ class BufferQualityService:
         if orders:
             live = build_day_payload(orders, day=date.today(), prev_buffer_ids=None)
             live_masters = live["masters"]
+            # Живой пересчёт не знает про раздачу (нет prev-снимка) — берём её
+            # из последнего сохранённого снимка, иначе «Из буфера/Раздача» = 0.
+            live_masters = merge_snapshot_assignments(live_masters, masters)
             live_buffer = {
                 "buffer_count": live["daily"]["buffer_count"],
                 "buffer_over_3d": live["daily"]["buffer_over_3d"],

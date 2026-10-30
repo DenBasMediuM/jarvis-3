@@ -6068,7 +6068,7 @@ function renderBufferQualityStats(data) {
   if (kpis) {
     const score = latest.dispatch_score;
     const assigned = latest.assigned_from_buffer;
-    const assignLbl = bufferAssignLabel(latest);
+    const assignLbl = bufferGapLabel(latest);
     kpis.innerHTML = `
       <div class="vyrobotka-kpi">
         <span class="vyrobotka-kpi-label">Буфер сейчас</span>
@@ -7000,7 +7000,7 @@ addBubble(
 loadSettings();
 loadModules();
 
-function bufferAssignLabel(latest) {
+function bufferGapLabel(latest) {
   const gap = Number(latest?.gap_days || 0);
   if (gap > 1) {
     const [, m, d] = String(latest.prev_day || "").split("-");

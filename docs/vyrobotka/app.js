@@ -1164,7 +1164,7 @@ function renderBufferQuality(data) {
   if (kpis) {
     const assigned = latest.assigned_from_buffer;
     const score = latest.dispatch_score;
-    const assignLbl = bufferAssignLabel(latest);
+    const assignLbl = bufferGapLabel(latest);
     kpis.innerHTML = `
       <div class="kpi"><span class="kpi-label">Буфер сейчас</span><strong>${live.buffer_count ?? "—"}</strong><span class="kpi-sub">без мастера</span></div>
       <div class="kpi"><span class="kpi-label">Старше 3 дней</span><strong>${live.buffer_over_3d ?? "—"}</strong><span class="kpi-sub">в буфере</span></div>
@@ -1569,7 +1569,7 @@ async function boot() {
 
 boot();
 
-function bufferAssignLabel(latest) {
+function bufferGapLabel(latest) {
   const gap = Number(latest?.gap_days || 0);
   if (gap > 1) {
     const [, m, d] = String(latest.prev_day || "").split("-");
