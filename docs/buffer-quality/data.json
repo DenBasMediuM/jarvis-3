@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-30T07:58:47.308807+00:00",
+  "exported_at": "2026-10-30T08:09:55.465533+00:00",
   "title": "Качество обработки буфера",
   "latest": {
     "day": "2026-10-30",
@@ -37,8 +37,8 @@
       "no_diag_count": 19,
       "load_index": 150.0,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 1,
+      "assign_quality": "bad"
     },
     {
       "master_key": "дубовой юрий владимирович",
@@ -61,8 +61,8 @@
       "no_diag_count": 14,
       "load_index": 140.0,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 2,
+      "assign_quality": "bad"
     },
     {
       "master_key": "плачковский александр",
@@ -73,8 +73,8 @@
       "no_diag_count": 16,
       "load_index": 133.33,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 3,
+      "assign_quality": "bad"
     },
     {
       "master_key": "руднев евгений",
@@ -85,8 +85,8 @@
       "no_diag_count": 9,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 4,
+      "assign_quality": "bad"
     },
     {
       "master_key": "садоян дмитрий",
@@ -97,8 +97,8 @@
       "no_diag_count": 12,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 1,
+      "assign_quality": "bad"
     },
     {
       "master_key": "саша андрусяк",
@@ -109,8 +109,8 @@
       "no_diag_count": 9,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 3,
+      "assign_quality": "bad"
     },
     {
       "master_key": "тарасенко игорь викторович",
@@ -121,8 +121,8 @@
       "no_diag_count": 22,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 2,
+      "assign_quality": "bad"
     },
     {
       "master_key": "перебейнос игорь",
@@ -145,8 +145,8 @@
       "no_diag_count": 5,
       "load_index": 64.38,
       "zone": "ok",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
+      "assigned_from_buffer": 3,
+      "assign_quality": "ok"
     },
     {
       "master_key": "роман михайлюк",
@@ -577,12 +577,12 @@
   },
   "sync": {
     "id": 1,
-    "status": "running",
+    "status": "idle",
     "total": 1,
-    "done": 0,
-    "message": "Список CRM: 327 зак. · пересчёт загрузки…",
+    "done": 1,
+    "message": "Снимок 2026-10-30: буфер 42, мастеров 18, из буфера → мастерам 19 (за 2 дн. с 2026-10-28), оценка 31.32, pages 18 маст.",
     "started_at": "2026-10-30T07:58:38.401241+00:00",
-    "finished_at": null
+    "finished_at": "2026-10-30T07:58:47.309453+00:00"
   },
   "counts": {
     "masters": 18,
