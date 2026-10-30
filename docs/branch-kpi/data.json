@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-28T07:07:36.143503+00:00",
+  "exported_at": "2026-10-30T07:48:05.303441+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -41,8 +41,8 @@
       "gross_profit": 44850.0,
       "net_profit": -10930.0,
       "expense": -55780.0,
-      "refusals": 24,
-      "return_rate": 0.4528
+      "refusals": 25,
+      "return_rate": 0.4717
     },
     {
       "year": 2026,
@@ -52,8 +52,8 @@
       "gross_profit": 197770.0,
       "net_profit": 21577.0,
       "expense": -176193.0,
-      "refusals": 74,
-      "return_rate": 0.3756
+      "refusals": 75,
+      "return_rate": 0.3807
     },
     {
       "year": 2026,
@@ -250,8 +250,8 @@
       "gross_profit": 286044.0,
       "net_profit": 68827.0,
       "expense": -217217.0,
-      "refusals": 69,
-      "return_rate": 0.3013
+      "refusals": 70,
+      "return_rate": 0.3057
     },
     {
       "year": 2026,
@@ -316,41 +316,41 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 94,
-      "return_rate": 0.3394
+      "refusals": 98,
+      "return_rate": 0.3538
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "karetn",
-      "acceptances": 218,
-      "gross_profit": 350917.0,
-      "net_profit": 140305.0,
-      "expense": -210612.0,
-      "refusals": 46,
-      "return_rate": 0.211
-    },
-    {
-      "year": 2026,
-      "month": 10,
-      "branch_id": "levitan",
-      "acceptances": 32,
-      "gross_profit": 8550.0,
-      "net_profit": -1150.0,
-      "expense": -9700.0,
-      "refusals": 8,
+      "acceptances": 232,
+      "gross_profit": 364717.0,
+      "net_profit": 144078.0,
+      "expense": -220639.0,
+      "refusals": 58,
       "return_rate": 0.25
     },
     {
       "year": 2026,
       "month": 10,
+      "branch_id": "levitan",
+      "acceptances": 38,
+      "gross_profit": 11550.0,
+      "net_profit": -500.0,
+      "expense": -12050.0,
+      "refusals": 8,
+      "return_rate": 0.2105
+    },
+    {
+      "year": 2026,
+      "month": 10,
       "branch_id": "seged",
-      "acceptances": 245,
-      "gross_profit": 265987.01,
-      "net_profit": 91457.01,
-      "expense": -174530.0,
-      "refusals": 51,
-      "return_rate": 0.2082
+      "acceptances": 267,
+      "gross_profit": 286987.01,
+      "net_profit": 104587.01,
+      "expense": -182400.0,
+      "refusals": 59,
+      "return_rate": 0.221
     }
   ],
   "charts": {
@@ -381,7 +381,7 @@
           261,
           263,
           270,
-          218
+          232
         ]
       },
       {
@@ -398,7 +398,7 @@
           229,
           255,
           277,
-          245
+          267
         ]
       },
       {
@@ -415,7 +415,7 @@
           64,
           55,
           29,
-          32
+          38
         ]
       }
     ],
@@ -434,7 +434,7 @@
           410071.0,
           400183.0,
           373185.0,
-          350917.0
+          364717.0
         ]
       },
       {
@@ -451,7 +451,7 @@
           286044.0,
           335555.0,
           305105.0,
-          265987.01
+          286987.01
         ]
       },
       {
@@ -468,7 +468,7 @@
           44537.0,
           50000.0,
           32150.0,
-          8550.0
+          11550.0
         ]
       }
     ],
@@ -487,7 +487,7 @@
           109517.0,
           109722.0,
           94137.0,
-          140305.0
+          144078.0
         ]
       },
       {
@@ -504,7 +504,7 @@
           68827.0,
           92494.0,
           117223.0,
-          91457.01
+          104587.01
         ]
       },
       {
@@ -521,7 +521,7 @@
           910.0,
           6500.0,
           250.0,
-          -1150.0
+          -500.0
         ]
       }
     ],
@@ -540,7 +540,7 @@
           36.78,
           39.16,
           38.89,
-          21.1
+          25.0
         ]
       },
       {
@@ -548,16 +548,16 @@
         "branch_id": "seged",
         "color": "#1a5f8a",
         "data": [
-          37.56,
+          38.07,
           39.9,
           34.57,
           30.09,
           26.29,
           36.28,
-          30.13,
+          30.57,
           33.33,
-          33.94,
-          20.82
+          35.38,
+          22.1
         ]
       },
       {
@@ -565,7 +565,7 @@
         "branch_id": "levitan",
         "color": "#8a4b1a",
         "data": [
-          45.28,
+          47.17,
           60.98,
           53.85,
           41.67,
@@ -574,7 +574,7 @@
           37.5,
           49.09,
           34.48,
-          25.0
+          21.05
         ]
       }
     ]
