@@ -1,21 +1,23 @@
 {
-  "exported_at": "2026-10-30T07:48:05.367954+00:00",
+  "exported_at": "2026-10-30T07:58:47.308807+00:00",
   "title": "Качество обработки буфера",
   "latest": {
     "day": "2026-10-30",
     "buffer_count": 42,
     "buffer_over_3d": 20,
-    "assigned_from_buffer": null,
+    "assigned_from_buffer": 19,
     "masters_high": 9,
     "masters_ok": 9,
     "masters_low": 0,
-    "assign_to_high": 0,
-    "assign_to_ok": 0,
+    "assign_to_high": 16,
+    "assign_to_ok": 3,
     "assign_to_low": 0,
     "assign_unknown": 0,
     "avg_load_index": 91.64,
-    "dispatch_score": null,
-    "updated_at": "2026-10-30 07:48:05"
+    "dispatch_score": 31.32,
+    "updated_at": "2026-10-30 07:58:47",
+    "prev_day": "2026-10-28",
+    "gap_days": 2
   },
   "live": {
     "buffer_count": 42,
@@ -254,9 +256,9 @@
       "no_diag_count": 19,
       "load_index": 150.0,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 1,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -270,7 +272,7 @@
       "zone": "high",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -282,9 +284,9 @@
       "no_diag_count": 14,
       "load_index": 140.0,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 2,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -296,9 +298,9 @@
       "no_diag_count": 16,
       "load_index": 133.33,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 3,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -310,9 +312,9 @@
       "no_diag_count": 9,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 4,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -324,9 +326,9 @@
       "no_diag_count": 12,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 1,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -338,9 +340,9 @@
       "no_diag_count": 9,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 3,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -352,9 +354,9 @@
       "no_diag_count": 22,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 2,
+      "assign_quality": "bad",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -368,7 +370,7 @@
       "zone": "high",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -380,9 +382,9 @@
       "no_diag_count": 5,
       "load_index": 64.38,
       "zone": "ok",
-      "assigned_from_buffer": 0,
-      "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "assigned_from_buffer": 3,
+      "assign_quality": "ok",
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -396,7 +398,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -410,7 +412,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -424,7 +426,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -438,7 +440,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -452,7 +454,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -466,7 +468,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -480,7 +482,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     },
     {
       "day": "2026-10-30",
@@ -494,7 +496,7 @@
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "updated_at": "2026-10-30 07:58:47"
     }
   ],
   "daily": [
@@ -512,23 +514,27 @@
       "assign_unknown": 0,
       "avg_load_index": 91.55,
       "dispatch_score": null,
-      "updated_at": "2026-10-28 07:39:41"
+      "updated_at": "2026-10-28 07:39:41",
+      "prev_day": null,
+      "gap_days": null
     },
     {
       "day": "2026-10-30",
       "buffer_count": 42,
       "buffer_over_3d": 20,
-      "assigned_from_buffer": null,
+      "assigned_from_buffer": 19,
       "masters_high": 9,
       "masters_ok": 9,
       "masters_low": 0,
-      "assign_to_high": 0,
-      "assign_to_ok": 0,
+      "assign_to_high": 16,
+      "assign_to_ok": 3,
       "assign_to_low": 0,
       "assign_unknown": 0,
       "avg_load_index": 91.64,
-      "dispatch_score": null,
-      "updated_at": "2026-10-30 07:48:05"
+      "dispatch_score": 31.32,
+      "updated_at": "2026-10-30 07:58:47",
+      "prev_day": "2026-10-28",
+      "gap_days": 2
     }
   ],
   "series": {
@@ -546,15 +552,15 @@
     ],
     "assigned_from_buffer": [
       null,
-      null
+      19
     ],
     "assign_to_high": [
       0,
-      0
+      16
     ],
     "assign_to_ok": [
       0,
-      0
+      3
     ],
     "assign_to_low": [
       0,
@@ -562,7 +568,7 @@
     ],
     "dispatch_score": [
       null,
-      null
+      31.32
     ],
     "avg_load_index": [
       91.55,
@@ -571,12 +577,12 @@
   },
   "sync": {
     "id": 1,
-    "status": "idle",
+    "status": "running",
     "total": 1,
-    "done": 1,
-    "message": "Снимок 2026-10-30: буфер 42, мастеров 18, pages 18 маст.",
-    "started_at": "2026-10-30T07:47:56.432609+00:00",
-    "finished_at": "2026-10-30T07:48:05.134143+00:00"
+    "done": 0,
+    "message": "Список CRM: 327 зак. · пересчёт загрузки…",
+    "started_at": "2026-10-30T07:58:38.401241+00:00",
+    "finished_at": null
   },
   "counts": {
     "masters": 18,
