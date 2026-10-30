@@ -1164,13 +1164,14 @@ function renderBufferQuality(data) {
   if (kpis) {
     const assigned = latest.assigned_from_buffer;
     const score = latest.dispatch_score;
+    const assignLbl = bufferAssignLabel(latest);
     kpis.innerHTML = `
       <div class="kpi"><span class="kpi-label">Буфер сейчас</span><strong>${live.buffer_count ?? "—"}</strong><span class="kpi-sub">без мастера</span></div>
       <div class="kpi"><span class="kpi-label">Старше 3 дней</span><strong>${live.buffer_over_3d ?? "—"}</strong><span class="kpi-sub">в буфере</span></div>
-      <div class="kpi"><span class="kpi-label">Роздано за день</span><strong>${assigned == null ? "—" : assigned}</strong><span class="kpi-sub">${
+      <div class="kpi"><span class="kpi-label">${assignLbl.title}</span><strong>${assigned == null ? "—" : assigned}</strong><span class="kpi-sub">${
         assigned == null
           ? "нужен 2-й снимок"
-          : `high ${latest.assign_to_high || 0} · ok ${latest.assign_to_ok || 0} · low ${latest.assign_to_low || 0}`
+          : `high ${latest.assign_to_high || 0} · ok ${latest.assign_to_ok || 0} · low ${latest.assign_to_low || 0}${assignLbl.since}`
       }</span></div>
       <div class="kpi"><span class="kpi-label">Оценка раздачи</span><strong>${score == null ? "—" : score}</strong><span class="kpi-sub">dispatch score</span></div>
       <div class="kpi"><span class="kpi-label">Зоны мастеров</span><strong>${live.masters_high ?? 0} / ${live.masters_ok ?? 0} / ${live.masters_low ?? 0}</strong><span class="kpi-sub">high / ok / low</span></div>`;
@@ -1567,3 +1568,12 @@ async function boot() {
 }
 
 boot();
+
+function bufferAssignLabel(latest) {
+  const gap = Number(latest?.gap_days || 0);
+  if (gap > 1) {
+    const [, m, d] = String(latest.prev_day || "").split("-");
+    return { title: `Роздано за ${gap} дн.`, since: m && d ? ` · с ${d}.${m}` : "" };
+  }
+  return { title: "Роздано за день", since: "" };
+}

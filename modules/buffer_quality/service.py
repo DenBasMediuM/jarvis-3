@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from modules.buffer_quality.compute import build_day_payload
 from modules.gincore.quality import compute_quality_metrics
+
+# Максимальный разрыв между снимками, при котором ещё считаем раздачу.
+MAX_GAP_DAYS = 7
 
 
 class BufferQualityService:
@@ -55,7 +58,6 @@ class BufferQualityService:
     async def sync(self, *, day: date | None = None) -> dict[str, Any]:
         day = day or date.today()
         day_s = day.isoformat()
-        prev_day_s = (day - timedelta(days=1)).isoformat()
         now = datetime.now(timezone.utc).isoformat()
 
         await self.db.buffer_quality_set_sync_state(
@@ -100,9 +102,22 @@ class BufferQualityService:
                     "sync": await self.get_sync_state(),
                 }
 
-            prev_ids = await self.db.buffer_quality_list_buffer_ids(prev_day_s)
-            prev_masters = await self.db.buffer_quality_list_masters_daily(prev_day_s)
-            prev_daily = await self.db.buffer_quality_get_daily(prev_day_s)
+            # Сравниваем с последним доступным снимком, а не строго со вчера:
+            # пропущенные дни (выходные, не запускали) не обнуляют раздачу.
+            prev_day_s = await self.db.buffer_quality_find_prev_day(day_s)
+            if prev_day_s and (day - date.fromisoformat(prev_day_s)).days > MAX_GAP_DAYS:
+                prev_day_s = None
+            prev_ids = (
+                await self.db.buffer_quality_list_buffer_ids(prev_day_s) if prev_day_s else []
+            )
+            prev_masters = (
+                await self.db.buffer_quality_list_masters_daily(prev_day_s)
+                if prev_day_s
+                else []
+            )
+            prev_daily = (
+                await self.db.buffer_quality_get_daily(prev_day_s) if prev_day_s else None
+            )
             has_prev = bool(prev_ids) or bool(prev_daily)
 
             payload = build_day_payload(
@@ -115,6 +130,7 @@ class BufferQualityService:
                     if prev_daily and prev_daily.get("buffer_over_3d") is not None
                     else None
                 ),
+                prev_day=prev_day_s if has_prev else None,
             )
 
             await self.db.buffer_quality_upsert_daily(payload["daily"])
@@ -132,6 +148,9 @@ class BufferQualityService:
             assigned = payload["daily"].get("assigned_from_buffer")
             if assigned is not None:
                 msg += f", из буфера → мастерам {assigned}"
+                gap = payload["daily"].get("gap_days")
+                if gap and gap > 1:
+                    msg += f" (за {gap} дн. с {payload['daily'].get('prev_day')})"
                 score = payload["daily"].get("dispatch_score")
                 if score is not None:
                     msg += f", оценка {score}"

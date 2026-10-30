@@ -323,7 +323,9 @@ def build_day_payload(
     prev_buffer_ids: list[str] | None = None,
     prev_masters: list[dict[str, Any]] | None = None,
     prev_buffer_over_3d: int | None = None,
+    prev_day: str | None = None,
 ) -> dict[str, Any]:
+    """prev_day — дата снимка, с которым сравниваем (не обязательно вчера)."""
     day = day or date.today()
     day_s = day.isoformat()
     buf = build_buffer_snapshot(orders, as_of=day)
@@ -378,6 +380,12 @@ def build_day_payload(
         "assign_unknown": assignments["assign_unknown"],
         "avg_load_index": avg_load,
         "dispatch_score": score,
+        "prev_day": prev_day if prev_buffer_ids is not None else None,
+        "gap_days": (
+            (day - date.fromisoformat(prev_day)).days
+            if prev_day and prev_buffer_ids is not None
+            else None
+        ),
     }
     return {
         "day": day_s,

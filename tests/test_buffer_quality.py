@@ -209,3 +209,55 @@ def test_build_day_payload_first_day_null_assigned():
     m = next(x for x in day2["masters"] if x["master_key"] == "мастер а")
     assert m["assigned_from_buffer"] == 1
     assert m["assign_quality"] in (ASSIGN_GOOD, ASSIGN_OK, ASSIGN_BAD, ASSIGN_UNKNOWN)
+
+
+def test_build_day_payload_gap_marks_prev_day():
+    orders = [
+        {
+            "order_id": "1",
+            "engineer": "Мастер А",
+            "status": "На диагностике",
+            "accepted_at": "2026-10-20",
+            "total_days": 9,
+            "rework_count": 0,
+        },
+    ]
+    payload = build_day_payload(
+        orders,
+        day=date(2026, 10, 30),
+        prev_buffer_ids=["1"],
+        prev_masters=[],
+        prev_day="2026-10-28",
+    )
+    assert payload["daily"]["assigned_from_buffer"] == 1
+    assert payload["daily"]["prev_day"] == "2026-10-28"
+    assert payload["daily"]["gap_days"] == 2
+
+    first = build_day_payload(orders, day=date(2026, 10, 30), prev_buffer_ids=None)
+    assert first["daily"]["prev_day"] is None
+    assert first["daily"]["gap_days"] is None
+
+
+def test_find_prev_day_skips_missing_days(tmp_path):
+    import asyncio
+
+    from core.db import Database
+
+    async def run():
+        db = Database(tmp_path / "t.db")
+        await db.connect()
+        try:
+            await db.buffer_quality_replace_buffer_ids("2026-10-27", ["1"])
+            await db.buffer_quality_replace_buffer_ids("2026-10-28", ["2"])
+            assert await db.buffer_quality_find_prev_day("2026-10-30") == "2026-10-28"
+            assert await db.buffer_quality_find_prev_day("2026-10-28") == "2026-10-27"
+            assert await db.buffer_quality_find_prev_day("2026-10-27") is None
+            await db.buffer_quality_upsert_daily(
+                {"day": "2026-10-30", "prev_day": "2026-10-28", "gap_days": 2}
+            )
+            row = await db.buffer_quality_get_daily("2026-10-30")
+            assert row["prev_day"] == "2026-10-28" and row["gap_days"] == 2
+        finally:
+            await db.close()
+
+    asyncio.run(run())

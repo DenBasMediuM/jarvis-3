@@ -293,6 +293,8 @@ CREATE TABLE IF NOT EXISTS buffer_quality_daily (
   assign_unknown INTEGER NOT NULL DEFAULT 0,
   avg_load_index REAL,
   dispatch_score REAL,
+  prev_day TEXT,
+  gap_days INTEGER,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -421,7 +423,17 @@ class Database:
         await self._conn.executescript(SCHEMA)
         await self._migrate_vyrobotka_schema()
         await self._migrate_reviews_schema()
+        await self._migrate_buffer_quality_schema()
         await self._conn.commit()
+
+    async def _migrate_buffer_quality_schema(self) -> None:
+        cur = await self.conn.execute("PRAGMA table_info(buffer_quality_daily)")
+        cols = {str(r[1]) for r in await cur.fetchall()}
+        for col, typ in (("prev_day", "TEXT"), ("gap_days", "INTEGER")):
+            if col not in cols:
+                await self.conn.execute(
+                    f"ALTER TABLE buffer_quality_daily ADD COLUMN {col} {typ}"
+                )
 
     async def _migrate_vyrobotka_schema(self) -> None:
         """Лёгкие ALTER для уже существующих БД."""
@@ -1889,8 +1901,8 @@ class Database:
               day, buffer_count, buffer_over_3d, assigned_from_buffer,
               masters_high, masters_ok, masters_low,
               assign_to_high, assign_to_ok, assign_to_low, assign_unknown,
-              avg_load_index, dispatch_score, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+              avg_load_index, dispatch_score, prev_day, gap_days, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(day) DO UPDATE SET
               buffer_count = excluded.buffer_count,
               buffer_over_3d = excluded.buffer_over_3d,
@@ -1904,6 +1916,8 @@ class Database:
               assign_unknown = excluded.assign_unknown,
               avg_load_index = excluded.avg_load_index,
               dispatch_score = excluded.dispatch_score,
+              prev_day = excluded.prev_day,
+              gap_days = excluded.gap_days,
               updated_at = excluded.updated_at
             """,
             (
@@ -1920,9 +1934,19 @@ class Database:
                 int(row.get("assign_unknown") or 0),
                 row.get("avg_load_index"),
                 row.get("dispatch_score"),
+                row.get("prev_day"),
+                row.get("gap_days"),
             ),
         )
         await self.conn.commit()
+
+    async def buffer_quality_find_prev_day(self, day: str) -> str | None:
+        """Последний сохранённый снимок буфера строго до day (дни могут пропускаться)."""
+        cur = await self.conn.execute(
+            "SELECT MAX(day) FROM buffer_quality_buffer_ids WHERE day < ?", (day,)
+        )
+        row = await cur.fetchone()
+        return str(row[0]) if row and row[0] else None
 
     async def buffer_quality_list_daily(self, *, limit: int = 365) -> list[dict[str, Any]]:
         cur = await self.conn.execute(
