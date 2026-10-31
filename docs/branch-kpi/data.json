@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-30T07:48:05.303441+00:00",
+  "exported_at": "2026-10-31T08:00:33.473662+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -206,8 +206,8 @@
       "gross_profit": 29475.0,
       "net_profit": 3835.0,
       "expense": -25640.0,
-      "refusals": 44,
-      "return_rate": 0.6471
+      "refusals": 45,
+      "return_rate": 0.6618
     },
     {
       "year": 2026,
@@ -272,8 +272,8 @@
       "gross_profit": 50000.0,
       "net_profit": 6500.0,
       "expense": -43500.0,
-      "refusals": 27,
-      "return_rate": 0.4909
+      "refusals": 28,
+      "return_rate": 0.5091
     },
     {
       "year": 2026,
@@ -305,8 +305,8 @@
       "gross_profit": 32150.0,
       "net_profit": 250.0,
       "expense": -31900.0,
-      "refusals": 10,
-      "return_rate": 0.3448
+      "refusals": 12,
+      "return_rate": 0.4138
     },
     {
       "year": 2026,
@@ -316,19 +316,19 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 98,
-      "return_rate": 0.3538
+      "refusals": 97,
+      "return_rate": 0.3502
     },
     {
       "year": 2026,
       "month": 10,
       "branch_id": "karetn",
-      "acceptances": 232,
+      "acceptances": 240,
       "gross_profit": 364717.0,
       "net_profit": 144078.0,
       "expense": -220639.0,
-      "refusals": 58,
-      "return_rate": 0.25
+      "refusals": 59,
+      "return_rate": 0.2458
     },
     {
       "year": 2026,
@@ -345,12 +345,12 @@
       "year": 2026,
       "month": 10,
       "branch_id": "seged",
-      "acceptances": 267,
+      "acceptances": 276,
       "gross_profit": 286987.01,
       "net_profit": 104587.01,
       "expense": -182400.0,
-      "refusals": 59,
-      "return_rate": 0.221
+      "refusals": 63,
+      "return_rate": 0.2283
     }
   ],
   "charts": {
@@ -381,7 +381,7 @@
           261,
           263,
           270,
-          232
+          240
         ]
       },
       {
@@ -398,7 +398,7 @@
           229,
           255,
           277,
-          267
+          276
         ]
       },
       {
@@ -540,7 +540,7 @@
           36.78,
           39.16,
           38.89,
-          25.0
+          24.58
         ]
       },
       {
@@ -556,8 +556,8 @@
           36.28,
           30.57,
           33.33,
-          35.38,
-          22.1
+          35.02,
+          22.83
         ]
       },
       {
@@ -570,10 +570,10 @@
           53.85,
           41.67,
           45.28,
-          64.71,
+          66.18,
           37.5,
-          49.09,
-          34.48,
+          50.91,
+          41.38,
           21.05
         ]
       }
