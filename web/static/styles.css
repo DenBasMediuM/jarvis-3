@@ -3277,3 +3277,141 @@ tr.quality-row-flag { background: rgba(161, 40, 40, 0.05); }
   font-size: 0.78rem;
   padding: 4px 8px;
 }
+
+/* ---------- Улучшения (дорожная карта заявок витрины) ---------- */
+.nav-badge {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+.nav-badge[hidden] { display: none; }
+.fbadm-head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.fbadm-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; }
+.fbadm-toolbar input[type="search"], .fbadm-toolbar select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 11px;
+  font: 400 14px var(--font);
+  background: #fff;
+}
+.fbadm-toolbar input[type="search"] { min-width: 260px; }
+.fbadm-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.fbadm-toolbar .status { margin: 0 0 0 auto; }
+
+.fbadm-board {
+  display: grid;
+  grid-template-columns: repeat(var(--fbadm-cols, 4), minmax(230px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  align-items: start;
+}
+.fbadm-col { background: rgba(255, 255, 255, 0.5); border: 1px solid var(--line); border-radius: 16px; min-height: 120px; }
+.fbadm-col > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 13px;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.fbadm-col-new > header { color: var(--accent-2); }
+.fbadm-col-done > header { color: var(--accent); }
+.fbadm-count { color: var(--muted); font-weight: 500; }
+.fbadm-col-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+.fbadm-empty { margin: 6px 4px; color: var(--muted); font-size: 13px; }
+
+.fbadm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.fbadm-card:hover { box-shadow: 0 8px 22px rgba(28, 36, 48, 0.1); transform: translateY(-1px); }
+.fbadm-card.is-new { border-left: 3px solid var(--accent-2); }
+.fbadm-card-top { display: flex; gap: 6px; align-items: center; }
+.fbadm-id { font-size: 12px; font-weight: 600; color: var(--muted); }
+.fbadm-type { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: #eef1f5; color: #4a5768; }
+.fbadm-type-bug { background: #fdecea; color: #a12622; }
+.fbadm-type-feature { background: #e3f3ec; color: var(--accent); }
+.fbadm-type-data { background: #e6eefb; color: #2456a6; }
+.fbadm-prio { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--accent-2); }
+.fbadm-title { font-size: 14px; line-height: 1.35; }
+.fbadm-meta { font-size: 12px; color: var(--muted); }
+.fbadm-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.fbadm-chip { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: #f3f1ea; color: #5d6b7c; }
+.fbadm-chip-votes { background: #e3f3ec; color: var(--accent); font-weight: 600; }
+.fbadm-chip-warn { background: #fff3e0; color: #a65a10; }
+.fbadm-cx-high { background: #fdecea; color: #a12622; }
+
+.fbadm-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(28, 36, 48, 0.25); }
+.fbadm-overlay[hidden], .fbadm-detail[hidden] { display: none; }
+.fbadm-detail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  width: min(620px, 100vw);
+  overflow-y: auto;
+  padding: 20px 24px 32px;
+  background: #fbfaf6;
+  box-shadow: -18px 0 48px rgba(28, 36, 48, 0.18);
+}
+.fbadm-detail-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.fbadm-detail-head h2 { margin: 4px 0; font: 700 22px/1.25 var(--display); }
+.fbadm-x { border: 0; background: transparent; padding: 0 4px; font-size: 28px; line-height: 1; color: var(--muted); cursor: pointer; }
+.fbadm-sec { margin: 14px 0; }
+.fbadm-sec h3, .fbadm-decide h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.fbadm-sec p { margin: 4px 0; line-height: 1.5; }
+.fbadm-sec ul { margin: 4px 0; padding-left: 20px; }
+.fbadm-ai { padding: 10px 12px; border-radius: 12px; background: #f2f7f5; }
+details.fbadm-sec summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.fbadm-orig { padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid var(--line); }
+.fbadm-convo { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.fbadm-msg { padding: 7px 10px; border-radius: 10px; font-size: 13px; line-height: 1.45; background: #fff; border: 1px solid var(--line); }
+.fbadm-msg span { display: block; font-size: 11px; font-weight: 700; color: var(--muted); }
+.fbadm-msg-user { background: #f2f7f5; }
+.fbadm-decide { margin-top: 18px; padding: 14px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+.fbadm-decide label { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+.fbadm-decide select, .fbadm-decide input, .fbadm-decide textarea {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: 400 14px/1.45 var(--font);
+  resize: vertical;
+}
+.fbadm-hint { font-weight: 400; color: var(--muted); }
+.fbadm-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.fbadm-quick { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.fbadm-quick button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font: 600 13px var(--font);
+  cursor: pointer;
+}
+.fbadm-quick button:hover { border-color: var(--accent); color: var(--accent); }
+.fbadm-quick button.is-danger:hover { border-color: #a12622; color: #a12622; }
+.fbadm-actions { display: flex; align-items: center; gap: 12px; }
+.fbadm-setup pre { background: #f3f1ea; padding: 10px; border-radius: 8px; }
+
+.vitrine-fb-warn { color: var(--accent-2); }

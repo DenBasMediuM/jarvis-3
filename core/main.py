@@ -16,6 +16,7 @@ from core.llm import LLMService
 from core.vitrine_auth import (
     ACCESS_OPTIONS,
     export_users_payload,
+    feedback_verifier,
     hash_password,
     normalize_access,
     public_user_row,
@@ -33,6 +34,14 @@ from modules.buffer_quality import BufferQualityService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
 from modules.reviews.service import ReviewsService
+from modules.feedback.client import (
+    STATUSES as FEEDBACK_STATUSES,
+    TYPES as FEEDBACK_TYPES,
+    FeedbackClient,
+    FeedbackError,
+    summarize as feedback_summarize,
+    validate_update as feedback_validate_update,
+)
 
 
 db = Database(settings.resolved_db_path())
@@ -203,6 +212,13 @@ async def lifespan(_: FastAPI):
     if reviews_service is not None:
         try:
             await reviews_service.ingest_inbox()
+        except Exception:  # noqa: BLE001
+            pass
+    # Актуальное описание продукта (PRODUCT.md) — для ИИ модуля «Улучшения»
+    fb = _feedback_client()
+    if fb.configured:
+        try:
+            await fb.push_product()
         except Exception:  # noqa: BLE001
             pass
     yield
@@ -1090,6 +1106,80 @@ async def quality_sync_start(body: QualitySyncRequest | None = None) -> dict[str
         raise HTTPException(400, str(exc)) from exc
 
 
+def _feedback_client() -> FeedbackClient:
+    return FeedbackClient(settings.feedback_url, settings.feedback_admin_key)
+
+
+class FeedbackUpdateBody(BaseModel):
+    status: str | None = None
+    admin_comment: str | None = None
+    priority: int | None = None
+
+
+@app.get("/api/feedback/requests")
+async def feedback_requests() -> dict[str, Any]:
+    """Заявки «Улучшения» из Worker (D1) для дорожной карты."""
+    fb = _feedback_client()
+    if not fb.configured:
+        return {"ok": True, "configured": False, "items": [], "counts": {}}
+    try:
+        items = await fb.list_requests()
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {
+        "ok": True,
+        "configured": True,
+        "items": items,
+        "counts": feedback_summarize(items),
+        "statuses": FEEDBACK_STATUSES,
+        "types": FEEDBACK_TYPES,
+    }
+
+
+@app.patch("/api/feedback/requests/{request_id}")
+async def feedback_update(request_id: int, body: FeedbackUpdateBody) -> dict[str, Any]:
+    raw = body.model_dump(exclude_unset=True)
+    try:
+        payload = feedback_validate_update(raw)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    try:
+        await _feedback_client().update_request(request_id, payload)
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"ok": True}
+
+
+@app.get("/api/feedback/product")
+async def feedback_product_status() -> dict[str, Any]:
+    fb = _feedback_client()
+    if not fb.configured:
+        return {"ok": True, "configured": False}
+    try:
+        remote = await fb.product_status()
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    local = ROOT / "PRODUCT.md"
+    return {
+        "ok": True,
+        "configured": True,
+        "remote_chars": remote.get("chars"),
+        "remote_updated_at": remote.get("updated_at"),
+        "local_chars": len(local.read_text(encoding="utf-8")) if local.exists() else 0,
+    }
+
+
+@app.post("/api/feedback/product-sync")
+async def feedback_product_sync() -> dict[str, Any]:
+    try:
+        res = await _feedback_client().push_product()
+    except FileNotFoundError as exc:
+        raise HTTPException(404, "Нет PRODUCT.md в корне проекта") from exc
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"ok": True, "chars": res.get("chars")}
+
+
 @app.get("/api/conversations")
 async def conversations() -> dict[str, Any]:
     return {"conversations": await db.list_conversations()}
@@ -1360,6 +1450,7 @@ async def vitrine_users_create(body: VitrineUserCreate) -> dict[str, Any]:
         raise HTTPException(400, f"Логин «{login}» уже занят")
     try:
         salt, pw_hash = hash_password(body.password)
+        fb_salt, fb_verifier = feedback_verifier(body.password)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     access = normalize_access(body.access)
@@ -1368,6 +1459,8 @@ async def vitrine_users_create(body: VitrineUserCreate) -> dict[str, Any]:
             "login": login,
             "salt": salt,
             "password_hash": pw_hash,
+            "fb_salt": fb_salt,
+            "fb_verifier": fb_verifier,
             "access_json": json.dumps(access, ensure_ascii=False),
             "enabled": 1 if body.enabled else 0,
         }
@@ -1393,10 +1486,13 @@ async def vitrine_users_update(user_id: int, body: VitrineUserUpdate) -> dict[st
     if body.password:
         try:
             salt, pw_hash = hash_password(body.password)
+            fb_salt, fb_verifier = feedback_verifier(body.password)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         fields["salt"] = salt
         fields["password_hash"] = pw_hash
+        fields["fb_salt"] = fb_salt
+        fields["fb_verifier"] = fb_verifier
     if body.access is not None:
         fields["access_json"] = json.dumps(normalize_access(body.access), ensure_ascii=False)
     if body.enabled is not None:

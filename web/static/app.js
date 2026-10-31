@@ -62,6 +62,9 @@ function showView(view, opts = {}) {
   if (resolved === "vitrine-users") {
     loadVitrineUsers();
   }
+  if (resolved === "feedback") {
+    loadFeedbackAdmin();
+  }
   if (resolved === "updates") {
     loadUpdatesStatus();
     startUpdatesPoll();
@@ -5613,7 +5616,11 @@ function renderVitrineUsersTable() {
       return `<tr>
         <td><strong>${escapeHtml(u.login)}</strong></td>
         <td class="vitrine-access-cell">${escapeHtml(access)}</td>
-        <td>${u.enabled ? "активен" : "выкл"}</td>
+        <td>${u.enabled ? "активен" : "выкл"}${
+          u.feedback_ready === false
+            ? `<br><small class="vitrine-fb-warn" title="Задайте пароль заново — тогда пользователь сможет отправлять заявки в «Улучшения»">нужен новый пароль для «Улучшений»</small>`
+            : ""
+        }</td>
         <td class="vitrine-users-row-actions">
           <button type="button" class="cj-import-btn is-muted" data-edit-user="${u.id}">Изменить</button>
           <button type="button" class="cj-import-btn is-muted" data-del-user="${u.id}">Удалить</button>
@@ -7008,3 +7015,329 @@ function bufferGapLabel(latest) {
   }
   return { title: "Роздано за день", since: "" };
 }
+
+// ---------------------------------------------------------------------------
+// Улучшения — дорожная карта заявок пользователей витрины (Worker jarvis-feedback)
+// ---------------------------------------------------------------------------
+const FBADM_COLUMNS = [
+  { id: "new", label: "На рассмотрении" },
+  { id: "approved", label: "Одобрено" },
+  { id: "in_progress", label: "В работе" },
+  { id: "done", label: "Готово" },
+  { id: "rejected", label: "Отклонено" },
+];
+const FBADM_TYPES = {
+  feature: "Новая функция",
+  improvement: "Улучшение",
+  bug: "Ошибка",
+  data: "Данные / расчёты",
+  ux: "Удобство / интерфейс",
+  other: "Другое",
+};
+const fbadm = { items: [], configured: true, openId: null, busy: false };
+
+function fbEsc(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+const fbNl = (s) => fbEsc(s).replace(/\n/g, "<br>");
+const fbDate = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? String(iso).slice(0, 10)
+    : d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+};
+
+function fbadmSetBadge(items) {
+  const n = (items || []).filter((it) => it.status === "new").length;
+  const b = $("#feedback-nav-badge");
+  if (!b) return;
+  b.hidden = !n;
+  b.textContent = String(n);
+}
+
+async function loadFeedbackAdmin({ quiet = false } = {}) {
+  const statusEl = $("#fbadm-status");
+  if (!quiet && statusEl) statusEl.textContent = "Загрузка…";
+  try {
+    const res = await fetch("/api/feedback/requests");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || res.statusText);
+    fbadm.configured = data.configured !== false;
+    fbadm.items = data.items || [];
+    fbadmSetBadge(fbadm.items);
+    if (statusEl) {
+      const c = data.counts || {};
+      statusEl.textContent = fbadm.configured
+        ? `Всего ${fbadm.items.length} · новых ${c.new || 0} · в работе ${c.in_progress || 0}`
+        : "";
+      statusEl.className = "status";
+    }
+    fbadmRender();
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = `Ошибка: ${err.message || err}`;
+      statusEl.className = "status err";
+    }
+    if (!quiet && !fbadm.items.length) {
+      const board = $("#fbadm-board");
+      if (board) board.innerHTML = `<p class="quality-empty">Не удалось загрузить заявки.</p>`;
+    }
+  }
+}
+
+function fbadmScore(it) {
+  const a = it.assessment || {};
+  return (Number(a.value) || 0) * 10 + (Number(a.clarity) || 0) * 2 + (Number(it.votes) || 1) * 5;
+}
+
+function fbadmFiltered() {
+  const q = ($("#fbadm-search")?.value || "").trim().toLowerCase();
+  const type = $("#fbadm-type")?.value || "";
+  return fbadm.items.filter((it) => {
+    if (type && it.type !== type) return false;
+    if (!q) return true;
+    return [it.title, it.area, it.proposal, it.problem, it.login, `#${it.id}`]
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+}
+
+function fbadmCard(it) {
+  const a = it.assessment || {};
+  const chips = [];
+  if (a.value) chips.push(`<span class="fbadm-chip" title="Ценность по оценке ИИ">ценность ${a.value}/5</span>`);
+  if (a.clarity) chips.push(`<span class="fbadm-chip" title="Ясность">ясность ${a.clarity}/5</span>`);
+  if (a.complexity) {
+    const cx = { low: "просто", medium: "средне", high: "сложно" }[a.complexity] || a.complexity;
+    chips.push(`<span class="fbadm-chip fbadm-cx-${fbEsc(a.complexity)}">${cx}</span>`);
+  }
+  if (Number(it.votes) > 1) chips.push(`<span class="fbadm-chip fbadm-chip-votes">+${it.votes - 1}</span>`);
+  if (it.duplicate_hint) chips.push(`<span class="fbadm-chip fbadm-chip-warn">дубль #${fbEsc(it.duplicate_hint)}?</span>`);
+  if (a.already_exists) chips.push(`<span class="fbadm-chip fbadm-chip-warn">уже есть?</span>`);
+  if (a.fits_product === false) chips.push(`<span class="fbadm-chip fbadm-chip-warn">вне продукта?</span>`);
+  return `
+    <button type="button" class="fbadm-card ${it.status === "new" ? "is-new" : ""}" data-fbadm-open="${it.id}">
+      <span class="fbadm-card-top">
+        <span class="fbadm-id">#${it.id}</span>
+        <span class="fbadm-type fbadm-type-${fbEsc(it.type)}">${fbEsc(FBADM_TYPES[it.type] || it.type)}</span>
+        ${it.priority ? `<span class="fbadm-prio">P${fbEsc(it.priority)}</span>` : ""}
+      </span>
+      <strong class="fbadm-title">${fbEsc(it.title)}</strong>
+      <span class="fbadm-meta">${fbEsc(it.area || "—")} · ${fbEsc(it.login)} · ${fbDate(it.created_at)}</span>
+      ${chips.length ? `<span class="fbadm-chips">${chips.join("")}</span>` : ""}
+    </button>`;
+}
+
+function fbadmRender() {
+  const board = $("#fbadm-board");
+  if (!board) return;
+  const typeSel = $("#fbadm-type");
+  if (typeSel && typeSel.options.length <= 1) {
+    typeSel.insertAdjacentHTML(
+      "beforeend",
+      Object.entries(FBADM_TYPES)
+        .map(([k, v]) => `<option value="${k}">${v}</option>`)
+        .join(""),
+    );
+  }
+  if (!fbadm.configured) {
+    board.innerHTML = `
+      <div class="form-card fbadm-setup">
+        <h2>Модуль не подключён</h2>
+        <p>Разверните Worker <code>workers/feedback</code> (инструкция в его README) и добавьте в <code>.env</code>:</p>
+        <pre>JARVIS_FEEDBACK_URL=https://jarvis-feedback.&lt;account&gt;.workers.dev
+JARVIS_FEEDBACK_ADMIN_KEY=…</pre>
+        <p>Затем перезапустите Jarvis.</p>
+      </div>`;
+    return;
+  }
+  const items = fbadmFiltered();
+  const showRejected = $("#fbadm-show-rejected")?.checked;
+  const cols = FBADM_COLUMNS.filter((c) => c.id !== "rejected" || showRejected);
+  board.style.setProperty("--fbadm-cols", String(cols.length));
+  board.innerHTML = cols
+    .map((col) => {
+      const list = items
+        .filter((it) => it.status === col.id)
+        .sort((a, b) =>
+          col.id === "new"
+            ? fbadmScore(b) - fbadmScore(a)
+            : (Number(a.priority) || 99) - (Number(b.priority) || 99) ||
+              String(b.updated_at).localeCompare(String(a.updated_at)),
+        );
+      return `
+        <section class="fbadm-col fbadm-col-${col.id}">
+          <header><span>${col.label}</span><span class="fbadm-count">${list.length}</span></header>
+          <div class="fbadm-col-body">
+            ${list.length ? list.map(fbadmCard).join("") : `<p class="fbadm-empty">Пусто</p>`}
+          </div>
+        </section>`;
+    })
+    .join("");
+  board.querySelectorAll("[data-fbadm-open]").forEach((el) =>
+    el.addEventListener("click", () => fbadmOpen(Number(el.dataset.fbadmOpen))),
+  );
+  if (fbadm.openId) fbadmOpen(fbadm.openId, { keepScroll: true });
+}
+
+function fbadmClose() {
+  fbadm.openId = null;
+  $("#fbadm-detail").hidden = true;
+  $("#fbadm-overlay").hidden = true;
+}
+
+function fbadmOpen(id, { keepScroll = false } = {}) {
+  const it = fbadm.items.find((x) => x.id === id);
+  const box = $("#fbadm-detail");
+  if (!it || !box) return fbadmClose();
+  fbadm.openId = id;
+  const prevScroll = keepScroll ? box.scrollTop : 0;
+  const a = it.assessment || {};
+  const statusOpts = FBADM_COLUMNS.map(
+    (c) => `<option value="${c.id}" ${c.id === it.status ? "selected" : ""}>${c.label}</option>`,
+  ).join("");
+  const convo = (it.conversation || [])
+    .map(
+      (m) =>
+        `<div class="fbadm-msg fbadm-msg-${m.role === "user" ? "user" : "ai"}"><span>${
+          m.role === "user" ? fbEsc(it.login) : "ИИ"
+        }</span>${fbNl(m.text)}</div>`,
+    )
+    .join("");
+  box.innerHTML = `
+    <header class="fbadm-detail-head">
+      <div>
+        <span class="fbadm-id">#${it.id} · ${fbEsc(FBADM_TYPES[it.type] || it.type)} · ${fbEsc(it.area || "—")}</span>
+        <h2>${fbEsc(it.title)}</h2>
+        <span class="fbadm-meta">${fbEsc(it.login)} · ${fbDate(it.created_at)}${
+          Number(it.votes) > 1 ? ` · поддержали: ${fbEsc((it.voters || []).join(", "))}` : ""
+        }${a.edited_by_user ? " · автор правил формулировку ИИ" : ""}</span>
+      </div>
+      <button type="button" class="fbadm-x" data-fbadm-close aria-label="Закрыть">×</button>
+    </header>
+    <div class="fbadm-sec"><h3>Что сейчас не так</h3><p>${fbNl(it.problem || "—")}</p></div>
+    <div class="fbadm-sec"><h3>Что изменить</h3><p>${fbNl(it.proposal || "—")}</p></div>
+    <div class="fbadm-sec"><h3>Польза</h3><p>${fbNl(it.benefit || "—")}</p></div>
+    ${
+      (it.acceptance || []).length
+        ? `<div class="fbadm-sec"><h3>Критерии готовности</h3><ul>${it.acceptance
+            .map((x) => `<li>${fbEsc(x)}</li>`)
+            .join("")}</ul></div>`
+        : ""
+    }
+    <div class="fbadm-sec fbadm-ai">
+      <h3>Оценка ИИ</h3>
+      <p>Ценность: <b>${a.value ?? "—"}/5</b> · ясность: <b>${a.clarity ?? "—"}/5</b> · сложность: <b>${
+        { low: "низкая", medium: "средняя", high: "высокая" }[a.complexity] || "—"
+      }</b>${a.fits_product === false ? " · <b>не вписывается в продукт</b>" : ""}${
+        a.already_exists ? " · <b>возможно, уже есть</b>" : ""
+      }${it.duplicate_hint ? ` · похоже на #${fbEsc(it.duplicate_hint)}` : ""}</p>
+      ${a.risks ? `<p><b>Риски:</b> ${fbNl(a.risks)}</p>` : ""}
+      ${a.notes_for_admin ? `<p><b>Заметки:</b> ${fbNl(a.notes_for_admin)}</p>` : ""}
+    </div>
+    <details class="fbadm-sec"><summary>Исходный текст и диалог с ИИ</summary>
+      <p class="fbadm-orig">${fbNl(it.original_text || "")}</p>
+      <div class="fbadm-convo">${convo || "—"}</div>
+    </details>
+    <form class="fbadm-decide" id="fbadm-decide">
+      <h3>Решение</h3>
+      <div class="fbadm-quick">
+        <button type="button" data-fbadm-quick="approved">Одобрить</button>
+        <button type="button" data-fbadm-quick="in_progress">В работу</button>
+        <button type="button" data-fbadm-quick="done">Готово</button>
+        <button type="button" data-fbadm-quick="rejected" class="is-danger">Отклонить</button>
+      </div>
+      <div class="fbadm-row">
+        <label>Статус<select name="status">${statusOpts}</select></label>
+        <label>Приоритет<input name="priority" type="number" min="1" max="9" value="${fbEsc(it.priority ?? "")}" placeholder="1–9"></label>
+      </div>
+      <label>Комментарий для автора <span class="fbadm-hint">(обязателен при отклонении)</span>
+        <textarea name="admin_comment" rows="4" maxlength="2000">${fbEsc(it.admin_comment || "")}</textarea></label>
+      <div class="fbadm-actions">
+        <button type="submit" class="cj-import-open">Сохранить</button>
+        <span class="status" id="fbadm-decide-status"></span>
+      </div>
+    </form>`;
+  box.hidden = false;
+  $("#fbadm-overlay").hidden = false;
+  box.scrollTop = prevScroll;
+
+  box.querySelector("[data-fbadm-close]").addEventListener("click", fbadmClose);
+  const form = $("#fbadm-decide");
+  box.querySelectorAll("[data-fbadm-quick]").forEach((b) =>
+    b.addEventListener("click", () => {
+      form.elements.namedItem("status").value = b.dataset.fbadmQuick;
+      if (b.dataset.fbadmQuick === "rejected" && !form.elements.namedItem("admin_comment").value.trim()) {
+        form.elements.namedItem("admin_comment").focus();
+        $("#fbadm-decide-status").textContent = "Напишите причину отклонения и нажмите «Сохранить»";
+        return;
+      }
+      form.requestSubmit();
+    }),
+  );
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (fbadm.busy) return;
+    const st = $("#fbadm-decide-status");
+    const pr = form.elements.namedItem("priority").value;
+    const body = {
+      status: form.elements.namedItem("status").value,
+      admin_comment: form.elements.namedItem("admin_comment").value,
+      priority: pr === "" ? null : Number(pr),
+    };
+    fbadm.busy = true;
+    st.textContent = "Сохранение…";
+    st.className = "status";
+    try {
+      const res = await fetch(`/api/feedback/requests/${it.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      await loadFeedbackAdmin({ quiet: true });
+      const st2 = $("#fbadm-decide-status");
+      if (st2) {
+        st2.textContent = "Сохранено — автор увидит решение";
+        st2.className = "status ok";
+      }
+    } catch (err) {
+      st.textContent = `Ошибка: ${err.message || err}`;
+      st.className = "status err";
+    } finally {
+      fbadm.busy = false;
+    }
+  });
+}
+
+$("#fbadm-overlay")?.addEventListener("click", fbadmClose);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && fbadm.openId) fbadmClose();
+});
+$("#fbadm-refresh-btn")?.addEventListener("click", () => loadFeedbackAdmin());
+$("#fbadm-search")?.addEventListener("input", () => fbadmRender());
+$("#fbadm-type")?.addEventListener("change", () => fbadmRender());
+$("#fbadm-show-rejected")?.addEventListener("change", () => fbadmRender());
+$("#fbadm-product-btn")?.addEventListener("click", async () => {
+  const st = $("#fbadm-status");
+  st.textContent = "Отправка PRODUCT.md…";
+  try {
+    const res = await fetch("/api/feedback/product-sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || res.statusText);
+    st.textContent = `Описание продукта обновлено для ИИ (${data.chars} симв.)`;
+    st.className = "status ok";
+  } catch (err) {
+    st.textContent = `Ошибка: ${err.message || err}`;
+    st.className = "status err";
+  }
+});
+// бейдж новых заявок в меню — тихо при старте
+loadFeedbackAdmin({ quiet: true });

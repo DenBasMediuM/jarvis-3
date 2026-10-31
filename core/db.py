@@ -424,7 +424,15 @@ class Database:
         await self._migrate_vyrobotka_schema()
         await self._migrate_reviews_schema()
         await self._migrate_buffer_quality_schema()
+        await self._migrate_vitrine_users_schema()
         await self._conn.commit()
+
+    async def _migrate_vitrine_users_schema(self) -> None:
+        cur = await self.conn.execute("PRAGMA table_info(vitrine_users)")
+        cols = {str(r[1]) for r in await cur.fetchall()}
+        for col in ("fb_salt", "fb_verifier"):
+            if col not in cols:
+                await self.conn.execute(f"ALTER TABLE vitrine_users ADD COLUMN {col} TEXT")
 
     async def _migrate_buffer_quality_schema(self) -> None:
         cur = await self.conn.execute("PRAGMA table_info(buffer_quality_daily)")
@@ -1715,8 +1723,9 @@ class Database:
         now = datetime.now(timezone.utc).isoformat()
         cur = await self.conn.execute(
             """
-            INSERT INTO vitrine_users(login, salt, password_hash, access_json, enabled, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO vitrine_users(login, salt, password_hash, access_json, enabled,
+              fb_salt, fb_verifier, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 row["login"],
@@ -1724,6 +1733,8 @@ class Database:
                 row["password_hash"],
                 row.get("access_json") or "[]",
                 int(row.get("enabled", 1)),
+                row.get("fb_salt"),
+                row.get("fb_verifier"),
                 now,
                 now,
             ),
@@ -1742,7 +1753,7 @@ class Database:
             """
             UPDATE vitrine_users SET
               login = ?, salt = ?, password_hash = ?, access_json = ?,
-              enabled = ?, updated_at = ?
+              enabled = ?, fb_salt = ?, fb_verifier = ?, updated_at = ?
             WHERE id = ?
             """,
             (
@@ -1751,6 +1762,8 @@ class Database:
                 data["password_hash"],
                 data.get("access_json") or "[]",
                 int(data.get("enabled", 1)),
+                data.get("fb_salt"),
+                data.get("fb_verifier"),
                 data["updated_at"],
                 int(user_id),
             ),

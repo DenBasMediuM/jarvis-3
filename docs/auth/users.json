@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-10-30T07:48:05.372524+00:00",
+  "exported_at": "2026-10-31T07:15:06.611489+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
       "login": "demo",
-      "salt": "90ec13033fa3412c7db2590d560c82fe",
-      "hash": "77f5461d19cacb01d1de4bdb7bdf769735a7e6733db22137f28f3a82b9f8da36",
+      "salt": "24dc512cca60b786f902c4c607fa18d7",
+      "hash": "1daac920623a2cc28ed26cfa8ecadd38711eb5228ac403f9f9f34b77d3954ede",
       "iters": 200000,
       "algo": "sha256",
       "access": [
@@ -17,7 +17,9 @@
         "processes.reviews",
         "processes.reviews_stats",
         "processes.buffer_quality"
-      ]
+      ],
+      "fb_salt": "247d765b734c7f1ae39c8869fc7be92a",
+      "fb_verifier": "9dd499d8e7e1cca25d1000e0f40493728362acbec504f0fa9474c1bfecb35401"
     }
   ]
 }

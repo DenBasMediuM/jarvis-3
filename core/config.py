@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     reviews_inbox_write_key: str = ""
     reviews_inbox_read_key: str = ""
 
+    # Cloudflare Worker модуля «Улучшения» (заявки пользователей витрины + ИИ)
+    feedback_url: str = ""
+    feedback_admin_key: str = ""
+
     def resolved_db_path(self) -> Path:
         return self.db_path or (self.data_dir / "jarvis.db")
 

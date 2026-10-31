@@ -1,6 +1,9 @@
 /* Вход на витрину Pages: PBKDF2 по docs/auth/users.json */
 (function () {
   const SESSION_KEY = "jarvis.vitrine.session";
+  // Cloudflare Worker модуля «Улучшения» (серверная проверка пароля + заявки)
+  const FEEDBACK_URL = "https://jarvis-feedback.isaev-denis-igorevih.workers.dev";
+  const FEEDBACK_V = "20261031-feedback2";
   // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
   const scriptBase = (() => {
     try {
@@ -108,7 +111,64 @@
       at: Date.now(),
     };
     setSession(sess);
-    return sess;
+    // токен для модуля «Улучшения»; если Worker недоступен — вход на витрину всё равно проходит
+    await fetchFeedbackToken(user.login, password, data).catch(() => null);
+    return session() || sess;
+  }
+
+  function feedbackUrl() {
+    return FEEDBACK_URL;
+  }
+
+  function feedbackToken() {
+    return session()?.fb_token || "";
+  }
+
+  function setFeedbackToken(token) {
+    const s = session();
+    if (!s) return;
+    if (token) s.fb_token = token;
+    else delete s.fb_token;
+    setSession(s);
+  }
+
+  async function fetchFeedbackToken(loginName, password, usersData) {
+    // Пароль Worker'у не отправляем: считаем proof = PBKDF2(password, fb_salt) здесь,
+    // Worker сверяет sha256(proof) с fb_verifier из users.json.
+    const data0 = usersData || (await loadUsers());
+    const name = String(loginName || "").trim().toLowerCase();
+    const user = (data0.users || []).find((u) => String(u.login || "").toLowerCase() === name);
+    if (!user?.fb_salt) {
+      throw new Error("Для «Улучшений» администратору нужно заново задать вам пароль в Jarvis");
+    }
+    const proof = await pbkdf2Hex(password, user.fb_salt, user.iters || data0.pbkdf2_iterations || 200000);
+    const res = await fetch(`${FEEDBACK_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login: user.login, proof }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.token) throw new Error(data.message || "Не удалось подтвердить вход");
+    setFeedbackToken(data.token);
+    return data.token;
+  }
+
+  function loadFeedbackModule() {
+    if (!session()?.login || document.getElementById("login-form")) return;
+    if (document.querySelector('script[data-jarvis-feedback]')) return;
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = scriptBase
+      ? new URL(`./feedback.css?v=${FEEDBACK_V}`, scriptBase).href
+      : `./shared/feedback.css?v=${FEEDBACK_V}`;
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = scriptBase
+      ? new URL(`./feedback.js?v=${FEEDBACK_V}`, scriptBase).href
+      : `./shared/feedback.js?v=${FEEDBACK_V}`;
+    js.defer = true;
+    js.dataset.jarvisFeedback = "1";
+    document.body.appendChild(js);
   }
 
   function loginPath() {
@@ -207,5 +267,15 @@
     canSeeNav,
     filterProcessesTabs,
     loadUsers,
+    feedbackUrl,
+    feedbackToken,
+    setFeedbackToken,
+    fetchFeedbackToken,
   };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadFeedbackModule);
+  } else {
+    loadFeedbackModule();
+  }
 })();

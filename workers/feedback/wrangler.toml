@@ -1,0 +1,21 @@
+name = "jarvis-feedback"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+preview_urls = false
+
+[vars]
+# users.json витрины — Worker сам проверяет пароль и выдаёт подписанный токен
+USERS_URL = "https://denbasmedium.github.io/jarvis-3/auth/users.json"
+# Откуда разрешены запросы браузера (через запятую)
+ALLOWED_ORIGINS = "https://denbasmedium.github.io"
+OPENAI_MODEL = "gpt-4o-mini"
+# Сколько раундов уточнений максимум, потом ИИ обязан оформить заявку
+MAX_ROUNDS = "3"
+
+# Secrets (wrangler secret put …): OPENAI_API_KEY, TOKEN_SECRET, ADMIN_KEY
+
+[[d1_databases]]
+binding = "DB"
+database_name = "jarvis-feedback"
+database_id = "1d8bff26-9d15-4371-abf1-f0d77aeae470"

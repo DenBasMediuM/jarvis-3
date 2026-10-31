@@ -1,0 +1,9 @@
+{
+  "name": "jarvis-feedback",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/lib.test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}
