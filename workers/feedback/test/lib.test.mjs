@@ -38,9 +38,17 @@ test("token: подпись, срок, подделка", async () => {
 });
 
 test("normalizeAiReply: обрезает вопросы и мусор", () => {
-  const r = normalizeAiReply({ action: "ask", message: "?", questions: ["a", "b", "c", "d", ""] });
+  const r = normalizeAiReply({
+    action: "ask",
+    message: "?",
+    questions: ["a", { text: "b", options: ["x", "y", "", "z", "w", "v"] }, { question: "c" }, "d", ""],
+  });
   assert.equal(r.action, "ask");
-  assert.deepEqual(r.questions, ["a", "b", "c"]);
+  assert.deepEqual(r.questions, [
+    { text: "a", options: [] },
+    { text: "b", options: ["x", "y", "z", "w"] },
+    { text: "c", options: [] },
+  ]);
   assert.equal(r.draft, null);
   const bad = normalizeAiReply({ action: "hack" });
   assert.equal(bad.action, "ask");
@@ -74,6 +82,7 @@ test("normalizeDraft: тип по умолчанию, длины", () => {
 
 test("buildSystemPrompt: включает продукт, заявки и флаг лимита", () => {
   const p = buildSystemPrompt({
+    rules: "ПРАВИЛА-ИЗ-D1",
     product: "## Дебиторка",
     existing: [{ id: 7, status: "new", title: "Фильтр", area: "Дебиторка" }],
     context: { page: "vyrobotka" },
@@ -84,4 +93,6 @@ test("buildSystemPrompt: включает продукт, заявки и фла
   assert.ok(p.includes("## Дебиторка"));
   assert.ok(p.includes("#7 [new] Фильтр"));
   assert.ok(p.includes("ЛИМИТ ИСЧЕРПАН"));
+  assert.ok(p.startsWith("ПРАВИЛА-ИЗ-D1"));
+  assert.ok(buildSystemPrompt({}).includes("Сначала черновик"));
 });

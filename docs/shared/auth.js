@@ -3,7 +3,7 @@
   const SESSION_KEY = "jarvis.vitrine.session";
   // Cloudflare Worker модуля «Улучшения» (серверная проверка пароля + заявки)
   const FEEDBACK_URL = "https://jarvis-feedback.isaev-denis-igorevih.workers.dev";
-  const FEEDBACK_V = "20261031-feedback2";
+  const FEEDBACK_V = "20261031-feedback3";
   // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
   const scriptBase = (() => {
     try {

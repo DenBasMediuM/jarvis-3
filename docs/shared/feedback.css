@@ -162,3 +162,17 @@ body.fb-lock { overflow: hidden; }
 .fb-st-in_progress { background: #e6eefb; color: #2456a6; }
 .fb-st-done { background: #0f6e56; color: #fff; }
 .fb-st-rejected { background: #fdecea; color: #a12622; }
+
+.fb-options { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.fb-opt-group > span { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #3a4656; }
+.fb-opt-group > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-opt {
+  border: 1px solid rgba(15, 110, 86, 0.3);
+  background: #fff;
+  color: var(--accent, #0f6e56);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: 500 13px var(--font, system-ui);
+  cursor: pointer;
+}
+.fb-opt:hover, .fb-opt.is-on { background: var(--accent, #0f6e56); color: #fff; }

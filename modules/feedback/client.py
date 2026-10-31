@@ -36,6 +36,10 @@ def product_doc_path() -> Path:
     return ROOT / "PRODUCT.md"
 
 
+def intake_rules_path() -> Path:
+    return ROOT / "workers" / "feedback" / "intake_rules.md"
+
+
 def validate_update(body: dict[str, Any]) -> dict[str, Any]:
     """Проверить решение администратора до отправки в Worker."""
     out: dict[str, Any] = {}
@@ -121,3 +125,32 @@ class FeedbackClient:
 
     async def product_status(self) -> dict[str, Any]:
         return await self._request("GET", "/admin/product")
+
+    async def push_config(self, *, rules: str | None = None, model: str | None = None) -> dict[str, Any]:
+        body: dict[str, Any] = {}
+        if rules is not None:
+            body["rules"] = rules
+        if model is not None:
+            body["model"] = model
+        return await self._request("PUT", "/admin/config", json=body)
+
+    async def push_rules(self) -> dict[str, Any]:
+        return await self.push_config(rules=intake_rules_path().read_text(encoding="utf-8"))
+
+    async def get_config(self) -> dict[str, Any]:
+        return await self._request("GET", "/admin/config")
+
+    async def simulate(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        context: dict[str, Any] | None = None,
+        rounds: int = 0,
+        model: str | None = None,
+    ) -> dict[str, Any]:
+        """Прогнать диалог через ИИ без сохранения (настройка промпта)."""
+        return await self._request(
+            "POST",
+            "/admin/simulate",
+            json={"messages": messages, "context": context or {}, "rounds": rounds, "model": model or ""},
+        )

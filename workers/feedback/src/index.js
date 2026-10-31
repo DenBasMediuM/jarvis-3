@@ -75,10 +75,20 @@ async function loadUsers(env) {
   return usersCache.data;
 }
 
-async function getProduct(env) {
-  const row = await env.DB.prepare("SELECT value FROM meta WHERE key = 'product'").first();
+async function getMeta(env, key) {
+  const row = await env.DB.prepare("SELECT value FROM meta WHERE key = ?").bind(key).first();
   return row?.value || "";
 }
+
+async function setMeta(env, key, value) {
+  await env.DB.prepare(
+    "INSERT INTO meta (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+  )
+    .bind(key, value, now())
+    .run();
+}
+
+const getProduct = (env) => getMeta(env, "product");
 
 async function existingForAi(env) {
   const { results } = await env.DB.prepare(
@@ -87,7 +97,21 @@ async function existingForAi(env) {
   return results || [];
 }
 
-async function callOpenAI(env, system, messages) {
+async function callOpenAI(env, system, messages, model) {
+  const primary = model || env.OPENAI_MODEL || "gpt-4o-mini";
+  const fallback = env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini";
+  try {
+    return { reply: await callOpenAIOnce(env, system, messages, primary), model: primary };
+  } catch (err) {
+    // модель недоступна для ключа / неверное имя → не ломаем пользователю диалог
+    if (primary !== fallback && err instanceof HttpError && err.code === "ai_error" && err.upstream < 500) {
+      return { reply: await callOpenAIOnce(env, system, messages, fallback), model: fallback };
+    }
+    throw err;
+  }
+}
+
+async function callOpenAIOnce(env, system, messages, model) {
   if (!env.OPENAI_API_KEY) throw new HttpError(500, "ai_not_configured", "ИИ не настроен");
   const base = String(env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
   const res = await fetch(`${base}/chat/completions`, {
@@ -97,7 +121,7 @@ async function callOpenAI(env, system, messages) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: env.OPENAI_MODEL || "gpt-4o-mini",
+      model,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [{ role: "system", content: system }, ...messages],
@@ -105,7 +129,9 @@ async function callOpenAI(env, system, messages) {
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    throw new HttpError(502, "ai_error", `ИИ недоступен (${res.status}) ${t.slice(0, 200)}`);
+    const e = new HttpError(502, "ai_error", `ИИ недоступен (${res.status}) ${t.slice(0, 200)}`);
+    e.upstream = res.status;
+    throw e;
   }
   const data = await res.json();
   try {
@@ -123,10 +149,11 @@ function toModelMessages(history) {
   }));
 }
 
-async function runAi(env, conv, history) {
+async function runAi(env, conv, history, { model } = {}) {
   const maxRounds = Math.max(1, Number(env.MAX_ROUNDS || 3));
   const mustDraft = conv.rounds >= maxRounds;
   const system = buildSystemPrompt({
+    rules: await getMeta(env, "intake_rules"),
     product: await getProduct(env),
     existing: await existingForAi(env),
     context: conv.context,
@@ -134,11 +161,15 @@ async function runAi(env, conv, history) {
     maxRounds,
     mustDraft,
   });
-  const raw = await callOpenAI(env, system, toModelMessages(history));
-  const firstUser = history.find((m) => m.role === "user")?.text || "";
+  const { reply: raw, model: used } = await callOpenAI(
+    env,
+    system,
+    toModelMessages(history),
+    model || (await getMeta(env, "model")) || undefined,
+  );
   const allUser = history.filter((m) => m.role === "user").map((m) => m.text).join("\n\n");
-  const reply = normalizeAiReply(raw, { mustDraft, fallbackText: allUser || firstUser });
-  return { reply, raw };
+  const reply = normalizeAiReply(raw, { mustDraft, fallbackText: allUser });
+  return { reply, raw, model: used };
 }
 
 async function loadConversation(env, id, login) {
@@ -160,7 +191,12 @@ async function appendAndAnswer(env, conv, text) {
   }
   const history = [...conv.history, { role: "user", text, at: now() }];
   const { reply, raw } = await runAi(env, conv, history);
-  const assistantText = [reply.message, ...reply.questions.map((q, i) => `${i + 1}. ${q}`)]
+  const assistantText = [
+    reply.message,
+    ...reply.questions.map(
+      (q, i) => `${i + 1}. ${q.text}${q.options.length ? ` (${q.options.join(" / ")})` : ""}`,
+    ),
+  ]
     .filter(Boolean)
     .join("\n");
   history.push({ role: "assistant", text: assistantText, raw: JSON.stringify(raw), action: reply.action, at: now() });
@@ -423,6 +459,36 @@ async function handle(request, env) {
         .bind(md, now())
         .run();
       return { ok: true, chars: md.length };
+    }
+
+    if (method === "PUT" && path === "/admin/config") {
+      const body = await readJson(request);
+      if (body.rules != null) await setMeta(env, "intake_rules", String(body.rules).slice(0, 30_000));
+      if (body.model != null) await setMeta(env, "model", clip(body.model, 60));
+      return { ok: true };
+    }
+
+    if (method === "GET" && path === "/admin/config") {
+      const rules = await getMeta(env, "intake_rules");
+      return {
+        ok: true,
+        model: (await getMeta(env, "model")) || env.OPENAI_MODEL || "gpt-4o-mini",
+        fallback_model: env.OPENAI_FALLBACK_MODEL || "gpt-4o-mini",
+        rules_chars: rules.length,
+      };
+    }
+
+    // Прогон диалога без сохранения — для настройки промпта из Jarvis
+    if (method === "POST" && path === "/admin/simulate") {
+      const body = await readJson(request);
+      const history = (Array.isArray(body.messages) ? body.messages : [])
+        .slice(-12)
+        .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", text: clip(m.text, LIMITS.messageChars) }))
+        .filter((m) => m.text);
+      if (!history.length) throw new HttpError(400, "empty");
+      const conv = { rounds: Number(body.rounds) || 0, context: body.context || {} };
+      const { reply, model } = await runAi(env, conv, history, { model: clip(body.model, 60) || undefined });
+      return { ok: true, model, reply };
     }
 
     if (method === "GET" && path === "/admin/product") {

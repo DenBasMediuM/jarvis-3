@@ -217,10 +217,11 @@ async def lifespan(_: FastAPI):
     # Актуальное описание продукта (PRODUCT.md) — для ИИ модуля «Улучшения»
     fb = _feedback_client()
     if fb.configured:
-        try:
-            await fb.push_product()
-        except Exception:  # noqa: BLE001
-            pass
+        for push in (fb.push_product, fb.push_rules):
+            try:
+                await push()
+            except Exception:  # noqa: BLE001
+                pass
     yield
     await db.close()
 
@@ -1171,13 +1172,56 @@ async def feedback_product_status() -> dict[str, Any]:
 
 @app.post("/api/feedback/product-sync")
 async def feedback_product_sync() -> dict[str, Any]:
+    """Отправить в Worker PRODUCT.md и правила ИИ (workers/feedback/intake_rules.md)."""
+    fb = _feedback_client()
     try:
-        res = await _feedback_client().push_product()
+        res = await fb.push_product()
+        await fb.push_rules()
     except FileNotFoundError as exc:
-        raise HTTPException(404, "Нет PRODUCT.md в корне проекта") from exc
+        raise HTTPException(404, f"Нет файла: {exc.filename}") from exc
     except FeedbackError as exc:
         raise HTTPException(502, str(exc)) from exc
     return {"ok": True, "chars": res.get("chars")}
+
+
+class FeedbackConfigBody(BaseModel):
+    model: str = Field(min_length=3, max_length=60)
+
+
+@app.get("/api/feedback/config")
+async def feedback_config() -> dict[str, Any]:
+    try:
+        return await _feedback_client().get_config()
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.put("/api/feedback/config")
+async def feedback_config_update(body: FeedbackConfigBody) -> dict[str, Any]:
+    """Сменить модель ИИ для приёма заявок (без передеплоя Worker)."""
+    try:
+        await _feedback_client().push_config(model=body.model.strip())
+        return await _feedback_client().get_config()
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+class FeedbackSimulateBody(BaseModel):
+    messages: list[dict[str, str]]
+    context: dict[str, Any] | None = None
+    rounds: int = 0
+    model: str | None = None
+
+
+@app.post("/api/feedback/simulate")
+async def feedback_simulate(body: FeedbackSimulateBody) -> dict[str, Any]:
+    """Прогон диалога через ИИ Worker'а без сохранения — для настройки промпта."""
+    try:
+        return await _feedback_client().simulate(
+            body.messages, context=body.context, rounds=body.rounds, model=body.model
+        )
+    except FeedbackError as exc:
+        raise HTTPException(502, str(exc)) from exc
 
 
 @app.get("/api/conversations")

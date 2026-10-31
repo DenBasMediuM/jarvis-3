@@ -233,6 +233,7 @@
     if (r.action === "draft" && r.draft) tail = renderDraft(r);
     else
       tail = `
+        ${renderOptions(r)}
         <form data-fb="reply" class="fb-compose">
           <textarea name="message" rows="3" maxlength="2000" required placeholder="Ваш ответ…"></textarea>
           ${renderError()}
@@ -242,6 +243,20 @@
           </div>
         </form>`;
     return `<div class="fb-log">${log}</div>${rounds}${tail}`;
+  }
+
+  // варианты ответа на уточняющие вопросы — кнопками
+  function renderOptions(r) {
+    const qs = (r.questions || []).filter((q) => q && typeof q === "object" && (q.options || []).length);
+    if (r.action !== "ask" || !qs.length) return "";
+    return `<div class="fb-options">${qs
+      .map((q) => {
+        const n = (r.questions || []).indexOf(q) + 1;
+        return `<div class="fb-opt-group"><span>${n}. ${esc(q.text)}</span><div>${q.options
+          .map((o) => `<button type="button" class="fb-opt" data-fb-opt="${n}" data-val="${esc(o)}">${esc(o)}</button>`)
+          .join("")}</div></div>`;
+      })
+      .join("")}</div>`;
   }
 
   function renderDraft(r) {
@@ -322,7 +337,10 @@
   function applyConversation(conv, userText) {
     const prev = state.conv?.id === conv.id ? state.conv.history || [] : [];
     const r = conv.reply || {};
-    const aiText = [r.message, ...(r.questions || []).map((q, i) => `${i + 1}. ${q}`)].filter(Boolean).join("\n");
+    const qText = (q) => (typeof q === "string" ? q : q?.text || "");
+    const aiText = [r.message, ...(r.questions || []).map((q, i) => `${i + 1}. ${qText(q)}`)]
+      .filter(Boolean)
+      .join("\n");
     state.conv = {
       id: conv.id,
       rounds: conv.rounds,
@@ -386,6 +404,20 @@
           });
           applyConversation(data.conversation, text);
         });
+      }),
+    );
+
+    panel.querySelectorAll("[data-fb-opt]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const ta = panel.querySelector('form[data-fb="reply"] textarea');
+        if (!ta) return;
+        const n = btn.dataset.fbOpt;
+        // одна строка на вопрос: повторный клик меняет выбор
+        const lines = ta.value.split("\n").filter((l) => l.trim() && !l.startsWith(`${n}. `));
+        lines.push(`${n}. ${btn.dataset.val}`);
+        ta.value = lines.sort().join("\n");
+        panel.querySelectorAll(`[data-fb-opt="${n}"]`).forEach((b) => b.classList.toggle("is-on", b === btn));
+        ta.focus();
       }),
     );
 
