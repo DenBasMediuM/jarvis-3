@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="./styles.css?v=20261028-buffer-quality-vitrine1" />
   <script src="../shared/auth.js?v=20261031-feedback3"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-  <script src="./app.js?v=20261030-buffer-gap2" defer></script>
+  <script src="./app.js?v=20261031-bq-history2" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -233,8 +233,9 @@
               <div class="chart-box"><canvas id="chart-bq-dispatch"></canvas></div>
             </article>
             <article class="card" style="grid-column:1/-1">
-              <h3>Раздача из буфера по мастерам</h3>
-              <p class="card-sub">Цвет столбца = зона загрузки мастера.</p>
+              <h3>Раздача из буфера по дням</h3>
+              <p class="card-sub">Столбец — день снимка, цветные части — мастера. Наведите — кто сколько получил и насколько уместно.</p>
+              <p class="card-sub" id="chart-bq-masters-empty" hidden>Нужно минимум два снимка, чтобы посчитать раздачу.</p>
               <div class="chart-box chart-box--tall"><canvas id="chart-bq-masters"></canvas></div>
             </article>
           </div>

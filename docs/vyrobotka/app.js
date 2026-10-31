@@ -1271,42 +1271,11 @@ function renderBufferQuality(data) {
       },
     });
   }
-  const withAssign = masters.filter((m) => Number(m.assigned_from_buffer || 0) > 0);
-  const barMasters = withAssign.length
-    ? withAssign
-    : [...masters].sort((a, b) => Number(b.load_index || 0) - Number(a.load_index || 0)).slice(0, 12);
   const mastersCanvas = $("#chart-bq-masters");
-  if (mastersCanvas) {
-    bqCharts.masters = new Chart(mastersCanvas, {
-      type: "bar",
-      data: {
-        labels: barMasters.map((m) => {
-          const name = String(m.display_name || m.master_key || "");
-          const parts = name.split(/\s+/);
-          return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : name.slice(0, 16);
-        }),
-        datasets: [
-          {
-            label: withAssign.length ? "Из буфера" : "Load",
-            data: barMasters.map((m) =>
-              withAssign.length ? Number(m.assigned_from_buffer || 0) : Number(m.load_index || 0),
-            ),
-            backgroundColor: barMasters.map((m) => bqZoneColor(m.zone)),
-            borderWidth: 0,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { maxRotation: 45, font: { size: 10 } } },
-          y: { beginAtZero: true, ticks: { font: { size: 10 } } },
-        },
-      },
-    });
-  }
+  const hist = buildAssignHistoryChart(mastersCanvas, data?.assign_history || [], bqAssignLabel);
+  if (hist) bqCharts.masters = hist;
+  const histEmpty = $("#chart-bq-masters-empty");
+  if (histEmpty) histEmpty.hidden = Boolean(hist);
 }
 
 function renderAll() {
@@ -1576,4 +1545,83 @@ function bufferGapLabel(latest) {
     return { title: `Роздано за ${gap} дн.`, since: m && d ? ` · с ${d}.${m}` : "" };
   }
   return { title: "Роздано за день", since: "" };
+}
+
+// Раздача из буфера по дням: столбец = день снимка, сегменты = мастера (цвет стабилен для мастера)
+function bqMasterColor(key) {
+  let h = 0;
+  for (const ch of String(key || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `hsl(${h % 360}, 55%, ${42 + (h >> 9) % 18}%)`;
+}
+
+function bqShortName(name) {
+  const parts = String(name || "").split(/\s+/).filter(Boolean);
+  return parts.length >= 2 ? `${parts[0]} ${parts[1][0]}.` : String(name || "").slice(0, 16);
+}
+
+function buildAssignHistoryChart(canvas, history, assignLabel) {
+  const days = (history || []).filter((d) => d && d.day);
+  if (!canvas || !days.length || typeof Chart === "undefined") return null;
+  const labels = days.map((d) => {
+    const [, m, dd] = String(d.day).split("-");
+    return Number(d.gap_days) > 1 ? `${dd}.${m} (${d.gap_days} дн.)` : `${dd}.${m}`;
+  });
+  const masters = new Map();
+  days.forEach((d) =>
+    (d.masters || []).forEach((m) => {
+      const key = m.master_key || m.display_name;
+      const cur = masters.get(key) || { key, name: m.display_name, total: 0 };
+      cur.total += Number(m.assigned || 0);
+      masters.set(key, cur);
+    }),
+  );
+  const ordered = [...masters.values()].sort((a, b) => b.total - a.total);
+  const datasets = ordered.map((ms) => ({
+    label: bqShortName(ms.name),
+    data: days.map((d) => {
+      const hit = (d.masters || []).find((m) => (m.master_key || m.display_name) === ms.key);
+      return hit ? Number(hit.assigned || 0) : 0;
+    }),
+    quality: days.map((d) => {
+      const hit = (d.masters || []).find((m) => (m.master_key || m.display_name) === ms.key);
+      return hit ? hit.quality : null;
+    }),
+    fullName: ms.name,
+    backgroundColor: bqMasterColor(ms.key),
+    borderColor: "#fff",
+    borderWidth: 1,
+    maxBarThickness: 90,
+    stack: "assign",
+  }));
+  return new Chart(canvas, {
+    type: "bar",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: {
+          filter: (item) => Number(item.raw) > 0,
+          itemSort: (a, b) => Number(b.raw) - Number(a.raw),
+          callbacks: {
+            title: (items) => {
+              const d = days[items[0]?.dataIndex];
+              if (!d) return "";
+              const since = Number(d.gap_days) > 1 && d.prev_day ? ` (с ${d.prev_day})` : "";
+              return `${d.day}${since} · роздано ${d.total}`;
+            },
+            label: (ctx) => {
+              const q = ctx.dataset.quality?.[ctx.dataIndex];
+              return `${ctx.dataset.fullName}: ${ctx.raw} · ${assignLabel(q)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 10 } } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+      },
+    },
+  });
 }

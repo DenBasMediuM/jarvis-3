@@ -620,8 +620,9 @@
                     <div class="vyrobotka-chart-box"><canvas id="buffer-quality-chart-dispatch"></canvas></div>
                   </section>
                   <section class="vyrobotka-chart-panel buffer-quality-chart-wide">
-                    <h3>Раздача из буфера по мастерам</h3>
-                    <p class="vyrobotka-chart-sub">Сколько получил каждый · цвет = зона загрузки на момент оценки</p>
+                    <h3>Раздача из буфера по дням</h3>
+                    <p class="vyrobotka-chart-sub">Столбец — день снимка, части — мастера · наведите: сколько и насколько уместно</p>
+                    <p class="vyrobotka-chart-sub" id="buffer-quality-chart-masters-empty" hidden>Нужно минимум два снимка, чтобы посчитать раздачу.</p>
                     <div class="vyrobotka-chart-box"><canvas id="buffer-quality-chart-masters"></canvas></div>
                   </section>
                 </div>
@@ -804,6 +805,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261031-feedback2"></script>
+  <script src="/static/app.js?v=20261031-bq-history2"></script>
 </body>
 </html>

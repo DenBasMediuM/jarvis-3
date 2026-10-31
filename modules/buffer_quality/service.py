@@ -9,6 +9,45 @@ from typing import Any
 from modules.buffer_quality.compute import build_day_payload
 from modules.gincore.quality import compute_quality_metrics
 
+def build_assign_history(
+    daily: list[dict[str, Any]],
+    master_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Раздача из буфера по дням: кому и сколько роздано (для графика в динамике).
+
+    Только дни, где раздачу можно было посчитать (был предыдущий снимок).
+    """
+    by_day: dict[str, list[dict[str, Any]]] = {}
+    for m in master_rows or []:
+        n = int(m.get("assigned_from_buffer") or 0)
+        if n <= 0:
+            continue
+        by_day.setdefault(str(m.get("day")), []).append(
+            {
+                "master_key": m.get("master_key"),
+                "display_name": m.get("display_name") or m.get("master_key"),
+                "assigned": n,
+                "quality": m.get("assign_quality"),
+            }
+        )
+    out: list[dict[str, Any]] = []
+    for d in daily or []:
+        if d.get("assigned_from_buffer") is None:
+            continue
+        day = str(d.get("day"))
+        masters = sorted(by_day.get(day, []), key=lambda x: (-x["assigned"], str(x["display_name"])))
+        out.append(
+            {
+                "day": day,
+                "prev_day": d.get("prev_day"),
+                "gap_days": d.get("gap_days"),
+                "total": int(d.get("assigned_from_buffer") or 0),
+                "masters": masters,
+            }
+        )
+    return out
+
+
 def merge_snapshot_assignments(
     live_masters: list[dict[str, Any]],
     snapshot_masters: list[dict[str, Any]],
@@ -236,6 +275,7 @@ class BufferQualityService:
             }
 
         latest = daily[-1] if daily else None
+        history_rows = await self.db.buffer_quality_list_masters_range(limit_days=90)
         return {
             "ok": True,
             "title": "Качество обработки буфера",
@@ -246,6 +286,7 @@ class BufferQualityService:
             "masters": live_masters if live_masters is not None else masters,
             "masters_snapshot": masters,
             "daily": daily,
+            "assign_history": build_assign_history(daily, history_rows),
             "series": {
                 "days": [d["day"] for d in daily],
                 "buffer_count": [d.get("buffer_count") for d in daily],

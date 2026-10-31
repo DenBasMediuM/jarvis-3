@@ -278,3 +278,23 @@ def test_merge_snapshot_assignments_into_live():
     assert out["a"]["assigned_from_buffer"] == 3 and out["a"]["assign_quality"] == "bad"
     assert out["b"]["assigned_from_buffer"] == 0
     assert out["c"]["assigned_from_buffer"] == 1
+
+
+def test_build_assign_history_by_day():
+    from modules.buffer_quality.service import build_assign_history
+
+    daily = [
+        {"day": "2026-10-28", "assigned_from_buffer": None},
+        {"day": "2026-10-30", "assigned_from_buffer": 3, "prev_day": "2026-10-28", "gap_days": 2},
+        {"day": "2026-10-31", "assigned_from_buffer": 0, "prev_day": "2026-10-30", "gap_days": 1},
+    ]
+    rows = [
+        {"day": "2026-10-30", "master_key": "a", "display_name": "A", "assigned_from_buffer": 1, "assign_quality": "ok"},
+        {"day": "2026-10-30", "master_key": "b", "display_name": "B", "assigned_from_buffer": 2, "assign_quality": "bad"},
+        {"day": "2026-10-30", "master_key": "c", "display_name": "C", "assigned_from_buffer": 0},
+    ]
+    h = build_assign_history(daily, rows)
+    assert [x["day"] for x in h] == ["2026-10-30", "2026-10-31"]
+    assert h[0]["gap_days"] == 2 and h[0]["total"] == 3
+    assert [(m["display_name"], m["assigned"], m["quality"]) for m in h[0]["masters"]] == [("B", 2, "bad"), ("A", 1, "ok")]
+    assert h[1]["masters"] == []

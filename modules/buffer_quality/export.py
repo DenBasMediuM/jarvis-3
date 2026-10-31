@@ -24,6 +24,7 @@ def build_buffer_quality_pages_payload(stats: dict[str, Any]) -> dict[str, Any]:
         "masters": stats.get("masters") or [],
         "masters_snapshot": stats.get("masters_snapshot") or [],
         "daily": stats.get("daily") or [],
+        "assign_history": stats.get("assign_history") or [],
         "series": stats.get("series") or {},
         "sync": stats.get("sync"),
         "counts": {
