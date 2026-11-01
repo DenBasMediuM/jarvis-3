@@ -14,6 +14,7 @@
 - Jarvis запускается без reload: после правок Python — перезапуск `python run.py`.
 - При правке `web/static/app.js` / `docs/*/app.js` поднимать `?v=` в соответствующем `index.html`.
 - В `docs/` нельзя класть секреты (репозиторий и Pages публичные). Персональные данные — минимум.
+- Справка витрины — `docs/shared/help-content.js`: при изменении раздела витрины обновлять и её.
 - Тесты: `pytest tests`, воркер feedback: `cd workers/feedback && npm test`.
 - Публикация витрины: экспорт пишет `docs/*/data.json`; push — `POST /api/vyrobotka/publish-pages`
   (коммитит всё застейдженное).

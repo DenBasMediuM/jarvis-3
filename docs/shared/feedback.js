@@ -105,7 +105,7 @@
   function pageContext() {
     const parts = location.pathname.split("/").filter(Boolean);
     const page = parts.length > 1 ? parts[parts.length - 1] : "главная";
-    const tab = document.querySelector(".mod-tab.is-active")?.textContent?.trim() || "";
+    const tab = document.querySelector(".mod-tab.is-active, .tab.is-active")?.textContent?.trim() || "";
     return { page, tab, title: document.title };
   }
 
@@ -128,7 +128,15 @@
   panel.setAttribute("aria-label", "Улучшения");
   panel.hidden = true;
 
-  document.body.append(fab, overlay, panel);
+  // общий док справа внизу (рядом — кнопка «Справка» из help.js)
+  let dock = document.querySelector(".jv-dock");
+  if (!dock) {
+    dock = document.createElement("div");
+    dock.className = "jv-dock";
+    document.body.appendChild(dock);
+  }
+  dock.appendChild(fab);
+  document.body.append(overlay, panel);
 
   fab.addEventListener("click", () => toggle(true));
   overlay.addEventListener("click", () => toggle(false));

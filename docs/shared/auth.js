@@ -3,7 +3,7 @@
   const SESSION_KEY = "jarvis.vitrine.session";
   // Cloudflare Worker модуля «Улучшения» (серверная проверка пароля + заявки)
   const FEEDBACK_URL = "https://jarvis-feedback.isaev-denis-igorevih.workers.dev";
-  const FEEDBACK_V = "20261031-feedback3";
+  const FEEDBACK_V = "20261101-help1";
   // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
   const scriptBase = (() => {
     try {
@@ -153,22 +153,27 @@
     return data.token;
   }
 
+  // Кнопки справа внизу: «Справка» (help*.js) и «Предложить улучшение» (feedback.js)
   function loadFeedbackModule() {
     if (!session()?.login || document.getElementById("login-form")) return;
-    if (document.querySelector('script[data-jarvis-feedback]')) return;
-    const css = document.createElement("link");
-    css.rel = "stylesheet";
-    css.href = scriptBase
-      ? new URL(`./feedback.css?v=${FEEDBACK_V}`, scriptBase).href
-      : `./shared/feedback.css?v=${FEEDBACK_V}`;
-    document.head.appendChild(css);
-    const js = document.createElement("script");
-    js.src = scriptBase
-      ? new URL(`./feedback.js?v=${FEEDBACK_V}`, scriptBase).href
-      : `./shared/feedback.js?v=${FEEDBACK_V}`;
-    js.defer = true;
-    js.dataset.jarvisFeedback = "1";
-    document.body.appendChild(js);
+    if (document.querySelector("script[data-jarvis-feedback]")) return;
+    const asset = (name) =>
+      scriptBase
+        ? new URL(`./${name}?v=${FEEDBACK_V}`, scriptBase).href
+        : `./shared/${name}?v=${FEEDBACK_V}`;
+    for (const name of ["help.css", "feedback.css"]) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = asset(name);
+      document.head.appendChild(css);
+    }
+    for (const name of ["help-content.js", "help.js", "feedback.js"]) {
+      const js = document.createElement("script");
+      js.src = asset(name);
+      js.async = false; // сохранить порядок: контент справки → справка → заявки
+      if (name === "feedback.js") js.dataset.jarvisFeedback = "1";
+      document.body.appendChild(js);
+    }
   }
 
   function loginPath() {
