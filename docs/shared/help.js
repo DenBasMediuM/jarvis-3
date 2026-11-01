@@ -196,10 +196,12 @@
     setTimeout(() => {
       const el = document.querySelector(target.selector);
       if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.classList.remove("hp-spot");
       void el.offsetWidth;
       el.classList.add("hp-spot");
+      // высокий блок (большая таблица) — показываем начало, иначе — по центру
+      const tall = el.getBoundingClientRect().height > window.innerHeight * 0.7;
+      el.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "center" });
       setTimeout(() => el.classList.remove("hp-spot"), 3600);
     }, target.tab ? 450 : 50);
   }

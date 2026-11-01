@@ -161,6 +161,7 @@ body.hp-lock { overflow: hidden; }
 
 /* подсветка блока по «Показать на странице» */
 .hp-spot {
+  scroll-margin-top: 140px; /* не прятать под липкой панелью вкладок */
   outline: 3px solid var(--accent-2, #c45c26) !important;
   outline-offset: 4px;
   border-radius: 12px;
