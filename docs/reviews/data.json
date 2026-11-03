@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "exported_at": "2026-11-03T20:36:43.727805+00:00",
+  "exported_at": "2026-11-03T21:56:01.026858+00:00",
   "source": "jarvis-reviews",
   "branches": [
     {
@@ -4238,8 +4238,8 @@
       "branch_id": "karetnaya",
       "rating": 3.9,
       "review_count": 835,
-      "noted_by": "zlatal",
-      "noted_at": "2026-11-03T11:46:40.599Z"
+      "noted_by": "demo",
+      "noted_at": "2026-11-03T21:55:15.002Z"
     },
     {
       "id": 24,
@@ -4247,8 +4247,8 @@
       "branch_id": "levitana",
       "rating": 3.0,
       "review_count": 10,
-      "noted_by": "zlatal",
-      "noted_at": "2026-11-03T11:46:40.599Z"
+      "noted_by": "demo",
+      "noted_at": "2026-11-03T21:55:15.002Z"
     },
     {
       "id": 23,
@@ -4256,8 +4256,8 @@
       "branch_id": "segedskaya",
       "rating": 4.3,
       "review_count": 236,
-      "noted_by": "zlatal",
-      "noted_at": "2026-11-03T11:46:40.599Z"
+      "noted_by": "demo",
+      "noted_at": "2026-11-03T21:55:15.002Z"
     }
   ],
   "google_series": {
@@ -4298,7 +4298,7 @@
           "day": "2026-11-03",
           "rating": 3.9,
           "review_count": 835,
-          "noted_at": "2026-11-03T11:46:40.599Z"
+          "noted_at": "2026-11-03T21:55:15.002Z"
         }
       ],
       "levitana": [
@@ -4330,7 +4330,7 @@
           "day": "2026-11-03",
           "rating": 3.0,
           "review_count": 10,
-          "noted_at": "2026-11-03T11:46:40.599Z"
+          "noted_at": "2026-11-03T21:55:15.002Z"
         }
       ],
       "segedskaya": [
@@ -4362,7 +4362,7 @@
           "day": "2026-11-03",
           "rating": 4.3,
           "review_count": 236,
-          "noted_at": "2026-11-03T11:46:40.599Z"
+          "noted_at": "2026-11-03T21:55:15.002Z"
         }
       ]
     }
