@@ -1,6 +1,14 @@
 name = "jarvis-reviews-inbox"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
+preview_urls = false
+
+# как было настроено в Dashboard — чтобы deploy не выключал логи
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
 
 [[kv_namespaces]]
 binding = "INBOX"

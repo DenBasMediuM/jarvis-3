@@ -688,17 +688,22 @@ class VyrobotkaService:
             ),
         )
 
-        ranges = [client.a1_range(t) for t in to_fetch]
+        # В запросе к API — НАСТОЯЩЕЕ имя листа (с пробелами по краям, если они есть):
+        # по обрезанному имени Sheets отвечает «Unable to parse range», и лист не читается.
+        def raw_title(t: str) -> str:
+            return str((title_to_meta.get(t) or {}).get("title") or t)
+
+        ranges = [client.a1_range(raw_title(t)) for t in to_fetch]
         values_map = await client.batch_get_values(sid, ranges)
 
         updated = 0
         skipped_same = 0
         for idx, title in enumerate(to_fetch):
-            rng = client.a1_range(title)
+            rng = client.a1_range(raw_title(title))
             values = values_map.get(rng) or []
             if not values:
                 for k, v in values_map.items():
-                    if k.split("!", 1)[0].strip("'") == title:
+                    if normalize_sheet_title(k.rsplit("!", 1)[0].strip("'").replace("''", "'")) == title:
                         values = v
                         break
             rows = parse_week_rows(title, values)
