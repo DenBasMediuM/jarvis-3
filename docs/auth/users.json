@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-02T06:38:46.946426+00:00",
+  "exported_at": "2026-11-03T07:19:22.747547+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -20,6 +20,24 @@
       ],
       "fb_salt": "247d765b734c7f1ae39c8869fc7be92a",
       "fb_verifier": "9dd499d8e7e1cca25d1000e0f40493728362acbec504f0fa9474c1bfecb35401"
+    },
+    {
+      "login": "zlatal",
+      "salt": "8422c384bbe1a0afd580adde23af335d",
+      "hash": "cf4a0d12a901496a55c6d734887a0858efcc34170e83a7cd25e783ac5f6e5015",
+      "iters": 200000,
+      "algo": "sha256",
+      "access": [
+        "quality",
+        "processes.upsell",
+        "processes.debt",
+        "processes.branch_kpi",
+        "processes.reviews",
+        "processes.reviews_stats",
+        "processes.buffer_quality"
+      ],
+      "fb_salt": "0044118284e5d7e5400c80a082e14027",
+      "fb_verifier": "0ba17d89dc55ac3fafaa13b541d8e3fe4640933d83e71fdc3030f89c5b34774b"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "exported_at": "2026-10-26T07:42:37.053242+00:00",
+  "exported_at": "2026-11-03T06:13:02.317379+00:00",
   "source": "jarvis-reviews",
   "branches": [
     {
@@ -4233,38 +4233,39 @@
   ],
   "google_latest": [
     {
-      "id": 16,
-      "day": "2026-10-26",
+      "id": 19,
+      "day": "2026-11-01",
       "branch_id": "karetnaya",
       "rating": 3.9,
-      "review_count": 834,
+      "review_count": 835,
       "noted_by": "demo",
-      "noted_at": "2026-10-26T07:42:21.830Z"
+      "noted_at": "2026-11-01T07:03:15.255Z"
     },
     {
-      "id": 18,
-      "day": "2026-10-26",
+      "id": 21,
+      "day": "2026-11-01",
       "branch_id": "levitana",
       "rating": 3.0,
       "review_count": 10,
       "noted_by": "demo",
-      "noted_at": "2026-10-26T07:42:21.830Z"
+      "noted_at": "2026-11-01T07:03:15.255Z"
     },
     {
-      "id": 17,
-      "day": "2026-10-26",
+      "id": 20,
+      "day": "2026-11-01",
       "branch_id": "segedskaya",
       "rating": 4.3,
       "review_count": 236,
       "noted_by": "demo",
-      "noted_at": "2026-10-26T07:42:21.830Z"
+      "noted_at": "2026-11-01T07:03:15.255Z"
     }
   ],
   "google_series": {
     "days": [
       "2026-10-23",
       "2026-10-24",
-      "2026-10-26"
+      "2026-10-26",
+      "2026-11-01"
     ],
     "by_branch": {
       "karetnaya": [
@@ -4285,6 +4286,12 @@
           "rating": 3.9,
           "review_count": 834,
           "noted_at": "2026-10-26T07:42:21.830Z"
+        },
+        {
+          "day": "2026-11-01",
+          "rating": 3.9,
+          "review_count": 835,
+          "noted_at": "2026-11-01T07:03:15.255Z"
         }
       ],
       "levitana": [
@@ -4305,6 +4312,12 @@
           "rating": 3.0,
           "review_count": 10,
           "noted_at": "2026-10-26T07:42:21.830Z"
+        },
+        {
+          "day": "2026-11-01",
+          "rating": 3.0,
+          "review_count": 10,
+          "noted_at": "2026-11-01T07:03:15.255Z"
         }
       ],
       "segedskaya": [
@@ -4325,6 +4338,12 @@
           "rating": 4.3,
           "review_count": 236,
           "noted_at": "2026-10-26T07:42:21.830Z"
+        },
+        {
+          "day": "2026-11-01",
+          "rating": 4.3,
+          "review_count": 236,
+          "noted_at": "2026-11-01T07:03:15.255Z"
         }
       ]
     }
@@ -4333,7 +4352,8 @@
     "days": [
       "2026-10-23",
       "2026-10-24",
-      "2026-10-26"
+      "2026-10-26",
+      "2026-11-01"
     ],
     "total": [
       {
@@ -4346,6 +4366,10 @@
       },
       {
         "day": "2026-10-26",
+        "count": 1
+      },
+      {
+        "day": "2026-11-01",
         "count": 1
       }
     ],
@@ -4362,34 +4386,38 @@
         {
           "day": "2026-10-26",
           "count": 1
+        },
+        {
+          "day": "2026-11-01",
+          "count": 1
         }
       ]
     }
   },
   "outcome_counts": {
     "will_review": 1,
-    "no_answer": 3,
+    "no_answer": 4,
     "wont_review": 0,
     "unhappy": 0
   },
   "managers": [
     {
       "manager": "demo",
-      "total": 4,
+      "total": 5,
       "will_review": 1,
-      "no_answer": 3,
+      "no_answer": 4,
       "wont_review": 0,
       "unhappy": 0,
-      "will_review_rate": 0.25
+      "will_review_rate": 0.2
     }
   ],
-  "calls_total": 4,
-  "will_review_rate": 0.25,
+  "calls_total": 5,
+  "will_review_rate": 0.2,
   "counts": {
     "pool": 50,
     "batch": 50,
     "queue_size": 10,
     "branches": 3,
-    "calls": 4
+    "calls": 5
   }
 }
