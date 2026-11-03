@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-11-02T06:38:46.869312+00:00",
+  "exported_at": "2026-11-03T07:37:30.143426+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -316,8 +316,8 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 97,
-      "return_rate": 0.3502
+      "refusals": 98,
+      "return_rate": 0.3538
     },
     {
       "year": 2026,
@@ -327,8 +327,8 @@
       "gross_profit": 364717.0,
       "net_profit": 144078.0,
       "expense": -220639.0,
-      "refusals": 59,
-      "return_rate": 0.2428
+      "refusals": 67,
+      "return_rate": 0.2757
     },
     {
       "year": 2026,
@@ -349,17 +349,17 @@
       "gross_profit": 286987.01,
       "net_profit": 104587.01,
       "expense": -182400.0,
-      "refusals": 64,
-      "return_rate": 0.2278
+      "refusals": 66,
+      "return_rate": 0.2349
     },
     {
       "year": 2026,
       "month": 11,
       "branch_id": "karetn",
-      "acceptances": 1,
-      "gross_profit": 25410.0,
-      "net_profit": 3589.0,
-      "expense": -21821.0,
+      "acceptances": 12,
+      "gross_profit": 65410.0,
+      "net_profit": 18564.0,
+      "expense": -46846.0,
       "refusals": 0,
       "return_rate": 0.0
     },
@@ -367,23 +367,23 @@
       "year": 2026,
       "month": 11,
       "branch_id": "levitan",
-      "acceptances": 0,
-      "gross_profit": 4400.0,
-      "net_profit": 0.0,
-      "expense": -4400.0,
+      "acceptances": 2,
+      "gross_profit": 6100.0,
+      "net_profit": -800.0,
+      "expense": -6900.0,
       "refusals": 0,
-      "return_rate": null
+      "return_rate": 0.0
     },
     {
       "year": 2026,
       "month": 11,
       "branch_id": "seged",
-      "acceptances": 0,
-      "gross_profit": 24125.0,
-      "net_profit": 10375.0,
-      "expense": -13750.0,
+      "acceptances": 15,
+      "gross_profit": 40475.0,
+      "net_profit": 14635.0,
+      "expense": -25840.0,
       "refusals": 0,
-      "return_rate": null
+      "return_rate": 0.0
     }
   ],
   "charts": {
@@ -416,7 +416,7 @@
           263,
           270,
           243,
-          1
+          12
         ]
       },
       {
@@ -434,7 +434,7 @@
           255,
           277,
           281,
-          0
+          15
         ]
       },
       {
@@ -452,7 +452,7 @@
           55,
           29,
           38,
-          0
+          2
         ]
       }
     ],
@@ -472,7 +472,7 @@
           400183.0,
           373185.0,
           364717.0,
-          25410.0
+          65410.0
         ]
       },
       {
@@ -490,7 +490,7 @@
           335555.0,
           305105.0,
           286987.01,
-          24125.0
+          40475.0
         ]
       },
       {
@@ -508,7 +508,7 @@
           50000.0,
           32150.0,
           11550.0,
-          4400.0
+          6100.0
         ]
       }
     ],
@@ -528,7 +528,7 @@
           109722.0,
           94137.0,
           144078.0,
-          3589.0
+          18564.0
         ]
       },
       {
@@ -546,7 +546,7 @@
           92494.0,
           117223.0,
           104587.01,
-          10375.0
+          14635.0
         ]
       },
       {
@@ -564,7 +564,7 @@
           6500.0,
           250.0,
           -500.0,
-          0.0
+          -800.0
         ]
       }
     ],
@@ -583,7 +583,7 @@
           36.78,
           39.16,
           38.89,
-          24.28,
+          27.57,
           0.0
         ]
       },
@@ -600,9 +600,9 @@
           36.28,
           30.57,
           33.33,
-          35.02,
-          22.78,
-          null
+          35.38,
+          23.49,
+          0.0
         ]
       },
       {
@@ -620,7 +620,7 @@
           50.91,
           41.38,
           21.05,
-          null
+          0.0
         ]
       }
     ]
