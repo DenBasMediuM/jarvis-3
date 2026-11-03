@@ -39,6 +39,7 @@ function queueSize() {
 // Общее для всех менеджеров: Worker хранит «отложено / сделано / звонит сейчас».
 // Если Worker недоступен — работаем по старым отметкам этого браузера.
 let QSTATE = null; // { tickets: {ticket: {s, by, at}} } | null (офлайн)
+let GOOGLE_LAST = null; // последний ввод рейтинга Google: {day, by, at, branches}
 let qstateError = "";
 let claimedTicket = null;
 const LS_MIGRATED = "jarvis.reviews.migratedToShared";
@@ -93,6 +94,7 @@ async function stateRequest(method, body) {
   });
   const j = await res.json().catch(() => ({}));
   if (res.ok && j.tickets) QSTATE = { tickets: j.tickets };
+  if (res.ok && "google_last" in j) GOOGLE_LAST = j.google_last;
   return { ok: res.ok, status: res.status, data: j };
 }
 
@@ -254,6 +256,7 @@ function showGate() {
   } catch {
     /* ignore */
   }
+  renderGateToday();
   const branches = DATA?.branches || [];
   const box = $("#reviews-gate-branches");
   if (!box) return;
@@ -324,6 +327,49 @@ function collectGateBranches() {
   return { branches, errors };
 }
 
+/** Рейтинг за сегодня уже внесён? Тогда по умолчанию — сразу к прозвону, форма — по кнопке «Обновить». */
+function todayGoogle() {
+  return GOOGLE_LAST && GOOGLE_LAST.day === todayISO() ? GOOGLE_LAST : null;
+}
+
+function renderGateToday() {
+  const card = $(".reviews-gate-card");
+  if (!card) return;
+  card.querySelector(".reviews-gate-today")?.remove();
+  const today = todayGoogle();
+  const form = [$("#reviews-gate-branches"), $(".reviews-gate-footer")];
+  form.forEach((el) => el && (el.hidden = Boolean(today)));
+  if (!today) return;
+  const byId = Object.fromEntries((DATA?.branches || []).map((b) => [b.id, b.name]));
+  const rows = (today.branches || [])
+    .map(
+      (b) =>
+        `<span class="chip">${escapeHtml(byId[b.id] || b.id)}: <strong>★ ${escapeHtml(b.rating)}</strong> · ${escapeHtml(b.review_count)}</span>`,
+    )
+    .join("");
+  const box = document.createElement("div");
+  box.className = "reviews-gate-today";
+  box.innerHTML = `
+    <p><strong>Рейтинг за сегодня уже внесён</strong> — ${escapeHtml(today.by || "кто-то из менеджеров")}${
+      fmtStamp(today.at) ? `, ${escapeHtml(fmtStamp(today.at))}` : ""
+    }. Обновить его?</p>
+    <div class="reviews-session-google">${rows}</div>
+    <div class="reviews-actions">
+      <button type="button" class="reviews-btn" data-gate-update>Да, обновить рейтинг</button>
+      <button type="button" class="reviews-btn is-primary reviews-btn-lg" data-gate-skip>Нет, перейти к прозвону</button>
+    </div>`;
+  card.querySelector(".reviews-gate-head")?.after(box);
+  box.querySelector("[data-gate-skip]")?.addEventListener("click", () => {
+    sessionGoogle = today.branches || [];
+    showWork();
+  });
+  box.querySelector("[data-gate-update]")?.addEventListener("click", () => {
+    box.remove();
+    form.forEach((el) => el && (el.hidden = false));
+    $("#reviews-gate-branches input")?.focus();
+  });
+}
+
 async function submitGoogleGate() {
   const status = $("#reviews-gate-status");
   const btn = $("#reviews-start-btn");
@@ -358,6 +404,7 @@ async function submitGoogleGate() {
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.error || res.statusText);
     sessionGoogle = branches;
+    GOOGLE_LAST = { day: todayISO(), by: vitrineLogin() || null, at: new Date().toISOString(), branches };
     try {
       sessionStorage.setItem(SS_GATE, "1");
     } catch {
@@ -655,8 +702,10 @@ async function boot() {
     DATA.branches = [];
   }
   $("#reviews-start-btn")?.addEventListener("click", () => submitGoogleGate());
-  // Каждый заход — сначала гейт рейтинга (не пропускаем по localStorage).
+  // Каждый заход — сначала гейт рейтинга; если сегодня рейтинг уже вносили — предложим пропустить.
   showGate();
+  await fetchQueueState();
+  renderGateToday();
 }
 
 boot();

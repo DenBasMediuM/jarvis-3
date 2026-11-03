@@ -162,13 +162,24 @@ export default {
           branches: cleaned,
           at,
         });
+        // последний ввод рейтинга — чтобы витрина не просила вводить его повторно в тот же день
+        await env.INBOX.put(
+          "google_last",
+          JSON.stringify({ day, by: cleanBy(body.manager), at, branches: cleaned }),
+        );
         return json({ ok: true, id, at });
       }
 
       if (request.method === "GET" && path === "/queue-state") {
         if (!timingSafeEqual(bearer(request), env.WRITE_KEY || "")) return unauthorized();
         const st = pruneState(await loadState(env), Date.now());
-        return json({ ok: true, tickets: st.tickets, now: new Date().toISOString() });
+        let googleLast = null;
+        try {
+          googleLast = JSON.parse((await env.INBOX.get("google_last")) || "null");
+        } catch {
+          googleLast = null;
+        }
+        return json({ ok: true, tickets: st.tickets, google_last: googleLast, now: new Date().toISOString() });
       }
 
       if (request.method === "POST" && path === "/queue-state") {
