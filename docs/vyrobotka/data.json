@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-11-03T07:38:46.607117+00:00",
+  "exported_at": "2026-11-03T20:36:42.752990+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
@@ -1133,10 +1133,10 @@
       "sheet_url": null,
       "crm_feed_at": "2026-11-03T07:24:09.267927+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:50:34.805Z",
       "live_feed": [
         {
           "date": "29 Окт.",
@@ -1324,10 +1324,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1207439478#gid=1207439478&range=A21",
       "crm_feed_at": "2026-11-03T07:24:10.498756+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:51:33.798Z",
       "live_feed": [
         {
           "date": "7 Окт.",
@@ -1500,10 +1500,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A75",
       "crm_feed_at": "2026-11-03T07:24:11.856267+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:52:46.656Z",
       "live_feed": [
         {
           "date": "13 Июл.",
@@ -1616,10 +1616,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A80",
       "crm_feed_at": "2026-11-03T07:24:13.049691+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:53:10.592Z",
       "live_feed": [
         {
           "date": "10.10.25",
@@ -1712,10 +1712,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A41",
       "crm_feed_at": "2026-11-03T07:24:14.303998+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:53:22.484Z",
       "live_feed": [
         {
           "date": "12 Мар.",
@@ -1969,10 +1969,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=2051687616#gid=2051687616&range=A24",
       "crm_feed_at": "2026-11-03T07:24:16.682530+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T10:54:14.710Z",
       "live_feed": [
         {
           "date": "18 Авг.",
@@ -2226,10 +2226,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1173586366#gid=1173586366&range=A56",
       "crm_feed_at": "2026-11-03T07:24:19.240777+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:04:51.085Z",
       "live_feed": [
         {
           "date": "12 Окт.",
@@ -2397,10 +2397,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A23",
       "crm_feed_at": "2026-11-03T07:24:20.498339+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:05:22.047Z",
       "live_feed": [
         {
           "date": "9 Янв.",
@@ -2593,10 +2593,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1242273594#gid=1242273594&range=A32",
       "crm_feed_at": "2026-11-03T07:24:21.897870+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:06:08.847Z",
       "live_feed": [
         {
           "date": "17 Фев.",
@@ -2869,10 +2869,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A68",
       "crm_feed_at": "2026-11-03T07:24:26.460050+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "paid_fact",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:06:27.676Z",
       "live_feed": [
         {
           "date": "13 Авг.",
@@ -3005,10 +3005,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A102",
       "crm_feed_at": "2026-11-03T07:24:27.689682+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:07:53.399Z",
       "live_feed": [
         {
           "date": "08.10.25",
@@ -3196,10 +3196,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A80",
       "crm_feed_at": "2026-11-03T07:24:28.898048+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "no_pay",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:37:45.879Z",
       "live_feed": [
         {
           "date": "01.11.25",
@@ -3307,10 +3307,10 @@
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A49",
       "crm_feed_at": "2026-11-03T07:24:30.111991+00:00",
       "on_pay_list": 0,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
+      "decision_status": "pending",
+      "decision_code": "mgmt_ok",
+      "decision_by": "zlatal",
+      "decision_at": "2026-11-03T11:38:15.409Z",
       "live_feed": [
         {
           "date": "26 Авг.",
@@ -24019,12 +24019,12 @@
     }
   ],
   "debt_table_counts": {
-    "total": 154,
-    "red": 67,
+    "total": 141,
+    "red": 54,
     "yellow": 38,
     "open": 46,
     "mismatch": 3,
-    "pending": 1,
+    "pending": 14,
     "rework": 0
   },
   "debt_daily": [
@@ -24169,7 +24169,7 @@
     "sheets_debt_sum": 693417.0,
     "sheets_tickets": 412
   },
-  "debt_verify_message": "В таблице 154 (жёлтых 38, красных 67, open 46, mismatch 3)",
+  "debt_verify_message": "В таблице 141 (жёлтых 38, красных 54, open 46, mismatch 3)",
   "debt_inbox": {
     "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
     "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
@@ -24211,7 +24211,7 @@
     "upsell_sheets": 58,
     "debt_table": 155,
     "debt_daily": 15,
-    "pending": 1,
+    "pending": 14,
     "rework": 0
   }
 }
