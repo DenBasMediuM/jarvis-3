@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-11-03T20:45:17.459112+00:00",
+  "exported_at": "2026-11-03T21:44:41.196808+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
-    "finished_at": "2026-11-03T07:23:48.547988+00:00",
-    "message": "Готово: инкремент — обновлено 1 лист(ов), без изменений 0; в кэше 58 листов, 3397 квитанций. Таблица: Рассчет прибыльности июнь, pages 155 долгов",
+    "finished_at": "2026-11-03T21:43:47.485185+00:00",
+    "message": "Готово: все листы — обновлено 1 лист(ов), без изменений 57; в кэше 58 листов, 3475 квитанций. Таблица: Рассчет прибыльности июнь, pages 141 долгов",
     "status": "idle"
   },
   "upsell_sheets": [
@@ -518,12 +518,12 @@
       "sort_ym": 20260701,
       "sort_a": 1,
       "sort_b": 8,
-      "tickets_count": 0,
-      "report_sum": 0.0,
-      "upsell_sum": 0.0,
-      "upsell_count": 0,
-      "avg_upsell": null,
-      "upsell_ratio": null
+      "tickets_count": 78,
+      "report_sum": 120170.0,
+      "upsell_sum": 26400.0,
+      "upsell_count": 48,
+      "avg_upsell": 550.0,
+      "upsell_ratio": 0.6153846153846154
     },
     {
       "sheet_title": "202607(09-15)",
@@ -7857,8 +7857,8 @@
     },
     {
       "ticket": "121992",
-      "sheet_title": null,
-      "master": null,
+      "sheet_title": "202607(01-08)",
+      "master": "Левітана",
       "sheet_debt": null,
       "sheet_total": null,
       "sheet_paid": null,
@@ -7867,10 +7867,11 @@
       "crm_total": 0.0,
       "crm_status": "Выдан без ремонта",
       "crm_url": "https://itserviceoutsourcing.gincore.net/orders/121992",
-      "report_amount": null,
+      "report_amount": 1200.0,
+      "salary": 396.0,
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
-      "sheet_url": null,
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1834296366#gid=1834296366&range=A79",
       "crm_feed_at": "2026-11-03T07:25:31.628686+00:00",
       "on_pay_list": 0,
       "decision_status": null,
