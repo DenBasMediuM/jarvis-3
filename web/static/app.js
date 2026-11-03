@@ -6447,6 +6447,12 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/quality/analysis/telegram", { method: "POST" });
     } else if (actionId === "quality-export") {
       res = await fetch("/api/quality/export-pages", { method: "POST" });
+    } else if (actionId === "vyrobotka-full") {
+      res = await fetch("/api/vyrobotka/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full: true }),
+      });
     } else if (actionId === "vyrobotka-sync") {
       res = await fetch("/api/vyrobotka/sync", { method: "POST" });
     } else if (actionId === "vyrobotka-export") {
@@ -6499,6 +6505,7 @@ async function runUpdatesAction(actionId) {
       actionId === "quality-sync" ||
       actionId === "quality-force" ||
       actionId === "vyrobotka-sync" ||
+      actionId === "vyrobotka-full" ||
       actionId === "debt-verify-new" ||
       actionId === "debt-verify-all" ||
       actionId === "branch-kpi-sync";

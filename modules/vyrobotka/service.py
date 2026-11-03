@@ -608,7 +608,8 @@ class VyrobotkaService:
         )
         return out
 
-    async def start_sync(self) -> dict[str, Any]:
+    async def start_sync(self, *, full: bool = False) -> dict[str, Any]:
+        """full=True — перечитать все недельные листы (а не только новые и последний)."""
         global _sync_task
         state = await self.db.vyrobotka_get_sync_state()
         if state.get("status") == "running":
@@ -617,7 +618,7 @@ class VyrobotkaService:
         async def _runner() -> None:
             async with _sync_lock:
                 try:
-                    await self._run_sync()
+                    await self._run_sync(full=full)
                 except Exception as exc:  # noqa: BLE001
                     await self.db.vyrobotka_set_sync_state(
                         status="error",
@@ -629,8 +630,12 @@ class VyrobotkaService:
         state = await self.db.vyrobotka_get_sync_state()
         return {"ok": True, "started": True, "sync": state}
 
-    async def _run_sync(self) -> None:
-        """Инкрементальная синхронизация: первый прогон — все листы, далее только новые/выросшие."""
+    async def _run_sync(self, *, full: bool = False) -> None:
+        """Инкрементальная синхронизация: первый прогон — все листы, далее только новые/выросшие.
+
+        full — перечитать все листы. Правило «не затирать» то же: лист обновляется, только если
+        строк стало больше (так пустые/недоразобранные листы заполнятся, а очищенные позже — нет).
+        """
         await self.db.vyrobotka_set_sync_state(
             status="running",
             total=0,
@@ -662,7 +667,7 @@ class VyrobotkaService:
         }
         # Какие листы читать: все при первом слепке; иначе — неизвестные + самый свежий
         # (на нём обычно дописывают строки).
-        if is_first:
+        if is_first or full:
             to_fetch = [normalize_sheet_title(str(s.get("title") or "")) for s in weeks]
         else:
             unknown = [
@@ -678,7 +683,7 @@ class VyrobotkaService:
             total=len(to_fetch),
             done=0,
             message=(
-                f"{'Первый слепок' if is_first else 'Инкремент'}: "
+                f"{'Первый слепок' if is_first else 'Все листы' if full else 'Инкремент'}: "
                 f"{len(to_fetch)} лист(ов)…"
             ),
         )
@@ -770,7 +775,7 @@ class VyrobotkaService:
             total=len(to_fetch),
             done=len(to_fetch),
             message=(
-                f"Готово: {'первый слепок' if is_first else 'инкремент'} — "
+                f"Готово: {'первый слепок' if is_first else 'все листы' if full else 'инкремент'} — "
                 f"обновлено {updated} лист(ов), без изменений {skipped_same}; "
                 f"в кэше {len(await self.db.vyrobotka_list_sheet_stats())} листов, "
                 f"{total_rows} квитанций. "

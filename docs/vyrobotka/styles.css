@@ -375,3 +375,15 @@
 .bq-assign-bad { background: #ffebee; color: #c62828; }
 .bq-assign-unknown { background: #eceff1; color: #546e7a; }
 
+
+.upsell-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.upsell-filter label { font-weight: 600; }
+.upsell-filter select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font: 500 14px var(--font);
+  background: #fff;
+  min-width: 200px;
+}
+.vtable tr.is-empty-week td { color: var(--muted); font-style: italic; }

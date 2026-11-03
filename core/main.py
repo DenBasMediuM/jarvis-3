@@ -349,12 +349,18 @@ async def vyrobotka_sync_status() -> dict[str, Any]:
     return {"ok": True, "sync": await db.vyrobotka_get_sync_state()}
 
 
+class VyrobotkaSyncBody(BaseModel):
+    full: bool = False
+
+
 @app.post("/api/vyrobotka/sync")
-async def vyrobotka_sync_start() -> dict[str, Any]:
+async def vyrobotka_sync_start(
+    body: VyrobotkaSyncBody = Body(default_factory=VyrobotkaSyncBody),
+) -> dict[str, Any]:
     if not vyrobotka_service:
         raise HTTPException(503, "Сервис Выработка не готов")
     try:
-        return await vyrobotka_service.start_sync()
+        return await vyrobotka_service.start_sync(full=body.full)
     except Exception as exc:  # noqa: BLE001
         from modules.vyrobotka.sheets import SheetsError
 
@@ -1369,6 +1375,7 @@ async def updates_status() -> dict[str, Any]:
             "finished_at": vyrobotka_sync.get("finished_at"),
             "actions": [
                 {"id": "vyrobotka-sync", "label": "Обновить из таблицы", "kind": "primary"},
+                {"id": "vyrobotka-full", "label": "Перечитать все листы", "kind": "muted"},
                 {"id": "vyrobotka-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/vyrobotka/data.json"),

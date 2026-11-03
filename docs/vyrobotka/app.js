@@ -592,9 +592,66 @@ function setTab(tab) {
   });
 }
 
-function renderUpsell(sheets) {
+// ---------- фильтр по месяцу (Досогласования) ----------
+const UPSELL_MONTH_KEY = "jarvis.upsell.month";
+const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+let upsellAllSheets = [];
+
+/** Месяц листа: первые 6 цифр sort_ym (как в названии листа, например 202610…). */
+function upsellMonthKey(s) {
+  const ym = String(s?.sort_ym || "").slice(0, 6);
+  return /^\d{6}$/.test(ym) ? ym : "";
+}
+function upsellMonthLabel(key) {
+  const m = Number(key.slice(4, 6));
+  return `${MONTHS_RU[m - 1] || key.slice(4, 6)} ${key.slice(0, 4)}`;
+}
+function upsellSelectedMonth() {
+  try {
+    return localStorage.getItem(UPSELL_MONTH_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+/** Пустой лист (0 квитанций) — не заполнен или не разобран: на графиках разрыв, а не провал в 0. */
+const upsellEmpty = (s) => !(Number(s?.tickets_count) > 0);
+const upsellVal = (s, v) => (upsellEmpty(s) ? null : v);
+
+function renderUpsellFilter(sheets) {
+  upsellAllSheets = sheets || [];
+  const sel = $("#upsell-month");
+  if (!sel) return upsellAllSheets;
+  const months = [...new Set(upsellAllSheets.map(upsellMonthKey).filter(Boolean))].sort().reverse();
+  let cur = upsellSelectedMonth();
+  if (cur && !months.includes(cur)) cur = "";
+  sel.innerHTML =
+    `<option value="">Все месяцы</option>` +
+    months.map((m) => `<option value="${m}" ${m === cur ? "selected" : ""}>${upsellMonthLabel(m)}</option>`).join("");
+  if (!sel.dataset.bound) {
+    sel.dataset.bound = "1";
+    sel.addEventListener("change", () => {
+      try {
+        localStorage.setItem(UPSELL_MONTH_KEY, sel.value);
+      } catch {
+        /* ignore */
+      }
+      renderUpsell(upsellAllSheets);
+    });
+  }
+  const picked = cur ? upsellAllSheets.filter((s) => upsellMonthKey(s) === cur) : upsellAllSheets;
+  const emptyN = picked.filter(upsellEmpty).length;
+  const note = $("#upsell-filter-note");
+  if (note) {
+    note.textContent = `${picked.length} нед.${emptyN ? ` · без данных: ${emptyN} (лист не заполнен или не подтянулся)` : ""}`;
+  }
+  return picked;
+}
+
+function renderUpsell(sheetsAll) {
   const empty = $("#upsell-empty");
   const body = $("#upsell-body");
+  const sheets = sheetsAll?.length ? renderUpsellFilter(sheetsAll) : sheetsAll;
+  const monthPicked = Boolean(upsellSelectedMonth()) && sheets !== sheetsAll;
   if (!sheets?.length) {
     if (empty) empty.hidden = false;
     if (body) body.hidden = true;
@@ -613,7 +670,7 @@ function renderUpsell(sheets) {
   if (kpis) {
     kpis.innerHTML = [
       ["Листов", String(sheets.length), last?.sheet_title || ""],
-      ["Квитанций", fmtMoney(totalTickets), "все недели"],
+      ["Квитанций", fmtMoney(totalTickets), monthPicked ? "за месяц" : "все недели"],
       ["Σ досогл.", fmtMoney(totalUpsell), `${totalUpsellN} шт.`],
       ["Σ в отчёте", fmtMoney(totalReport), "мастера"],
       ["Посл. ср.", fmtMoney(last?.avg_upsell), last?.sheet_title || ""],
@@ -631,7 +688,12 @@ function renderUpsell(sheets) {
   if (tbody) {
     tbody.innerHTML = sheets
       .map(
-        (s) => `<tr>
+        (s) => upsellEmpty(s)
+          ? `<tr class="is-empty-week">
+          <td>${escapeHtml(s.sheet_title)}</td>
+          <td colspan="6">нет данных — лист не заполнен или не подтянулся</td>
+        </tr>`
+          : `<tr>
           <td>${escapeHtml(s.sheet_title)}</td>
           <td>${fmtMoney(s.avg_upsell)}</td>
           <td>${fmtMoney(s.upsell_sum)}</td>
@@ -659,21 +721,21 @@ function renderUpsell(sheets) {
           {
             ...line,
             label: "Ср. досогласование",
-            data: sheets.map((s) => s.avg_upsell),
+            data: sheets.map((s) => upsellVal(s, s.avg_upsell)),
             borderColor: "#0f6e56",
             yAxisID: "yAvg",
           },
           {
             ...line,
             label: "Σ досогласований",
-            data: sheets.map((s) => s.upsell_sum),
+            data: sheets.map((s) => upsellVal(s, s.upsell_sum)),
             borderColor: "#c45c26",
             yAxisID: "y",
           },
           {
             ...line,
             label: "Σ в отчёте",
-            data: sheets.map((s) => s.report_sum),
+            data: sheets.map((s) => upsellVal(s, s.report_sum)),
             borderColor: "#1a5f8a",
             yAxisID: "y",
           },
@@ -710,12 +772,12 @@ function renderUpsell(sheets) {
       data: {
         labels,
         datasets: [
-          { ...line, label: "Кол-во досогл.", data: sheets.map((s) => s.upsell_count), borderColor: "#6b4f9a", yAxisID: "y" },
-          { ...line, label: "Квитанций", data: sheets.map((s) => s.tickets_count), borderColor: "#5d6b7c", yAxisID: "y" },
+          { ...line, label: "Кол-во досогл.", data: sheets.map((s) => upsellVal(s, s.upsell_count)), borderColor: "#6b4f9a", yAxisID: "y" },
+          { ...line, label: "Квитанций", data: sheets.map((s) => upsellVal(s, s.tickets_count)), borderColor: "#5d6b7c", yAxisID: "y" },
           {
             ...line,
             label: "Доля, %",
-            data: sheets.map((s) => (s.upsell_ratio == null ? null : Number(s.upsell_ratio) * 100)),
+            data: sheets.map((s) => (upsellEmpty(s) || s.upsell_ratio == null ? null : Number(s.upsell_ratio) * 100)),
             borderColor: "#a12828",
             borderDash: [5, 4],
             yAxisID: "y1",

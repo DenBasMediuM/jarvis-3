@@ -343,3 +343,9 @@
   font-size: 0.85rem;
   margin: 0;
 }
+
+.reviews-deferred { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+.reviews-deferred h3 { margin: 0; }
+.reviews-deferred .reviews-queue-item { cursor: default; align-items: center; }
+.reviews-deferred-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.reviews-busy { margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: #fff3e0; color: #8a4b0f; font-size: 14px; }
