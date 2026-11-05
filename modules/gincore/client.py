@@ -688,6 +688,21 @@ class GincoreClient:
             "crm": payload,
         }
 
+    async def load_order_product_group(self, order_id: str | int, goods_id: int | str) -> str:
+        """Строки свёрнутой группы одинаковых товаров (как при клике по группе в CRM)."""
+        oid = str(order_id).strip()
+        resp = await self.request(
+            "POST",
+            f"/orders/{oid}/products/group",
+            data={"gid": str(goods_id)},
+            headers=self._ajax_headers(f"{self.base_url}/orders/{oid}"),
+        )
+        resp.raise_for_status()
+        payload = resp.json() if resp.content else {}
+        if not payload.get("state"):
+            raise GincoreError(payload.get("message") or "Не удалось раскрыть группу товаров")
+        return str(payload.get("html") or "")
+
     async def remove_order_product(
         self, order_id: str | int, order_product_id: int | str
     ) -> dict[str, Any]:
@@ -799,11 +814,13 @@ class GincoreClient:
             data["client_order_id"] = str(client_order_id)
         if order_product_id:
             data["order_product_id"] = str(order_product_id)
+        # С ноября 2026 Gincore перешёл на REST-адреса: форма — GET /supplier-orders/{id}
+        # (старый POST /supplier_orders/ajax?act=edit_supplier_order отвечает 500).
         resp = await self.request(
-            "POST",
-            "/supplier_orders/ajax?act=edit_supplier_order",
-            data=data,
-            headers=self._ajax_headers(f"{self.base_url}/supplier_orders"),
+            "GET",
+            f"/supplier-orders/{supplier_order_id}",
+            params=data,
+            headers=self._ajax_headers(f"{self.base_url}/orders/{client_order_id or ''}"),
         )
         resp.raise_for_status()
         payload = resp.json() if resp.content else {}
@@ -814,7 +831,7 @@ class GincoreClient:
                 or f"Не удалось открыть запрос поставщику {supplier_order_id}"
             )
         form = payload.get("form") or {}
-        html = form.get("html") if isinstance(form, dict) else ""
+        html = payload.get("html") or (form.get("html") if isinstance(form, dict) else "")
         return {
             "ok": True,
             "supplier_order_id": str(supplier_order_id),
@@ -832,6 +849,7 @@ class GincoreClient:
         price: float,
         supplier_id: str | int,
         fast_debit: int = 1,
+        supplier_order_id: str | int | None = None,
     ) -> dict[str, Any]:
         data = {str(k): "" if v is None else str(v) for k, v in (fields or {}).items()}
         data["warehouse-supplier"] = str(supplier_id)
@@ -854,11 +872,15 @@ class GincoreClient:
                 data[qty_key] = "1"
         data["fast_debit"] = str(fast_debit)
         data["for_manufacture"] = "0"
+        so_id = str(supplier_order_id or data.get("order_id") or data.get("id") or "").strip()
+        if not so_id:
+            raise GincoreError("Не известен номер запроса поставщику для оприходования")
+        # Новый адрес Gincore: POST /supplier-orders/{id} (как в их supplier-orders JS)
         resp = await self.request(
             "POST",
-            "/supplier_orders/ajax?act=edit-supplier-order",
+            f"/supplier-orders/{so_id}",
             data=data,
-            headers=self._ajax_headers(f"{self.base_url}/supplier_orders"),
+            headers=self._ajax_headers(f"{self.base_url}/supplier-orders"),
         )
         resp.raise_for_status()
         payload = resp.json() if resp.content else {}
@@ -905,6 +927,25 @@ class GincoreClient:
                 "status": status,
             },
         }
+
+    @staticmethod
+    def _dump_debug(name: str, *, html: str = "", meta: dict[str, Any] | None = None) -> str | None:
+        """Сохранить ответ CRM в data/debug/ для разбора (локально, в .gitignore)."""
+        try:
+            import json as _json
+            from pathlib import Path as _Path
+
+            root = _Path(__file__).resolve().parents[2] / "data" / "debug"
+            root.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            base = root / f"{name}_{stamp}"
+            base.with_suffix(".html").write_text(html or "", encoding="utf-8")
+            base.with_suffix(".json").write_text(
+                _json.dumps(meta or {}, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
+            )
+            return f"data/debug/{base.name}.html"
+        except Exception:  # noqa: BLE001
+            return None
 
     async def attach_spare_part(
         self,
@@ -963,8 +1004,25 @@ class GincoreClient:
             html2 = await self.fetch_order_html(oid)
             supplier_order_id = self.find_supplier_order_id_for_product(html2, og_id)
             if not supplier_order_id:
+                # С ноября 2026 одинаковые товары в квитанции свёрнуты в группу
+                # («Запчасти. · 3 шт»), строки подгружаются отдельно — раскрываем группу.
+                try:
+                    group_html = await self.load_order_product_group(oid, goods_id)
+                except Exception:  # noqa: BLE001
+                    group_html = ""
+                supplier_order_id = self.find_supplier_order_id_for_product(group_html, og_id)
+                if not supplier_order_id:
+                    html2 = f"{html2}\n<!-- products/group gid={goods_id} -->\n{group_html}"
+            if not supplier_order_id:
+                # Разметка CRM поменялась — сохранить, что пришло, чтобы поправить разбор
+                dump = self._dump_debug(
+                    f"parts_attach_{oid}_{og_id}",
+                    html=html2,
+                    meta={"order_id": oid, "og_id": og_id, "first": first, "local": locals().get("local")},
+                )
                 raise GincoreError(
                     "После «заказать локально» не найден запрос поставщику на запчасть"
+                    + (f" (страница сохранена: {dump})" if dump else "")
                 )
 
             form = await self.edit_supplier_order_form(
@@ -983,6 +1041,7 @@ class GincoreClient:
                 price=price,
                 supplier_id=supplier_id,
                 fast_debit=1,
+                supplier_order_id=supplier_order_id,
             )
 
             restored = None
@@ -1006,17 +1065,26 @@ class GincoreClient:
                 "restored_status": bool(restored),
                 "crm": debit.get("crm"),
             }
-        except Exception:
+        except Exception as exc:
+            # Откат: сначала убрать добавленную строку «Запчасти.» (вместе с запросом поставщику —
+            # иначе CRM держит статус «Ожидает запчастей»), потом вернуть исходный статус.
+            leftovers: list[str] = []
+            if og_id is not None:
+                try:
+                    await self.remove_order_product(oid, og_id)
+                except Exception:  # noqa: BLE001
+                    leftovers.append("строка «Запчасти.» (и запрос поставщику) осталась в квитанции")
             if status_changed and restore_status and original_id is not None:
                 try:
                     await self.change_order_status(oid, original_id)
                 except Exception:  # noqa: BLE001
-                    pass
-            if og_id is not None and supplier_order_id is None:
-                try:
-                    await self.remove_order_product(oid, og_id)
-                except Exception:  # noqa: BLE001
-                    pass
+                    leftovers.append(
+                        f"статус не вернулся на «{original_status.get('status_name') or original_id}»"
+                    )
+            if leftovers:
+                raise GincoreError(
+                    f"{exc} · Проверьте квитанцию №{oid} в CRM: " + "; ".join(leftovers)
+                ) from exc
             raise
 
     async def begin_cashbox_expense(
