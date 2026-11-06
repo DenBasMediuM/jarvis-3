@@ -1,28 +1,28 @@
 {
-  "exported_at": "2026-11-05T08:13:52.862079+00:00",
+  "exported_at": "2026-11-06T07:02:08.844239+00:00",
   "title": "Качество обработки буфера",
   "latest": {
-    "day": "2026-11-05",
-    "buffer_count": 55,
-    "buffer_over_3d": 13,
-    "assigned_from_buffer": 22,
+    "day": "2026-11-06",
+    "buffer_count": 67,
+    "buffer_over_3d": 31,
+    "assigned_from_buffer": 1,
     "masters_high": 8,
     "masters_ok": 7,
     "masters_low": 3,
-    "assign_to_high": 21,
+    "assign_to_high": 0,
     "assign_to_ok": 0,
     "assign_to_low": 1,
     "assign_unknown": 0,
-    "avg_load_index": 87.08,
-    "dispatch_score": 42.73,
-    "updated_at": "2026-11-05 08:13:52",
-    "prev_day": "2026-11-03",
-    "gap_days": 2
+    "avg_load_index": 85.0,
+    "dispatch_score": 85.0,
+    "updated_at": "2026-11-06 07:02:08",
+    "prev_day": "2026-11-05",
+    "gap_days": 1
   },
   "live": {
-    "buffer_count": 55,
-    "buffer_over_3d": 13,
-    "avg_load_index": 87.08,
+    "buffer_count": 67,
+    "buffer_over_3d": 31,
+    "avg_load_index": 85.0,
     "masters_high": 8,
     "masters_ok": 7,
     "masters_low": 3
@@ -31,20 +31,20 @@
     {
       "master_key": "галанчук вадим",
       "display_name": "Галанчук Вадим",
-      "open_count": 72,
-      "age_sum_days": 6723.0,
+      "open_count": 68,
+      "age_sum_days": 6726.0,
       "rework_orders": 4,
-      "no_diag_count": 26,
+      "no_diag_count": 22,
       "load_index": 146.67,
       "zone": "high",
-      "assigned_from_buffer": 7,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "дубовой юрий владимирович",
       "display_name": "Дубовой Юрий Владимирович",
       "open_count": 26,
-      "age_sum_days": 2395.0,
+      "age_sum_days": 2421.0,
       "rework_orders": 3,
       "no_diag_count": 15,
       "load_index": 140.0,
@@ -55,56 +55,56 @@
     {
       "master_key": "сатаулов владислав",
       "display_name": "Сатаулов Владислав",
-      "open_count": 37,
-      "age_sum_days": 1605.0,
+      "open_count": 36,
+      "age_sum_days": 1628.0,
       "rework_orders": 3,
-      "no_diag_count": 11,
+      "no_diag_count": 6,
       "load_index": 140.0,
       "zone": "high",
-      "assigned_from_buffer": 2,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "саша андрусяк",
       "display_name": "Саша Андрусяк",
       "open_count": 15,
-      "age_sum_days": 779.0,
+      "age_sum_days": 794.0,
       "rework_orders": 3,
       "no_diag_count": 6,
       "load_index": 140.0,
       "zone": "high",
-      "assigned_from_buffer": 1,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "плачковский александр",
       "display_name": "Плачковский Александр",
-      "open_count": 28,
-      "age_sum_days": 2186.0,
+      "open_count": 26,
+      "age_sum_days": 2200.0,
       "rework_orders": 2,
-      "no_diag_count": 16,
+      "no_diag_count": 15,
       "load_index": 133.33,
       "zone": "high",
-      "assigned_from_buffer": 4,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "тарасенко игорь викторович",
       "display_name": "Тарасенко Игорь Викторович",
-      "open_count": 33,
-      "age_sum_days": 1253.0,
+      "open_count": 26,
+      "age_sum_days": 1167.0,
       "rework_orders": 2,
-      "no_diag_count": 25,
+      "no_diag_count": 16,
       "load_index": 133.33,
       "zone": "high",
-      "assigned_from_buffer": 5,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "руднев евгений",
       "display_name": "Руднев Евгений",
       "open_count": 20,
-      "age_sum_days": 1157.0,
+      "age_sum_days": 1177.0,
       "rework_orders": 1,
       "no_diag_count": 10,
       "load_index": 126.67,
@@ -116,19 +116,19 @@
       "master_key": "садоян дмитрий",
       "display_name": "Садоян Дмитрий",
       "open_count": 34,
-      "age_sum_days": 1626.0,
+      "age_sum_days": 1660.0,
       "rework_orders": 1,
-      "no_diag_count": 12,
+      "no_diag_count": 11,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 2,
-      "assign_quality": "bad"
+      "assigned_from_buffer": 0,
+      "assign_quality": null
     },
     {
       "master_key": "знайдёнов валентин",
       "display_name": "Знайдёнов Валентин",
       "open_count": 5,
-      "age_sum_days": 111.0,
+      "age_sum_days": 116.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 70.0,
@@ -140,7 +140,7 @@
       "master_key": "перебейнос игорь",
       "display_name": "Перебейнос Игорь",
       "open_count": 4,
-      "age_sum_days": 700.0,
+      "age_sum_days": 704.0,
       "rework_orders": 1,
       "no_diag_count": 1,
       "load_index": 67.92,
@@ -152,7 +152,7 @@
       "master_key": "ефимов игорь дмитрович",
       "display_name": "Ефимов Игорь Дмитрович",
       "open_count": 3,
-      "age_sum_days": 277.0,
+      "age_sum_days": 280.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 60.0,
@@ -164,7 +164,7 @@
       "master_key": "коноваленко владимир",
       "display_name": "Коноваленко Владимир",
       "open_count": 3,
-      "age_sum_days": 1668.0,
+      "age_sum_days": 1671.0,
       "rework_orders": 0,
       "no_diag_count": 1,
       "load_index": 56.25,
@@ -176,7 +176,7 @@
       "master_key": "роман михайлюк",
       "display_name": "Роман Михайлюк",
       "open_count": 2,
-      "age_sum_days": 882.0,
+      "age_sum_days": 884.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 55.0,
@@ -188,7 +188,7 @@
       "master_key": "рома пушкинская аутсорс",
       "display_name": "Рома Пушкинская аутсорс",
       "open_count": 1,
-      "age_sum_days": 355.0,
+      "age_sum_days": 356.0,
       "rework_orders": 1,
       "no_diag_count": 0,
       "load_index": 49.17,
@@ -200,7 +200,7 @@
       "master_key": "денис",
       "display_name": "Денис",
       "open_count": 1,
-      "age_sum_days": 231.0,
+      "age_sum_days": 232.0,
       "rework_orders": 0,
       "no_diag_count": 0,
       "load_index": 42.5,
@@ -211,11 +211,23 @@
     {
       "master_key": "максим селиванов",
       "display_name": "Максим Селиванов",
-      "open_count": 2,
-      "age_sum_days": 46.0,
+      "open_count": 1,
+      "age_sum_days": 28.0,
       "rework_orders": 0,
       "no_diag_count": 0,
-      "load_index": 38.75,
+      "load_index": 22.5,
+      "zone": "low",
+      "assigned_from_buffer": 0,
+      "assign_quality": null
+    },
+    {
+      "master_key": "полищук александр",
+      "display_name": "Полищук Александр",
+      "open_count": 1,
+      "age_sum_days": 3.0,
+      "rework_orders": 0,
+      "no_diag_count": 1,
+      "load_index": 10.63,
       "zone": "low",
       "assigned_from_buffer": 0,
       "assign_quality": null
@@ -223,280 +235,268 @@
     {
       "master_key": "вовчук владимир",
       "display_name": "Вовчук Владимир",
-      "open_count": 3,
-      "age_sum_days": 8.0,
+      "open_count": 1,
+      "age_sum_days": 1.0,
       "rework_orders": 0,
-      "no_diag_count": 3,
-      "load_index": 31.25,
+      "no_diag_count": 1,
+      "load_index": 9.38,
       "zone": "low",
       "assigned_from_buffer": 1,
       "assign_quality": "good"
-    },
-    {
-      "master_key": "полищук александр",
-      "display_name": "Полищук Александр",
-      "open_count": 1,
-      "age_sum_days": 2.0,
-      "rework_orders": 0,
-      "no_diag_count": 1,
-      "load_index": 10.0,
-      "zone": "low",
-      "assigned_from_buffer": 0,
-      "assign_quality": null
     }
   ],
   "masters_snapshot": [
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "галанчук вадим",
       "display_name": "Галанчук Вадим",
-      "open_count": 72,
-      "age_sum_days": 6723.0,
+      "open_count": 68,
+      "age_sum_days": 6726.0,
       "rework_orders": 4,
-      "no_diag_count": 26,
+      "no_diag_count": 22,
       "load_index": 146.67,
       "zone": "high",
-      "assigned_from_buffer": 7,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "дубовой юрий владимирович",
       "display_name": "Дубовой Юрий Владимирович",
       "open_count": 26,
-      "age_sum_days": 2395.0,
+      "age_sum_days": 2421.0,
       "rework_orders": 3,
       "no_diag_count": 15,
       "load_index": 140.0,
       "zone": "high",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "сатаулов владислав",
       "display_name": "Сатаулов Владислав",
-      "open_count": 37,
-      "age_sum_days": 1605.0,
-      "rework_orders": 3,
-      "no_diag_count": 11,
-      "load_index": 140.0,
-      "zone": "high",
-      "assigned_from_buffer": 2,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
-    },
-    {
-      "day": "2026-11-05",
-      "master_key": "саша андрусяк",
-      "display_name": "Саша Андрусяк",
-      "open_count": 15,
-      "age_sum_days": 779.0,
+      "open_count": 36,
+      "age_sum_days": 1628.0,
       "rework_orders": 3,
       "no_diag_count": 6,
       "load_index": 140.0,
       "zone": "high",
-      "assigned_from_buffer": 1,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
+      "master_key": "саша андрусяк",
+      "display_name": "Саша Андрусяк",
+      "open_count": 15,
+      "age_sum_days": 794.0,
+      "rework_orders": 3,
+      "no_diag_count": 6,
+      "load_index": 140.0,
+      "zone": "high",
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
+    },
+    {
+      "day": "2026-11-06",
       "master_key": "плачковский александр",
       "display_name": "Плачковский Александр",
-      "open_count": 28,
-      "age_sum_days": 2186.0,
+      "open_count": 26,
+      "age_sum_days": 2200.0,
+      "rework_orders": 2,
+      "no_diag_count": 15,
+      "load_index": 133.33,
+      "zone": "high",
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
+    },
+    {
+      "day": "2026-11-06",
+      "master_key": "тарасенко игорь викторович",
+      "display_name": "Тарасенко Игорь Викторович",
+      "open_count": 26,
+      "age_sum_days": 1167.0,
       "rework_orders": 2,
       "no_diag_count": 16,
       "load_index": 133.33,
       "zone": "high",
-      "assigned_from_buffer": 4,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
-      "master_key": "тарасенко игорь викторович",
-      "display_name": "Тарасенко Игорь Викторович",
-      "open_count": 33,
-      "age_sum_days": 1253.0,
-      "rework_orders": 2,
-      "no_diag_count": 25,
-      "load_index": 133.33,
-      "zone": "high",
-      "assigned_from_buffer": 5,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
-    },
-    {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "руднев евгений",
       "display_name": "Руднев Евгений",
       "open_count": 20,
-      "age_sum_days": 1157.0,
+      "age_sum_days": 1177.0,
       "rework_orders": 1,
       "no_diag_count": 10,
       "load_index": 126.67,
       "zone": "high",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "садоян дмитрий",
       "display_name": "Садоян Дмитрий",
       "open_count": 34,
-      "age_sum_days": 1626.0,
+      "age_sum_days": 1660.0,
       "rework_orders": 1,
-      "no_diag_count": 12,
+      "no_diag_count": 11,
       "load_index": 126.67,
       "zone": "high",
-      "assigned_from_buffer": 2,
-      "assign_quality": "bad",
-      "updated_at": "2026-11-05 08:13:52"
+      "assigned_from_buffer": 0,
+      "assign_quality": null,
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "знайдёнов валентин",
       "display_name": "Знайдёнов Валентин",
       "open_count": 5,
-      "age_sum_days": 111.0,
+      "age_sum_days": 116.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 70.0,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "перебейнос игорь",
       "display_name": "Перебейнос Игорь",
       "open_count": 4,
-      "age_sum_days": 700.0,
+      "age_sum_days": 704.0,
       "rework_orders": 1,
       "no_diag_count": 1,
       "load_index": 67.92,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "ефимов игорь дмитрович",
       "display_name": "Ефимов Игорь Дмитрович",
       "open_count": 3,
-      "age_sum_days": 277.0,
+      "age_sum_days": 280.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 60.0,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "коноваленко владимир",
       "display_name": "Коноваленко Владимир",
       "open_count": 3,
-      "age_sum_days": 1668.0,
+      "age_sum_days": 1671.0,
       "rework_orders": 0,
       "no_diag_count": 1,
       "load_index": 56.25,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "роман михайлюк",
       "display_name": "Роман Михайлюк",
       "open_count": 2,
-      "age_sum_days": 882.0,
+      "age_sum_days": 884.0,
       "rework_orders": 0,
       "no_diag_count": 2,
       "load_index": 55.0,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "рома пушкинская аутсорс",
       "display_name": "Рома Пушкинская аутсорс",
       "open_count": 1,
-      "age_sum_days": 355.0,
+      "age_sum_days": 356.0,
       "rework_orders": 1,
       "no_diag_count": 0,
       "load_index": 49.17,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "денис",
       "display_name": "Денис",
       "open_count": 1,
-      "age_sum_days": 231.0,
+      "age_sum_days": 232.0,
       "rework_orders": 0,
       "no_diag_count": 0,
       "load_index": 42.5,
       "zone": "ok",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "максим селиванов",
       "display_name": "Максим Селиванов",
-      "open_count": 2,
-      "age_sum_days": 46.0,
+      "open_count": 1,
+      "age_sum_days": 28.0,
       "rework_orders": 0,
       "no_diag_count": 0,
-      "load_index": 38.75,
+      "load_index": 22.5,
       "zone": "low",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
     },
     {
-      "day": "2026-11-05",
-      "master_key": "вовчук владимир",
-      "display_name": "Вовчук Владимир",
-      "open_count": 3,
-      "age_sum_days": 8.0,
-      "rework_orders": 0,
-      "no_diag_count": 3,
-      "load_index": 31.25,
-      "zone": "low",
-      "assigned_from_buffer": 1,
-      "assign_quality": "good",
-      "updated_at": "2026-11-05 08:13:52"
-    },
-    {
-      "day": "2026-11-05",
+      "day": "2026-11-06",
       "master_key": "полищук александр",
       "display_name": "Полищук Александр",
       "open_count": 1,
-      "age_sum_days": 2.0,
+      "age_sum_days": 3.0,
       "rework_orders": 0,
       "no_diag_count": 1,
-      "load_index": 10.0,
+      "load_index": 10.63,
       "zone": "low",
       "assigned_from_buffer": 0,
       "assign_quality": null,
-      "updated_at": "2026-11-05 08:13:52"
+      "updated_at": "2026-11-06 07:02:08"
+    },
+    {
+      "day": "2026-11-06",
+      "master_key": "вовчук владимир",
+      "display_name": "Вовчук Владимир",
+      "open_count": 1,
+      "age_sum_days": 1.0,
+      "rework_orders": 0,
+      "no_diag_count": 1,
+      "load_index": 9.38,
+      "zone": "low",
+      "assigned_from_buffer": 1,
+      "assign_quality": "good",
+      "updated_at": "2026-11-06 07:02:08"
     }
   ],
   "daily": [
@@ -607,6 +607,24 @@
       "updated_at": "2026-11-05 08:13:52",
       "prev_day": "2026-11-03",
       "gap_days": 2
+    },
+    {
+      "day": "2026-11-06",
+      "buffer_count": 67,
+      "buffer_over_3d": 31,
+      "assigned_from_buffer": 1,
+      "masters_high": 8,
+      "masters_ok": 7,
+      "masters_low": 3,
+      "assign_to_high": 0,
+      "assign_to_ok": 0,
+      "assign_to_low": 1,
+      "assign_unknown": 0,
+      "avg_load_index": 85.0,
+      "dispatch_score": 85.0,
+      "updated_at": "2026-11-06 07:02:08",
+      "prev_day": "2026-11-05",
+      "gap_days": 1
     }
   ],
   "assign_history": [
@@ -793,6 +811,20 @@
           "quality": "bad"
         }
       ]
+    },
+    {
+      "day": "2026-11-06",
+      "prev_day": "2026-11-05",
+      "gap_days": 1,
+      "total": 1,
+      "masters": [
+        {
+          "master_key": "вовчук владимир",
+          "display_name": "Вовчук Владимир",
+          "assigned": 1,
+          "quality": "good"
+        }
+      ]
     }
   ],
   "series": {
@@ -802,7 +834,8 @@
       "2026-10-31",
       "2026-11-02",
       "2026-11-03",
-      "2026-11-05"
+      "2026-11-05",
+      "2026-11-06"
     ],
     "buffer_count": [
       41,
@@ -810,7 +843,8 @@
       50,
       57,
       36,
-      55
+      55,
+      67
     ],
     "buffer_over_3d": [
       10,
@@ -818,7 +852,8 @@
       30,
       49,
       22,
-      13
+      13,
+      31
     ],
     "assigned_from_buffer": [
       null,
@@ -826,7 +861,8 @@
       1,
       1,
       31,
-      22
+      22,
+      1
     ],
     "assign_to_high": [
       0,
@@ -834,7 +870,8 @@
       1,
       0,
       29,
-      21
+      21,
+      0
     ],
     "assign_to_ok": [
       0,
@@ -842,6 +879,7 @@
       0,
       1,
       2,
+      0,
       0
     ],
     "assign_to_low": [
@@ -850,6 +888,7 @@
       0,
       0,
       0,
+      1,
       1
     ],
     "dispatch_score": [
@@ -858,7 +897,8 @@
       25.0,
       65.0,
       42.58,
-      42.73
+      42.73,
+      85.0
     ],
     "avg_load_index": [
       91.55,
@@ -866,7 +906,8 @@
       92.05,
       91.54,
       89.79,
-      87.08
+      87.08,
+      85.0
     ]
   },
   "sync": {
@@ -874,12 +915,12 @@
     "status": "idle",
     "total": 1,
     "done": 1,
-    "message": "Снимок 2026-11-05: буфер 55, мастеров 18, из буфера → мастерам 22 (за 2 дн. с 2026-11-03), оценка 42.73, pages 18 маст.",
-    "started_at": "2026-11-05T08:13:42.491596+00:00",
-    "finished_at": "2026-11-05T08:13:52.516867+00:00"
+    "message": "Снимок 2026-11-06: буфер 67, мастеров 18, из буфера → мастерам 1, оценка 85.0, pages 18 маст.",
+    "started_at": "2026-11-06T07:01:51.393777+00:00",
+    "finished_at": "2026-11-06T07:02:08.534201+00:00"
   },
   "counts": {
     "masters": 18,
-    "days": 6
+    "days": 7
   }
 }

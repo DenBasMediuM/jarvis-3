@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-11-05T08:13:52.771508+00:00",
+  "exported_at": "2026-11-06T07:02:08.759399+00:00",
   "title": "КПД филиалов",
   "branches": [
     {
@@ -30,8 +30,8 @@
       "gross_profit": 346492.0,
       "net_profit": 28415.0,
       "expense": -318077.0,
-      "refusals": 108,
-      "return_rate": 0.4186
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -41,8 +41,8 @@
       "gross_profit": 44850.0,
       "net_profit": -10930.0,
       "expense": -55780.0,
-      "refusals": 25,
-      "return_rate": 0.4717
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -52,8 +52,8 @@
       "gross_profit": 197770.0,
       "net_profit": 21577.0,
       "expense": -176193.0,
-      "refusals": 75,
-      "return_rate": 0.3807
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -63,8 +63,8 @@
       "gross_profit": 333025.0,
       "net_profit": 73202.0,
       "expense": -259823.0,
-      "refusals": 92,
-      "return_rate": 0.424
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -74,8 +74,8 @@
       "gross_profit": 41560.0,
       "net_profit": 1330.0,
       "expense": -40230.0,
-      "refusals": 25,
-      "return_rate": 0.6098
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -85,8 +85,8 @@
       "gross_profit": 228607.0,
       "net_profit": 41640.0,
       "expense": -186967.0,
-      "refusals": 77,
-      "return_rate": 0.399
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -96,8 +96,8 @@
       "gross_profit": 416113.0,
       "net_profit": 68986.0,
       "expense": -347127.0,
-      "refusals": 71,
-      "return_rate": 0.3349
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -107,8 +107,8 @@
       "gross_profit": 47850.0,
       "net_profit": -2216.0,
       "expense": -50066.0,
-      "refusals": 28,
-      "return_rate": 0.5385
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -118,8 +118,8 @@
       "gross_profit": 262655.0,
       "net_profit": 53050.0,
       "expense": -209605.0,
-      "refusals": 65,
-      "return_rate": 0.3457
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -129,8 +129,8 @@
       "gross_profit": 345222.0,
       "net_profit": 60631.99,
       "expense": -284590.01,
-      "refusals": 69,
-      "return_rate": 0.392
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -140,8 +140,8 @@
       "gross_profit": 47687.0,
       "net_profit": -2340.0,
       "expense": -50027.0,
-      "refusals": 25,
-      "return_rate": 0.4167
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -151,8 +151,8 @@
       "gross_profit": 189087.0,
       "net_profit": 667.0,
       "expense": -188420.0,
-      "refusals": 65,
-      "return_rate": 0.3009
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -162,8 +162,8 @@
       "gross_profit": 327899.0,
       "net_profit": 55907.0,
       "expense": -271992.0,
-      "refusals": 88,
-      "return_rate": 0.3713
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -173,8 +173,8 @@
       "gross_profit": 58700.0,
       "net_profit": -6061.0,
       "expense": -64761.0,
-      "refusals": 24,
-      "return_rate": 0.4528
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -184,8 +184,8 @@
       "gross_profit": 265740.0,
       "net_profit": 71197.0,
       "expense": -194543.0,
-      "refusals": 51,
-      "return_rate": 0.2629
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -195,8 +195,8 @@
       "gross_profit": 308406.0,
       "net_profit": 63107.0,
       "expense": -245299.0,
-      "refusals": 80,
-      "return_rate": 0.3587
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -206,8 +206,8 @@
       "gross_profit": 29475.0,
       "net_profit": 3835.0,
       "expense": -25640.0,
-      "refusals": 45,
-      "return_rate": 0.6618
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -217,8 +217,8 @@
       "gross_profit": 290367.0,
       "net_profit": 122013.0,
       "expense": -168354.0,
-      "refusals": 82,
-      "return_rate": 0.3628
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -228,8 +228,8 @@
       "gross_profit": 410071.0,
       "net_profit": 109517.0,
       "expense": -300554.0,
-      "refusals": 96,
-      "return_rate": 0.3678
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -239,8 +239,8 @@
       "gross_profit": 44537.0,
       "net_profit": 910.0,
       "expense": -43627.0,
-      "refusals": 24,
-      "return_rate": 0.375
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -250,8 +250,8 @@
       "gross_profit": 286044.0,
       "net_profit": 68827.0,
       "expense": -217217.0,
-      "refusals": 70,
-      "return_rate": 0.3057
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -261,8 +261,8 @@
       "gross_profit": 400183.0,
       "net_profit": 109722.0,
       "expense": -290461.0,
-      "refusals": 103,
-      "return_rate": 0.3916
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -272,8 +272,8 @@
       "gross_profit": 50000.0,
       "net_profit": 6500.0,
       "expense": -43500.0,
-      "refusals": 29,
-      "return_rate": 0.5273
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -283,8 +283,8 @@
       "gross_profit": 335555.0,
       "net_profit": 92494.0,
       "expense": -243061.0,
-      "refusals": 85,
-      "return_rate": 0.3333
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -294,8 +294,8 @@
       "gross_profit": 373185.0,
       "net_profit": 94137.0,
       "expense": -279048.0,
-      "refusals": 105,
-      "return_rate": 0.3889
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -305,8 +305,8 @@
       "gross_profit": 32150.0,
       "net_profit": 250.0,
       "expense": -31900.0,
-      "refusals": 12,
-      "return_rate": 0.4138
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -316,8 +316,8 @@
       "gross_profit": 305105.0,
       "net_profit": 117223.0,
       "expense": -187882.0,
-      "refusals": 98,
-      "return_rate": 0.3538
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -327,8 +327,8 @@
       "gross_profit": 364717.0,
       "net_profit": 144078.0,
       "expense": -220639.0,
-      "refusals": 70,
-      "return_rate": 0.2881
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -338,8 +338,8 @@
       "gross_profit": 11550.0,
       "net_profit": -500.0,
       "expense": -12050.0,
-      "refusals": 9,
-      "return_rate": 0.2368
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -349,19 +349,19 @@
       "gross_profit": 286987.01,
       "net_profit": 104587.01,
       "expense": -182400.0,
-      "refusals": 72,
-      "return_rate": 0.2562
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
       "month": 11,
       "branch_id": "karetn",
-      "acceptances": 34,
-      "gross_profit": 113000.0,
-      "net_profit": 41020.0,
-      "expense": -71980.0,
-      "refusals": 1,
-      "return_rate": 0.0294
+      "acceptances": 41,
+      "gross_profit": 124810.0,
+      "net_profit": 47814.0,
+      "expense": -76996.0,
+      "refusals": 0,
+      "return_rate": 0.0
     },
     {
       "year": 2026,
@@ -378,12 +378,12 @@
       "year": 2026,
       "month": 11,
       "branch_id": "seged",
-      "acceptances": 45,
-      "gross_profit": 71675.0,
-      "net_profit": 25006.0,
-      "expense": -46669.0,
-      "refusals": 1,
-      "return_rate": 0.0222
+      "acceptances": 52,
+      "gross_profit": 79275.0,
+      "net_profit": 21626.0,
+      "expense": -57649.0,
+      "refusals": 0,
+      "return_rate": 0.0
     }
   ],
   "charts": {
@@ -416,7 +416,7 @@
           263,
           270,
           243,
-          34
+          41
         ]
       },
       {
@@ -434,7 +434,7 @@
           255,
           277,
           281,
-          45
+          52
         ]
       },
       {
@@ -472,7 +472,7 @@
           400183.0,
           373185.0,
           364717.0,
-          113000.0
+          124810.0
         ]
       },
       {
@@ -490,7 +490,7 @@
           335555.0,
           305105.0,
           286987.01,
-          71675.0
+          79275.0
         ]
       },
       {
@@ -528,7 +528,7 @@
           109722.0,
           94137.0,
           144078.0,
-          41020.0
+          47814.0
         ]
       },
       {
@@ -546,7 +546,7 @@
           92494.0,
           117223.0,
           104587.01,
-          25006.0
+          21626.0
         ]
       },
       {
@@ -574,17 +574,17 @@
         "branch_id": "karetn",
         "color": "#0f6e56",
         "data": [
-          41.86,
-          42.4,
-          33.49,
-          39.2,
-          37.13,
-          35.87,
-          36.78,
-          39.16,
-          38.89,
-          28.81,
-          2.94
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ]
       },
       {
@@ -592,17 +592,17 @@
         "branch_id": "seged",
         "color": "#1a5f8a",
         "data": [
-          38.07,
-          39.9,
-          34.57,
-          30.09,
-          26.29,
-          36.28,
-          30.57,
-          33.33,
-          35.38,
-          25.62,
-          2.22
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ]
       },
       {
@@ -610,16 +610,16 @@
         "branch_id": "levitan",
         "color": "#8a4b1a",
         "data": [
-          47.17,
-          60.98,
-          53.85,
-          41.67,
-          45.28,
-          66.18,
-          37.5,
-          52.73,
-          41.38,
-          23.68,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ]
       }
