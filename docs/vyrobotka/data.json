@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "exported_at": "2026-11-06T07:32:56.560599+00:00",
+  "exported_at": "2026-11-09T06:59:41.668838+00:00",
   "source": "jarvis-vyrobotka",
   "spreadsheet_title": "Рассчет прибыльности июнь",
   "sync": {
-    "finished_at": "2026-11-06T06:46:19.980668+00:00",
-    "message": "Готово: инкремент — обновлено 0 лист(ов), без изменений 1; в кэше 58 листов, 3475 квитанций. Таблица: Рассчет прибыльности июнь, pages 137 долгов",
+    "finished_at": "2026-11-09T06:56:11.050176+00:00",
+    "message": "Готово: инкремент — обновлено 0 лист(ов), без изменений 1; в кэше 58 листов, 3475 квитанций. Таблица: Рассчет прибыльности июнь, pages 142 долгов",
     "status": "idle"
   },
   "upsell_sheets": [
@@ -724,7 +724,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A64",
-      "crm_feed_at": "2026-11-06T07:19:00.296051+00:00",
+      "crm_feed_at": "2026-11-09T06:36:33.862467+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -880,7 +880,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1870217490#gid=1870217490&range=A5",
-      "crm_feed_at": "2026-11-06T07:19:01.676374+00:00",
+      "crm_feed_at": "2026-11-09T06:36:35.274946+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1011,7 +1011,7 @@
       "flag": "red",
       "flag_reason": "Статус «Собран на возврат», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1834296366#gid=1834296366&range=A62",
-      "crm_feed_at": "2026-11-06T07:19:05.451222+00:00",
+      "crm_feed_at": "2026-11-09T06:36:39.629980+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1217,7 +1217,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=515525993#gid=515525993&range=A60",
-      "crm_feed_at": "2026-11-06T07:19:19.289367+00:00",
+      "crm_feed_at": "2026-11-09T06:36:54.226962+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1298,7 +1298,7 @@
       "flag": "red",
       "flag_reason": "Статус «Собран на возврат», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=798577801#gid=798577801&range=A71",
-      "crm_feed_at": "2026-11-06T07:19:21.782171+00:00",
+      "crm_feed_at": "2026-11-09T06:36:56.708488+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1454,7 +1454,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1834296366#gid=1834296366&range=A80",
-      "crm_feed_at": "2026-11-06T07:19:22.960546+00:00",
+      "crm_feed_at": "2026-11-09T06:36:58.120980+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1540,7 +1540,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A25",
-      "crm_feed_at": "2026-11-06T07:19:36.080357+00:00",
+      "crm_feed_at": "2026-11-09T06:37:11.847695+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1686,7 +1686,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A10",
-      "crm_feed_at": "2026-11-06T07:19:37.282941+00:00",
+      "crm_feed_at": "2026-11-09T06:37:13.073174+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1807,7 +1807,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1944472646#gid=1944472646&range=A69",
-      "crm_feed_at": "2026-11-06T07:19:39.996944+00:00",
+      "crm_feed_at": "2026-11-09T06:37:15.803700+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -1918,7 +1918,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A98",
-      "crm_feed_at": "2026-11-06T07:19:41.276685+00:00",
+      "crm_feed_at": "2026-11-09T06:37:17.146525+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -2219,7 +2219,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A100",
-      "crm_feed_at": "2026-11-06T07:19:42.551269+00:00",
+      "crm_feed_at": "2026-11-09T06:37:18.573184+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -2515,7 +2515,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A42",
-      "crm_feed_at": "2026-11-06T07:19:44.059572+00:00",
+      "crm_feed_at": "2026-11-09T06:37:20.033398+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -2666,7 +2666,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A53",
-      "crm_feed_at": "2026-11-06T07:19:45.402942+00:00",
+      "crm_feed_at": "2026-11-09T06:37:21.265723+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -2762,7 +2762,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1242273594#gid=1242273594&range=A47",
-      "crm_feed_at": "2026-11-06T07:19:46.645320+00:00",
+      "crm_feed_at": "2026-11-09T06:37:22.848441+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -2908,7 +2908,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A44",
-      "crm_feed_at": "2026-11-06T07:19:48.086696+00:00",
+      "crm_feed_at": "2026-11-09T06:37:24.177556+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -3134,7 +3134,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A45",
-      "crm_feed_at": "2026-11-06T07:19:49.353151+00:00",
+      "crm_feed_at": "2026-11-09T06:37:25.424942+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -3360,7 +3360,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A46",
-      "crm_feed_at": "2026-11-06T07:19:50.609607+00:00",
+      "crm_feed_at": "2026-11-09T06:37:26.757770+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -3586,7 +3586,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A47",
-      "crm_feed_at": "2026-11-06T07:19:51.859090+00:00",
+      "crm_feed_at": "2026-11-09T06:37:28.134159+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -3812,7 +3812,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A48",
-      "crm_feed_at": "2026-11-06T07:19:53.180877+00:00",
+      "crm_feed_at": "2026-11-09T06:37:29.417705+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4038,7 +4038,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A53",
-      "crm_feed_at": "2026-11-06T07:19:57.676723+00:00",
+      "crm_feed_at": "2026-11-09T06:37:33.963953+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4199,7 +4199,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1131030473#gid=1131030473&range=A85",
-      "crm_feed_at": "2026-11-06T07:19:58.983214+00:00",
+      "crm_feed_at": "2026-11-09T06:37:35.439773+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4490,7 +4490,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1415612777#gid=1415612777&range=A5",
-      "crm_feed_at": "2026-11-06T07:20:00.235631+00:00",
+      "crm_feed_at": "2026-11-09T06:37:36.647284+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4656,7 +4656,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1415612777#gid=1415612777&range=A32",
-      "crm_feed_at": "2026-11-06T07:20:01.522625+00:00",
+      "crm_feed_at": "2026-11-09T06:37:37.912219+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4757,7 +4757,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=621179026#gid=621179026&range=A24",
-      "crm_feed_at": "2026-11-06T07:20:02.712717+00:00",
+      "crm_feed_at": "2026-11-09T06:37:39.117030+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4858,7 +4858,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A53",
-      "crm_feed_at": "2026-11-06T07:20:03.895722+00:00",
+      "crm_feed_at": "2026-11-09T06:37:40.310228+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4944,7 +4944,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=692749486#gid=692749486&range=A22",
-      "crm_feed_at": "2026-11-06T07:20:05.109814+00:00",
+      "crm_feed_at": "2026-11-09T06:37:41.485273+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -4995,7 +4995,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A79",
-      "crm_feed_at": "2026-11-06T07:20:06.323475+00:00",
+      "crm_feed_at": "2026-11-09T06:37:42.717557+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5101,7 +5101,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A56",
-      "crm_feed_at": "2026-11-06T07:20:07.527712+00:00",
+      "crm_feed_at": "2026-11-09T06:37:43.966093+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5217,7 +5217,7 @@
       "flag": "red",
       "flag_reason": "Статус «Собран на возврат», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1641022738#gid=1641022738&range=A55",
-      "crm_feed_at": "2026-11-06T07:20:08.739713+00:00",
+      "crm_feed_at": "2026-11-09T06:37:45.393826+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5308,7 +5308,7 @@
       "flag": "red",
       "flag_reason": "Статус «Собран на возврат», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=215292533#gid=215292533&range=A77",
-      "crm_feed_at": "2026-11-06T07:20:09.962116+00:00",
+      "crm_feed_at": "2026-11-09T06:37:46.813645+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5429,7 +5429,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=606755194#gid=606755194&range=A40",
-      "crm_feed_at": "2026-11-06T07:20:11.221227+00:00",
+      "crm_feed_at": "2026-11-09T06:37:48.171522+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5565,7 +5565,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1088354319#gid=1088354319&range=A57",
-      "crm_feed_at": "2026-11-06T07:20:12.525506+00:00",
+      "crm_feed_at": "2026-11-09T06:37:49.490437+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5666,7 +5666,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1314089713#gid=1314089713&range=A20",
-      "crm_feed_at": "2026-11-06T07:20:13.879592+00:00",
+      "crm_feed_at": "2026-11-09T06:37:50.736050+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5811,7 +5811,7 @@
       "flag": "red",
       "flag_reason": "Пропал из фильтра недоплат CRM при открытом долге",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1750699780#gid=1750699780&range=A87",
-      "crm_feed_at": "2026-11-06T07:20:15.098128+00:00",
+      "crm_feed_at": "2026-11-09T06:37:51.926232+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5872,7 +5872,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1820317842#gid=1820317842&range=A42",
-      "crm_feed_at": "2026-11-06T07:20:16.320843+00:00",
+      "crm_feed_at": "2026-11-09T06:37:53.162372+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -5973,7 +5973,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A97",
-      "crm_feed_at": "2026-11-06T07:20:17.628446+00:00",
+      "crm_feed_at": "2026-11-09T06:37:54.478647+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -6274,7 +6274,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A99",
-      "crm_feed_at": "2026-11-06T07:20:18.987872+00:00",
+      "crm_feed_at": "2026-11-09T06:37:55.956081+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -6570,7 +6570,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1834296366#gid=1834296366&range=A29",
-      "crm_feed_at": "2026-11-06T07:20:20.201941+00:00",
+      "crm_feed_at": "2026-11-09T06:37:57.227891+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -6676,7 +6676,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1737404958#gid=1737404958&range=A83",
-      "crm_feed_at": "2026-11-06T07:20:21.526226+00:00",
+      "crm_feed_at": "2026-11-09T06:37:58.444088+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -6807,7 +6807,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A49",
-      "crm_feed_at": "2026-11-06T07:20:26.150307+00:00",
+      "crm_feed_at": "2026-11-09T06:38:03.041413+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -6893,7 +6893,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A87",
-      "crm_feed_at": "2026-11-06T07:20:27.391064+00:00",
+      "crm_feed_at": "2026-11-09T06:38:04.312385+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7039,7 +7039,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=363817257#gid=363817257&range=A53",
-      "crm_feed_at": "2026-11-06T07:20:28.860322+00:00",
+      "crm_feed_at": "2026-11-09T06:38:05.509109+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7120,7 +7120,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1944472646#gid=1944472646&range=A27",
-      "crm_feed_at": "2026-11-06T07:20:30.012887+00:00",
+      "crm_feed_at": "2026-11-09T06:38:06.664537+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7176,7 +7176,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=108813282#gid=108813282&range=A40",
-      "crm_feed_at": "2026-11-06T07:20:31.203159+00:00",
+      "crm_feed_at": "2026-11-09T06:38:07.880307+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7267,7 +7267,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1870217490#gid=1870217490&range=A57",
-      "crm_feed_at": "2026-11-06T07:20:32.392706+00:00",
+      "crm_feed_at": "2026-11-09T06:38:09.125570+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7348,7 +7348,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A113",
-      "crm_feed_at": "2026-11-06T07:20:33.596676+00:00",
+      "crm_feed_at": "2026-11-09T06:38:10.494574+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7484,7 +7484,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A69",
-      "crm_feed_at": "2026-11-06T07:20:34.792970+00:00",
+      "crm_feed_at": "2026-11-09T06:38:11.768188+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7635,7 +7635,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1778512940#gid=1778512940&range=A47",
-      "crm_feed_at": "2026-11-06T07:20:36.095704+00:00",
+      "crm_feed_at": "2026-11-09T06:38:13.012134+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7721,7 +7721,7 @@
       "flag": "red",
       "flag_reason": "Статус «Выдан без ремонта», оплата не собрана",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1052080922#gid=1052080922&range=A12",
-      "crm_feed_at": "2026-11-06T07:20:37.386416+00:00",
+      "crm_feed_at": "2026-11-09T06:38:14.261974+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -7907,7 +7907,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=606755194#gid=606755194&range=A79",
-      "crm_feed_at": "2026-11-06T07:20:38.536504+00:00",
+      "crm_feed_at": "2026-11-09T06:38:15.421310+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8008,7 +8008,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1834296366#gid=1834296366&range=A79",
-      "crm_feed_at": "2026-11-06T07:20:39.799737+00:00",
+      "crm_feed_at": "2026-11-09T06:38:16.663668+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8154,7 +8154,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=167882906#gid=167882906&range=A13",
-      "crm_feed_at": "2026-11-06T07:20:40.978149+00:00",
+      "crm_feed_at": "2026-11-09T06:38:17.832370+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8205,7 +8205,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A88",
-      "crm_feed_at": "2026-11-06T07:20:42.142819+00:00",
+      "crm_feed_at": "2026-11-09T06:38:19.080931+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8296,7 +8296,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A89",
-      "crm_feed_at": "2026-11-06T07:20:43.360250+00:00",
+      "crm_feed_at": "2026-11-09T06:38:20.362966+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8387,7 +8387,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A87",
-      "crm_feed_at": "2026-11-06T07:20:44.542617+00:00",
+      "crm_feed_at": "2026-11-09T06:38:21.689803+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8462,7 +8462,7 @@
       "flag": "red",
       "flag_reason": "Стоимость в CRM обнулена без оплаты",
       "sheet_url": null,
-      "crm_feed_at": "2026-11-06T07:20:47.105098+00:00",
+      "crm_feed_at": "2026-11-09T06:38:24.067707+00:00",
       "on_pay_list": 0,
       "decision_status": null,
       "decision_code": null,
@@ -8784,147 +8784,6 @@
           "date": "",
           "author": "Демина Виктория",
           "text": "SMS : Замовлення инвертер Pure Sine 5000 W, №120190 прийнято. ☎ 0931703105"
-        }
-      ]
-    },
-    {
-      "ticket": "123144",
-      "sheet_title": "202608(24-31)",
-      "master": "Сатаулов",
-      "sheet_debt": 2000.0,
-      "sheet_total": 2000.0,
-      "sheet_paid": 0.0,
-      "crm_debt": 1000.0,
-      "crm_paid": 2000.0,
-      "crm_total": 3000.0,
-      "crm_status": "Готов",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123144",
-      "report_amount": 1500.0,
-      "salary": 750.0,
-      "flag": "mismatch",
-      "flag_reason": "Долг: отчёт 2000 ≠ CRM 1000",
-      "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=167882906#gid=167882906&range=A31",
-      "crm_feed_at": "2026-10-31T07:48:27.050950+00:00",
-      "on_pay_list": 1,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
-      "live_feed": [
-        {
-          "date": "16 Окт.",
-          "author": "Демина Виктория",
-          "text": "возле п49"
-        },
-        {
-          "date": "16 Окт.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "16 Окт.",
-          "author": "Демина Виктория",
-          "text": "*износился привод"
-        },
-        {
-          "date": "16 Окт.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "16 Окт.",
-          "author": "Інна Балта",
-          "text": "Входящий"
-        },
-        {
-          "date": "9 Окт.",
-          "author": "Інна Балта",
-          "text": "перестала крутится"
-        },
-        {
-          "date": "9 Окт.",
-          "author": "Інна Балта",
-          "text": "Изменил статус на Принят на доработку"
-        },
-        {
-          "date": "4 Сен.",
-          "author": "Вовчук Владимир",
-          "text": "Изменил статус на Выдан"
-        },
-        {
-          "date": "4 Сен.",
-          "author": "Вовчук Владимир",
-          "text": "Шаблон \"Гарантия\" отправлен на печать"
-        },
-        {
-          "date": "30 Авг.",
-          "author": "Демина Виктория",
-          "text": "заберет в пятницу"
-        },
-        {
-          "date": "30 Авг.",
-          "author": "Вовчук Владимир",
-          "text": "Исходящий"
-        },
-        {
-          "date": "",
-          "author": "Демина Виктория",
-          "text": "SMS : Ваше замовлення №123144 готово. Вартість ремонту 2000 грн."
-        },
-        {
-          "date": "30 Авг.",
-          "author": "Демина Виктория",
-          "text": "Изменил статус на Готов"
-        },
-        {
-          "date": "30 Авг.",
-          "author": "Демина Виктория",
-          "text": "Заказ готов"
-        },
-        {
-          "date": "30 Авг.",
-          "author": "Демина Виктория",
-          "text": "123144 готов (полка 10)"
-        },
-        {
-          "date": "21 Авг.",
-          "author": "Вовчук Владимир",
-          "text": "Исходящий"
-        },
-        {
-          "date": "21 Авг.",
-          "author": "Без оператора",
-          "text": "Входящий"
-        },
-        {
-          "date": "19 Авг.",
-          "author": "Златіна Аля",
-          "text": "Изменил статус на В процессе ремонта"
-        },
-        {
-          "date": "19 Авг.",
-          "author": "Златіна Аля",
-          "text": "123144 Согласуйте (То, замена ремня , 1500, 3-4 дня)"
-        },
-        {
-          "date": "19 Авг.",
-          "author": "Перебейнос Игорь",
-          "text": "Исходящий"
-        },
-        {
-          "date": "18 Авг.",
-          "author": "Златіна Аля",
-          "text": "Изменил мастера на Сатаулов Владислав"
-        },
-        {
-          "date": "13 Авг.",
-          "author": "Демина Виктория",
-          "text": "п22"
-        },
-        {
-          "date": "",
-          "author": "Демина Виктория",
-          "text": "SMS : Замовлення хлебопечка moulinex, №123144 прийнято. ☎ 0931703105"
         }
       ]
     },
@@ -13755,6 +13614,201 @@
       ]
     },
     {
+      "ticket": "124506",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 9500.0,
+      "crm_paid": 0.0,
+      "crm_total": 9500.0,
+      "crm_status": "Выдан",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124506",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:35.127117+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "7 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на Выдан"
+        },
+        {
+          "date": "",
+          "author": "Демина Виктория",
+          "text": "SMS : Ваше замовлення №124506 готово. Вартість ремонту 9500 грн."
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "9 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Галанчук Вадим"
+        },
+        {
+          "date": "8 Окт.",
+          "author": "Інна Балта",
+          "text": "возле п17"
+        },
+        {
+          "date": "8 Окт.",
+          "author": "Інна Балта",
+          "text": "0653"
+        }
+      ]
+    },
+    {
+      "ticket": "124840",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 4650.0,
+      "crm_paid": 0.0,
+      "crm_total": 4650.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124840",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:36.345131+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "",
+          "author": "Демина Виктория",
+          "text": "SMS : Ваше замовлення №124840 готово. Вартість ремонту 4650 грн."
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Демина Виктория",
+          "text": "124840 готов (на приемке)"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Установлена галочка \"Итого\" = \"Стоимость ремонта\""
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "4650"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "124840 Согласуйте (То, декальцинация , чистка от масел,4000, 3-4 дня)"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "26 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Сатаулов Владислав"
+        },
+        {
+          "date": "23 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "21 Окт.",
+          "author": "Інна Балта",
+          "text": "На приёмке"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Замовлення Кофемашина Practical Rpm C008406, №124840 прийнято. ☎ 0931703105"
+        },
+        {
+          "date": "21 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "13 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Входящий"
+        },
+        {
+          "date": "10 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "22.05.24",
+          "author": "Без оператора",
+          "text": "Входящий"
+        }
+      ]
+    },
+    {
       "ticket": "124877",
       "sheet_title": null,
       "master": null,
@@ -14422,22 +14476,22 @@
       ]
     },
     {
-      "ticket": "125089",
+      "ticket": "124976",
       "sheet_title": null,
       "master": null,
       "sheet_debt": null,
       "sheet_total": null,
       "sheet_paid": null,
-      "crm_debt": 3100.0,
-      "crm_paid": 750.0,
-      "crm_total": 3850.0,
+      "crm_debt": 3150.0,
+      "crm_paid": 0.0,
+      "crm_total": 3150.0,
       "crm_status": "Готов",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/125089",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124976",
       "report_amount": null,
       "flag": "open",
       "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
       "sheet_url": null,
-      "crm_feed_at": "2026-11-06T06:49:30.938429+00:00",
+      "crm_feed_at": "2026-11-09T06:38:37.607122+00:00",
       "on_pay_list": 1,
       "decision_status": null,
       "decision_code": null,
@@ -14445,59 +14499,79 @@
       "decision_at": null,
       "live_feed": [
         {
-          "date": "",
+          "date": "6 Ноя.",
           "author": "Інна Балта",
-          "text": "SMS : Ваше замовлення №125089 готово. Вартість ремонту 3100 грн."
+          "text": "Заказ перемещен на Сегедская, основной (Сегедская)"
         },
         {
-          "date": "5 Ноя.",
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "п21"
+        },
+        {
+          "date": "6 Ноя.",
           "author": "Інна Балта",
           "text": "Изменил статус на Готов"
         },
         {
-          "date": "5 Ноя.",
+          "date": "6 Ноя.",
           "author": "Інна Балта",
           "text": "Заказ готов"
         },
         {
           "date": "3 Ноя.",
           "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Букулеско Маргарита",
+          "text": "Изменил статус на У курьера ГОТОВ"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Букулеско Маргарита",
+          "text": "124976 готов П28 в черном пакете."
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
           "text": "Изменил статус на В процессе ремонта"
         },
         {
-          "date": "3 Ноя.",
+          "date": "2 Ноя.",
           "author": "Перебейнос Игорь",
           "text": "Исходящий"
         },
         {
-          "date": "3 Ноя.",
-          "author": "Інна Балта",
-          "text": "3100"
-        },
-        {
-          "date": "3 Ноя.",
-          "author": "Інна Балта",
-          "text": "сгорела цепь управления нагревом основного бойлера, будем пробовать восстановить, в случае положительного результата (станет известно после восстановления поврежденных элементов выжил процессор или нет) ремонт будет 2500 нужно 3-4 дня"
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "124976 согласовать ремонт провода 2500 грн 1-2 дня"
         },
         {
           "date": "2 Ноя.",
           "author": "Златіна Аля",
-          "text": "У Саші"
+          "text": "Изменил мастера на Вовчук Владимир"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Демина Виктория",
+          "text": "Заказ перемещен на Каретный Центральный (Перемещено по сроку давности)"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Демина Виктория",
+          "text": "п28"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Златіна Аля",
+          "text": "п21"
         },
         {
           "date": "",
           "author": "Златіна Аля",
-          "text": "SMS : Замовлення кавомашина saeco SUP02YADR, №125089 прийнято. ☎ 0931708353"
-        },
-        {
-          "date": "2 Ноя.",
-          "author": "Хаустов Сергей",
-          "text": "Входящий"
-        },
-        {
-          "date": "15.03.21",
-          "author": "Павел НС",
-          "text": "Входящий"
+          "text": "SMS : Замовлення фен дайсен, №124976 прийнято. ☎ 0931708353"
         }
       ]
     },
@@ -15253,6 +15327,262 @@
       ]
     },
     {
+      "ticket": "123550",
+      "sheet_title": "202609(01-08)",
+      "master": "Дубовой",
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 2600.0,
+      "crm_paid": 0.0,
+      "crm_total": 2600.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/123550",
+      "report_amount": 2100.0,
+      "salary": 945.0,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1ardPmT-a-eyFZmEk97J70aPiirlLDhoySCXlauZbT-c/edit?gid=1965489734#gid=1965489734&range=A82",
+      "crm_feed_at": "2026-11-09T06:38:38.921573+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "перед п19"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ перемещен на Сегедская, основной (Сегедская)"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №123550 готово. Вартість ремонту 2600 грн."
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Златіна Аля",
+          "text": "гроші взяти за ремонт по повній вартості"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на У курьера ГОТОВ"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на У курьера БЕЗ РЕМОНТ"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Собираем на возврат"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "123550 неработает тайпси несможем сделать китайци натпись микросхемы стерли есть прекуреватель на ней если клиенто прям так сильно надо может купить зу доя прекуревателя на возврат собрана готова"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Златіна Аля",
+          "text": "Заказ перемещен на Аутсорс (Андрусяк)"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Саша Андрусяк"
+        },
+        {
+          "date": "22 Окт.",
+          "author": "Драгомарецкая Руслана",
+          "text": "пока инфы нет, разбираюсь"
+        },
+        {
+          "date": "21 Окт.",
+          "author": "Драгомарецкая Руслана",
+          "text": "0978114366 звонили с этого"
+        },
+        {
+          "date": "15 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Входящий"
+        },
+        {
+          "date": "15 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Входящий"
+        },
+        {
+          "date": "6 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        },
+        {
+          "date": "6 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        },
+        {
+          "date": "29 Сен.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "22 Сен.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "18 Сен.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "гнездо usb выход"
+        },
+        {
+          "date": "18 Сен.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Заказ перемещен на Левитан Центральный (Левитан Центральный)"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на Принят на доработку"
+        },
+        {
+          "date": "",
+          "author": "Златіна Аля",
+          "text": "SMS : Ваше замовлення №123550 готово. Вартість ремонту 2600 грн."
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Златіна Аля",
+          "text": "Заказ перемещен на Сегедская, основной (Сегедская)"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Златіна Аля",
+          "text": "п19"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Златіна Аля",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "15 Сен.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "8 Сен.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Изменил статус на У курьера ГОТОВ"
+        },
+        {
+          "date": "8 Сен.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "8 Сен.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "",
+          "author": "Златіна Аля",
+          "text": "SMS : Ваше замовлення №123550 на узгодженнi. Не дозвонились. Наберiть 0931708353"
+        },
+        {
+          "date": "2 Сен.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Изменил статус на Не дозвонились"
+        },
+        {
+          "date": "2 Сен.",
+          "author": "Інна Балта",
+          "text": "огласила 2600"
+        },
+        {
+          "date": "2 Сен.",
+          "author": "Вовчук Владимир",
+          "text": "Исходящий"
+        },
+        {
+          "date": "2 Сен.",
+          "author": "Інна Балта",
+          "text": "123550 согласовать: ремонт цепи питания, +ремонт выходных каскадов. 2100 грн. 2-3 дня. (можно скинуть, он уже готов)"
+        },
+        {
+          "date": "1 Сен.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Изменил мастера на Дубовой Юрий Владимирович"
+        },
+        {
+          "date": "31 Авг.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Изменил статус на На диагностике"
+        },
+        {
+          "date": "31 Авг.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Заказ перемещен на Левитан Центральный (Левитан Центральный)"
+        },
+        {
+          "date": "29 Авг.",
+          "author": "Демина Виктория",
+          "text": "Заказ перемещен на Сегедская Центральный (Сегедская Центральный)"
+        },
+        {
+          "date": "29 Авг.",
+          "author": "Інна Балта",
+          "text": "ПРИНЯТ НА СЕГЕДСКОЙ!!!!!!!"
+        },
+        {
+          "date": "29 Авг.",
+          "author": "Інна Балта",
+          "text": "за столом менеджера"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Замовлення зарядная станция WELL charger D320, №123550 прийнято. ☎ 0931703105"
+        },
+        {
+          "date": "29 Авг.",
+          "author": "Вовчук Владимир",
+          "text": "Входящий"
+        }
+      ]
+    },
+    {
       "ticket": "109219",
       "sheet_title": null,
       "master": null,
@@ -15800,6 +16130,91 @@
           "date": "2 Окт.",
           "author": "J",
           "text": "Изменил статус на В процессе ремонта"
+        }
+      ]
+    },
+    {
+      "ticket": "125071",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 2400.0,
+      "crm_paid": 0.0,
+      "crm_total": 2400.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/125071",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:40.153757+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №125071 готово. Вартість ремонту 2400 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "125071 готов,  замена ролика захвата, чистка головки, прокачка шлейфа Снпч, сброс счетчика абсорбера, около 18"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "125071 согл замену ролика захвата, чистку головки, прокачку шлейфа Снпч, сброс счетчика абсорбера. Работа 1900 грн."
+        },
+        {
+          "date": "4 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Тарасенко Игорь Викторович"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "за манагером"
+        },
+        {
+          "date": "",
+          "author": "Златіна Аля",
+          "text": "SMS : Замовлення принтер Epson L3101, №125071 прийнято. ☎ 0931708353"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
         }
       ]
     },
@@ -16514,6 +16929,121 @@
       ]
     },
     {
+      "ticket": "124995",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 2000.0,
+      "crm_paid": 0.0,
+      "crm_total": 2000.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124995",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:41.377890+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "124995 ТО заварочного блока, чистка отсека ЗБ, декаль системы подачи воды, общее ТО, готов у меня на столе"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №124995 готово. Вартість ремонту 2000 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "2000"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "2100"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Согласовать:124995 Что ремонтировать: ТО заварочного блока, чистка отсека ЗБ, декаль системы подачи воды, общее ТО Цена, грн:1500 Сроки, день:1(к вечеру будет готов) Особые условия\\риски: не накручивай особо, могут отказаться Предоплата, грн"
+        },
+        {
+          "date": "3 Ноя.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "3 Ноя.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Плачковский Александр"
+        },
+        {
+          "date": "",
+          "author": "Златіна Аля",
+          "text": "SMS : Замовлення кавомашина saeco lirika sup 041, №124995 прийнято. ☎ 0931708353"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Златіна Аля",
+          "text": "у Саші"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        }
+      ]
+    },
+    {
       "ticket": "120798",
       "sheet_title": "202606(16-23)",
       "master": "Галанчук",
@@ -16676,6 +17206,286 @@
           "date": "25 Апр.",
           "author": "Без оператора",
           "text": "Входящий"
+        }
+      ]
+    },
+    {
+      "ticket": "124307",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 1800.0,
+      "crm_paid": 0.0,
+      "crm_total": 1800.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124307",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:42.625429+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "124307 готов, ремонт подачи воды, запчасти сделал из подручных средств, запланированные на них 300 грн пишу в отчет, у Валентина"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №124307 готово. Вартість ремонту 1800 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на Ожидает запчастей"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Златіна Аля",
+          "text": "Установлена галочка \"Итого\" = \"Стоимость ремонта\""
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Драгомарецкая Руслана",
+          "text": "согл"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "20 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Златіна Аля",
+          "text": "озвучила Марго 1800"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Букулеско Маргарита",
+          "text": "Изменил статус на На согласовании"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Златіна Аля",
+          "text": "2400 пред 1500"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Златіна Аля",
+          "text": "5-7 робочих"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Златіна Аля",
+          "text": "124307 согл ремонт подачи воды (трещина в шланге, отсутствуют уплотнительные кольца), работа 1500 грн + запчасти около 300 грн. Итого 1800 грн."
+        },
+        {
+          "date": "9 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
+        },
+        {
+          "date": "9 Окт.",
+          "author": "Без оператора",
+          "text": "Входящий"
+        },
+        {
+          "date": "2 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Тарасенко Игорь Викторович"
+        },
+        {
+          "date": "30 Сен.",
+          "author": "Ефимов Игорь Дмитрович",
+          "text": "під стулом на прийомке"
+        },
+        {
+          "date": "",
+          "author": "Ефимов Игорь Дмитрович",
+          "text": "SMS : Замовлення пилосос zelmer 919.OST, №124307 прийнято. ☎ 0931708353"
+        },
+        {
+          "date": "17 Авг.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        }
+      ]
+    },
+    {
+      "ticket": "124546",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 1800.0,
+      "crm_paid": 0.0,
+      "crm_total": 1800.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124546",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:43.893681+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "",
+          "author": "Демина Виктория",
+          "text": "SMS : Ваше замовлення №124546 готово. Вартість ремонту 1800 грн."
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Установлена галочка \"Итого\" = \"Стоимость ремонта\""
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Демина Виктория",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Демина Виктория",
+          "text": "124546 готов п7"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "J",
+          "text": "Запчасть отгружена под ремонт"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Система",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "J",
+          "text": "Ожидаемая запчасть была принята"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "J",
+          "text": "Отправлен запрос на покупку запчасти: Запчасти.. Ожидаем ответ."
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Система",
+          "text": "Изменил статус на Ожидает запчастей"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Драгомарецкая Руслана",
+          "text": "cогл"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Хаустов Сергей",
+          "text": "Входящий"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "Изменил статус на На согласовании"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "+500 грнн"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "124546 перепаковка акб запчасти 800 +в отчет 1500 сроки 3-5 дней"
+        },
+        {
+          "date": "12 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Садоян Дмитрий"
+        },
+        {
+          "date": "9 Окт.",
+          "author": "Інна Балта",
+          "text": "п4"
+        },
+        {
+          "date": "9 Окт.",
+          "author": "Інна Балта",
+          "text": "+бп"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Замовлення пилесос THOMAS  kw2210dg, №124546 прийнято. ☎ 0931703105"
+        },
+        {
+          "date": "4 Окт.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
         }
       ]
     },
@@ -17567,22 +18377,22 @@
       ]
     },
     {
-      "ticket": "125135",
+      "ticket": "124958",
       "sheet_title": null,
       "master": null,
       "sheet_debt": null,
       "sheet_total": null,
       "sheet_paid": null,
-      "crm_debt": 1400.0,
+      "crm_debt": 1500.0,
       "crm_paid": 0.0,
-      "crm_total": 1400.0,
+      "crm_total": 1500.0,
       "crm_status": "Готов",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/125135",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124958",
       "report_amount": null,
       "flag": "open",
       "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
       "sheet_url": null,
-      "crm_feed_at": "2026-11-06T06:49:32.158124+00:00",
+      "crm_feed_at": "2026-11-09T06:38:45.421459+00:00",
       "on_pay_list": 1,
       "decision_status": null,
       "decision_code": null,
@@ -17590,69 +18400,59 @@
       "decision_at": null,
       "live_feed": [
         {
-          "date": "5 Ноя.",
+          "date": "7 Ноя.",
           "author": "Інна Балта",
-          "text": "Входящий"
+          "text": "124958 восстановление контакта пропайка разьема шлейфа управления на ручке, готов, сбоку 10"
         },
         {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №124958 готово. Вартість ремонту 1500 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
           "text": "Изменил статус на Готов"
         },
         {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
           "text": "Заказ готов"
         },
         {
-          "date": "",
-          "author": "Букулеско Маргарита",
-          "text": "SMS : Ваше замовлення №125135 готово. Вартiсть ремонта: 1400 грн."
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "125135 готов, возле П36"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
           "text": "Изменил статус на В процессе ремонта"
         },
         {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Установлена галочка \"Итого\" = \"Стоимость ремонта\""
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Інна Балта",
+          "date": "6 Ноя.",
+          "author": "Перебейнос Игорь",
           "text": "Исходящий"
         },
         {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "125135 рцп 1200 грн"
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "1500"
         },
         {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил мастера на Вовчук Владимир"
+          "date": "6 Ноя.",
+          "author": "Інна Балта",
+          "text": "Согласовать:124958 Что ремонтировать: восстановление контакта пропайка разьема шлейфа управления на ручке (дыма и прочих спецэффектов не заметил) Цена, грн:1000 Сроки, день:1(к вечеру будет готов) Особые условия\\риски: Предоплата, грн"
         },
         {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил статус на На диагностике"
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Плачковский Александр"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Інна Балта",
+          "text": "з боку приёмки"
         },
         {
           "date": "",
-          "author": "Букулеско Маргарита",
-          "text": "SMS : Замовлення обогреватель, №125135 прийнято. ☎ 0931703105"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "возле п35"
+          "author": "Інна Балта",
+          "text": "SMS : Замовлення пылесос Roventa clean s steam, №124958 прийнято. ☎ 0931708353"
         }
       ]
     },
@@ -18157,116 +18957,6 @@
       ]
     },
     {
-      "ticket": "124922",
-      "sheet_title": null,
-      "master": null,
-      "sheet_debt": null,
-      "sheet_total": null,
-      "sheet_paid": null,
-      "crm_debt": 1200.0,
-      "crm_paid": 0.0,
-      "crm_total": 1200.0,
-      "crm_status": "Готов",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124922",
-      "report_amount": null,
-      "flag": "open",
-      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
-      "sheet_url": null,
-      "crm_feed_at": "2026-11-05T08:02:16.278036+00:00",
-      "on_pay_list": 1,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
-      "live_feed": [
-        {
-          "date": "4 Ноя.",
-          "author": "Інна Балта",
-          "text": "Входящий"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил статус на Готов"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Заказ готов"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "124922 готов (полка 52)"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Установлена галочка \"Итого\" = \"Стоимость ремонта\""
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил статус на В процессе ремонта"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "124922 Согласуйте (Замена разъёма, 1200 , сегодня будет готово)"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Інна Балта",
-          "text": "Входящий"
-        },
-        {
-          "date": "2 Ноя.",
-          "author": "Хаустов Сергей",
-          "text": "Входящий"
-        },
-        {
-          "date": "29 Окт.",
-          "author": "Златіна Аля",
-          "text": "Изменил мастера на Сатаулов Владислав"
-        },
-        {
-          "date": "29 Окт.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "26 Окт.",
-          "author": "Перебейнос Игорь",
-          "text": "Исходящий"
-        },
-        {
-          "date": "26 Окт.",
-          "author": "Букулеско Маргарита",
-          "text": "п53"
-        },
-        {
-          "date": "",
-          "author": "Букулеско Маргарита",
-          "text": "SMS : Замовлення миостимулятор, №124922 прийнято. ☎ 0931703105"
-        },
-        {
-          "date": "26 Окт.",
-          "author": "Інна Балта",
-          "text": "Входящий"
-        }
-      ]
-    },
-    {
       "ticket": "122769",
       "sheet_title": "202608(16-23)",
       "master": "Дубовой",
@@ -18748,96 +19438,6 @@
       ]
     },
     {
-      "ticket": "125129",
-      "sheet_title": null,
-      "master": null,
-      "sheet_debt": null,
-      "sheet_total": null,
-      "sheet_paid": null,
-      "crm_debt": 1000.0,
-      "crm_paid": 1000.0,
-      "crm_total": 2000.0,
-      "crm_status": "Готов",
-      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/125129",
-      "report_amount": null,
-      "flag": "open",
-      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
-      "sheet_url": null,
-      "crm_feed_at": "2026-11-06T06:49:33.376359+00:00",
-      "on_pay_list": 1,
-      "decision_status": null,
-      "decision_code": null,
-      "decision_by": null,
-      "decision_at": null,
-      "live_feed": [
-        {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил статус на Готов"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Заказ готов"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "125129 готово полка 28"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Інна Балта",
-          "text": "Исходящий"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "J",
-          "text": "Изменил статус на Ожидает запчастей"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "J",
-          "text": "Запчасть отгружена под ремонт"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Система",
-          "text": "Изменил статус на В процессе ремонта"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "J",
-          "text": "Ожидаемая запчасть была принята"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "J",
-          "text": "Отправлен запрос на покупку запчасти: Запчасти.. Ожидаем ответ."
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "Система",
-          "text": "Изменил статус на Ожидает запчастей"
-        },
-        {
-          "date": "5 Ноя.",
-          "author": "J",
-          "text": "Изменил статус на В процессе ремонта"
-        },
-        {
-          "date": "4 Ноя.",
-          "author": "Букулеско Маргарита",
-          "text": "Изменил статус на Ожидает запчастей"
-        },
-        {
-          "date": "",
-          "author": "Букулеско Маргарита",
-          "text": "SMS : Замовлення ИБП для роутера, №125129 прийнято. ☎ 0931703105"
-        }
-      ]
-    },
-    {
       "ticket": "114970",
       "sheet_title": null,
       "master": null,
@@ -18949,6 +19549,131 @@
           "date": "",
           "author": "Ефимов Игорь Дмитрович",
           "text": "SMS : Замовлення Пылесос Philips, №114970 прийнято. ☎ +380931708682"
+        }
+      ]
+    },
+    {
+      "ticket": "124909",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 800.0,
+      "crm_paid": 1000.0,
+      "crm_total": 1800.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124909",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:46.792990+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "SMS : Ваше замовлення №124909 готово. Вартість ремонту 800 грн."
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "8 Ноя.",
+          "author": "Дубовой Юрий Владимирович",
+          "text": "Заказ перемещен на Левитан Центральный (Левитан Центральный)"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Букулеско Маргарита",
+          "text": "Изменил статус на У курьера ГОТОВ"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Букулеско Маргарита",
+          "text": "124909 готово полка 26"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "J",
+          "text": "Изменил статус на Принят в ремонт"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "J",
+          "text": "Запчасть отгружена под ремонт"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Система",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "J",
+          "text": "Ожидаемая запчасть была принята"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "J",
+          "text": "Отправлен запрос на покупку запчасти: Запчасти.. Ожидаем ответ."
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Система",
+          "text": "Изменил статус на Ожидает запчастей"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "J",
+          "text": "Изменил статус на В процессе ремонта"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Інна Балта",
+          "text": "124909 узгодити заміна амбюшур 1300 грн, передплата 1000, також якщо хочуть можемо ще замінити накладку оголівя це +500 по термінах 3-5 днів"
+        },
+        {
+          "date": "29 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Галанчук Вадим"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "Заказ перемещен на Каретный Центральный (Перемещено по сроку давности)"
+        },
+        {
+          "date": "27 Окт.",
+          "author": "Демина Виктория",
+          "text": "п26"
+        },
+        {
+          "date": "24 Окт.",
+          "author": "Інна Балта",
+          "text": "Исходящий"
+        },
+        {
+          "date": "24 Окт.",
+          "author": "Інна Балта",
+          "text": "Входящий"
         }
       ]
     },
@@ -19534,6 +20259,136 @@
           "date": "12 Окт.",
           "author": "Букулеско Маргарита",
           "text": "СКАЙ"
+        }
+      ]
+    },
+    {
+      "ticket": "124896",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 750.0,
+      "crm_paid": 0.0,
+      "crm_total": 750.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/124896",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:48.026260+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №124896 готово. Вартість ремонту 750 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "124896 чистка смазка заточка ножевого блока, готов, 750, п 23"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Не дозвонились"
+        },
+        {
+          "date": "30 Окт.",
+          "author": "Перебейнос Игорь",
+          "text": "Исходящий"
+        },
+        {
+          "date": "28 Окт.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Плачковский Александр"
+        },
+        {
+          "date": "24 Окт.",
+          "author": "Інна Балта",
+          "text": "П23"
+        },
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Замовлення машинка для стрижки MOSER 1586, №124896 прийнято. ☎ 0931708353"
+        }
+      ]
+    },
+    {
+      "ticket": "125076",
+      "sheet_title": null,
+      "master": null,
+      "sheet_debt": null,
+      "sheet_total": null,
+      "sheet_paid": null,
+      "crm_debt": 750.0,
+      "crm_paid": 0.0,
+      "crm_total": 750.0,
+      "crm_status": "Готов",
+      "crm_url": "https://itserviceoutsourcing.gincore.net/orders/125076",
+      "report_amount": null,
+      "flag": "open",
+      "flag_reason": "Дебиторка в CRM, в отчётах мастеров нет",
+      "sheet_url": null,
+      "crm_feed_at": "2026-11-09T06:38:49.217845+00:00",
+      "on_pay_list": 1,
+      "decision_status": null,
+      "decision_code": null,
+      "decision_by": null,
+      "decision_at": null,
+      "live_feed": [
+        {
+          "date": "",
+          "author": "Інна Балта",
+          "text": "SMS : Ваше замовлення №125076 готово. Вартість ремонту 750 грн."
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Изменил статус на Готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "Заказ готов"
+        },
+        {
+          "date": "7 Ноя.",
+          "author": "Інна Балта",
+          "text": "125076 готов, чистка интерфейсных контактов, работа 750 грн, 16"
+        },
+        {
+          "date": "6 Ноя.",
+          "author": "Златіна Аля",
+          "text": "Изменил мастера на Тарасенко Игорь Викторович"
+        },
+        {
+          "date": "2 Ноя.",
+          "author": "Златіна Аля",
+          "text": "п16"
+        },
+        {
+          "date": "",
+          "author": "Златіна Аля",
+          "text": "SMS : Замовлення ПК, №125076 прийнято. ☎ 0931708353"
         }
       ]
     },
@@ -20720,11 +21575,11 @@
     }
   ],
   "debt_table_counts": {
-    "total": 135,
+    "total": 142,
     "red": 56,
     "yellow": 30,
-    "open": 46,
-    "mismatch": 3,
+    "open": 54,
+    "mismatch": 2,
     "pending": 0,
     "rework": 0
   },
@@ -20881,6 +21736,15 @@
       "sheets_tickets": 412,
       "source": "verify-all",
       "updated_at": "2026-11-06T07:32:11.547980+00:00"
+    },
+    {
+      "day": "2026-11-09",
+      "crm_debt_sum": 193075.0,
+      "sheets_debt_sum": 693417.0,
+      "crm_orders": 86,
+      "sheets_tickets": 412,
+      "source": "verify-all",
+      "updated_at": "2026-11-09T06:50:32.825998+00:00"
     }
   ],
   "debt_baseline": {
@@ -20888,7 +21752,7 @@
     "sheets_debt_sum": 693417.0,
     "sheets_tickets": 412
   },
-  "debt_verify_message": "В таблице 135 (жёлтых 30, красных 56, open 46, mismatch 3)",
+  "debt_verify_message": "В таблице 142 (жёлтых 30, красных 56, open 54, mismatch 2)",
   "debt_inbox": {
     "url": "https://jarvis-debt-inbox.isaev-denis-igorevih.workers.dev",
     "write_key": "43f3170df67b73786dcc3c1512b113ff94b7caaec2696a8a",
@@ -20951,8 +21815,8 @@
   },
   "counts": {
     "upsell_sheets": 58,
-    "debt_table": 135,
-    "debt_daily": 17,
+    "debt_table": 142,
+    "debt_daily": 18,
     "pending": 0,
     "rework": 0
   }
