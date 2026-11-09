@@ -461,6 +461,11 @@ _PAREN_LABEL_AMT = re.compile(
     rf"^(?P<label>.+?)\s+(?P<sign>[+\-−–])?\s*(?P<amount>{MONEY_NUM})\s*(?:грн|uah|₴)\.?\s*$",
     re.I,
 )
+# «125135 провод 100» — квитанция, название, сумма в конце БЕЗ «грн» (только если начинается с № квитанции)
+_PAREN_ORDER_LABEL_BARE = re.compile(
+    rf"^(?P<order>\d{{4,}})\s+(?P<label>\D.*?)\s+(?P<amount>{MONEY_NUM})\s*$",
+    re.I,
+)
 _PAREN_HAS_AMT = re.compile(
     rf"(?:^|[+\-−–]\s*|(?<=\s))({MONEY_NUM})\s*(?:грн|uah|₴)\b",
     re.I,
@@ -516,6 +521,12 @@ def _parse_paren_breakdown_item(
         if val is not None and abs(val) >= 1e-9:
             return _op(parent_sign * abs(val), order_id=m.group("order"))
 
+    m = _PAREN_ORDER_LABEL_BARE.match(part)
+    if m:
+        val = parse_money(m.group("amount"))
+        if val is not None and abs(val) >= 1e-9:
+            return _op(parent_sign * abs(val), order_id=m.group("order"))
+
     m = _PAREN_LABEL_AMT.match(part)
     if m:
         val = parse_money(m.group("amount"))
@@ -537,8 +548,10 @@ def _merge_paren_parts_without_amount(parts: list[str]) -> list[str]:
     merged: list[str] = []
     buf: list[str] = []
     for part in parts:
-        if _PAREN_HAS_AMT.search(part) or re.match(
-            rf"^[+\-−–]\s*{MONEY_NUM}", part
+        if (
+            _PAREN_HAS_AMT.search(part)
+            or re.match(rf"^[+\-−–]\s*{MONEY_NUM}", part)
+            or _PAREN_ORDER_LABEL_BARE.match(part)
         ):
             chunk = _norm_space(" ".join([*buf, part])) if buf else part
             merged.append(chunk)

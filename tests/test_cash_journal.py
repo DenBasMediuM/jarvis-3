@@ -713,3 +713,35 @@ def test_find_supplier_order_id_helper():
     )
     assert GincoreClient.resolve_supplier_id_from_form(form, "Prom.ua") == "95"
 
+
+
+def test_paren_breakdown_without_grn_splits_parts_by_order():
+    """«-700 грн Вова ЗЧ (125135 провод 100, …)» — суммы позиций без «грн»."""
+    from modules.cash_journal.parser import is_parts_attach_line, reconcile_cash_journal
+
+    text = (
+        "Касса: 1000\n"
+        "-700 грн Вова ЗЧ (125135 провод 100, 124764 провод юсб 150, 124877 шлейф тачпад 150, "
+        "124992 кнопки 200, 125135 зч 100 )\n"
+        "Касса: 300"
+    )
+    r = reconcile_cash_journal(text)
+    w = r.get("cash_journal") or r
+    parts = [l for l in w["lines"] if is_parts_attach_line(l)]
+    assert [(l["order_id"], l["amount"]) for l in parts] == [
+        ("125135", 100.0),
+        ("124764", 150.0),
+        ("124877", 150.0),
+        ("124992", 200.0),
+        ("125135", 100.0),
+    ]
+    assert w["closing_cash"] == 300.0
+
+
+def test_paren_bare_amount_needs_matching_total():
+    """Без «грн» делим только если сумма позиций сходится с итогом строки."""
+    from modules.cash_journal.parser import is_parts_attach_line, reconcile_cash_journal
+
+    r = reconcile_cash_journal("Касса: 1000\n-700 грн Вова ЗЧ (125135 провод 100, 124764 кнопки 150)")
+    w = r.get("cash_journal") or r
+    assert not [l for l in w["lines"] if is_parts_attach_line(l) and l["amount"] in (100.0, 150.0)]
