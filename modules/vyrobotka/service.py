@@ -50,6 +50,11 @@ VERIFY_PAUSE_S = 0.75
 VERIFY_BATCH_EVERY = 20
 VERIFY_BATCH_PAUSE_S = 4.0
 CRM_LIST_PAGE_PAUSE_S = 0.4
+# Защита от неполной выгрузки списка CRM: если квитанций в фильтре стало
+# меньше этой доли от последнего дня (при базе ≥ CRM_LIST_GUARD_MIN_PREV),
+# не снимаем квитанции с pay-list и не пишем точку дня.
+CRM_LIST_GUARD_RATIO = 0.6
+CRM_LIST_GUARD_MIN_PREV = 10
 
 # Фильтр списка ремонтов = «Ожидаемая сумма оплаты» в колонке «Оплачено».
 # https://itserviceoutsourcing.gincore.net/orders?other=pay&dep=…#show_repair_orders
@@ -1007,6 +1012,7 @@ class VyrobotkaService:
             page_pause_s=CRM_LIST_PAGE_PAUSE_S,
         )
         pay_rows = list(pay.get("rows") or [])
+        crm_list_warning = await self._crm_pay_list_warning(pay)
         on_list = await self._merge_crm_pay_list_into_ledger(
             pay_rows, base_url=str(getattr(client, "base_url", "") or "")
         )
@@ -1018,7 +1024,11 @@ class VyrobotkaService:
         sheet_merged = await self._merge_sheet_into_ledger(underpaid_all)
 
         # Квитанции, которые были на pay-list, а сейчас нет — сбросить on_pay_list
-        existing = await self.db.vyrobotka_list_debt_ledger(active_only=False)
+        existing = (
+            []
+            if crm_list_warning
+            else await self.db.vyrobotka_list_debt_ledger(active_only=False)
+        )
         flipped_off: set[str] = set()
         for row in existing:
             oid = str(row.get("ticket") or "")
@@ -1166,17 +1176,23 @@ class VyrobotkaService:
             done=len(candidates),
             message="Считаю общую дебиторку CRM…",
         )
-        snap = await self._snapshot_debt_daily(
-            client,
-            source=f"verify-{mode}",
-            crm_debt_sum=float(pay.get("expected_payment_sum") or 0),
-            crm_orders=int(pay.get("orders") or pay.get("listed_total") or 0),
+        snap = (
+            None
+            if crm_list_warning
+            else await self._snapshot_debt_daily(
+                client,
+                source=f"verify-{mode}",
+                crm_debt_sum=float(pay.get("expected_payment_sum") or 0),
+                crm_orders=int(pay.get("orders") or pay.get("listed_total") or 0),
+            )
         )
         snap_msg = (
             f" · CRM {snap['crm_debt_sum']:.0f} / отчёты {snap['sheets_debt_sum']:.0f}"
             if snap
             else ""
         )
+        if crm_list_warning:
+            snap_msg += f" · ⚠ {crm_list_warning}"
         prefix = "Сверка (новые)" if mode == "new" else "Сверка"
         await self.db.vyrobotka_set_debt_verify_state(
             status="idle",
@@ -1193,6 +1209,35 @@ class VyrobotkaService:
             finished_at=_now(),
         )
         await self._safe_export_pages()
+
+    async def _crm_pay_list_warning(self, pay: dict[str, Any]) -> str | None:
+        """Текст предупреждения, если список CRM other=pay выглядит неполным."""
+        orders = int(pay.get("orders") or 0)
+        if pay.get("complete") is False:
+            return (
+                f"список CRM неполный ({orders} из {pay.get('listed_total')}, "
+                f"стоп: {pay.get('stop_reason')}) — точка дня не записана, "
+                "квитанции с pay-list не сняты"
+            )
+        today = date.today().isoformat()
+        prev = [
+            r
+            for r in await self.db.vyrobotka_list_debt_daily(limit=10)
+            if str(r.get("day") or "") < today and int(r.get("crm_orders") or 0) > 0
+        ]
+        if not prev:
+            return None
+        prev_orders = int(prev[-1].get("crm_orders") or 0)
+        if (
+            prev_orders >= CRM_LIST_GUARD_MIN_PREV
+            and orders < prev_orders * CRM_LIST_GUARD_RATIO
+        ):
+            return (
+                f"в фильтре CRM {orders} квитанций против {prev_orders} "
+                f"({prev[-1].get('day')}) — похоже на неполную выгрузку; "
+                "точка дня не записана, квитанции с pay-list не сняты"
+            )
+        return None
 
     @staticmethod
     def _ledger_verify_report(table: list[dict[str, Any]]) -> dict[str, Any]:

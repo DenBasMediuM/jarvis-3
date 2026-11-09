@@ -2319,48 +2319,74 @@ class GincoreClient:
         crm_params: dict[str, Any] | None = None,
         page_pause_s: float = 0.4,
     ) -> dict[str, Any]:
-        """Все страницы фильтра недоплат: список квитанций + суммы."""
+        """Все страницы фильтра недоплат: список квитанций + суммы.
+
+        Пагинация не зависит только от «Всего: N» в подвале: если подвал не
+        распознан (count=0), идём дальше, пока страница полная (как первая).
+        Останавливаемся, когда страница пустая или не дала новых квитанций.
+        """
         import asyncio
 
         params = dict(crm_params or {})
         meta = await self._repair_orders_page(crm_params=params, page=1)
         footer_total = int(meta.get("count") or 0)
-        chunk = self.parse_repair_orders_payment_totals(meta.get("html") or "")
-        all_rows: list[dict[str, Any]] = list(chunk.get("rows") or [])
-        totals = {
-            "orders": int(chunk["orders"]),
-            "cost_sum": float(chunk["cost_sum"]),
-            "paid_sum": float(chunk["paid_sum"]),
-            "expected_payment_sum": float(chunk["expected_payment_sum"]),
-        }
+        first_rows = list(
+            self.parse_repair_orders_debt_rows(meta.get("html") or "") or []
+        )
+        page_size = len(first_rows)
+        by_ticket: dict[str, dict[str, Any]] = {}
+        for r in first_rows:
+            by_ticket[str(r["ticket"])] = r
         page = 1
-        seen = totals["orders"]
-        while seen < footer_total and page < MAX_PAGES:
+        last_rows = page_size
+        stop_reason = "single_page"
+        while page < MAX_PAGES:
+            if footer_total:
+                if len(by_ticket) >= footer_total:
+                    stop_reason = "footer_total_reached"
+                    break
+            elif page_size == 0 or last_rows < page_size:
+                stop_reason = "short_page"
+                break
             page += 1
             if page_pause_s > 0:
                 await asyncio.sleep(page_pause_s)
             more = await self._repair_orders_page(crm_params=params, page=page)
-            chunk = self.parse_repair_orders_payment_totals(more.get("html") or "")
-            if not chunk["orders"]:
-                break
-            all_rows.extend(chunk.get("rows") or [])
-            totals["orders"] += int(chunk["orders"])
-            totals["cost_sum"] = round(totals["cost_sum"] + float(chunk["cost_sum"]), 2)
-            totals["paid_sum"] = round(totals["paid_sum"] + float(chunk["paid_sum"]), 2)
-            totals["expected_payment_sum"] = round(
-                totals["expected_payment_sum"] + float(chunk["expected_payment_sum"]), 2
+            rows = list(
+                self.parse_repair_orders_debt_rows(more.get("html") or "") or []
             )
-            seen = totals["orders"]
-        # dedupe by ticket (keep last)
-        by_ticket: dict[str, dict[str, Any]] = {}
-        for r in all_rows:
-            by_ticket[str(r["ticket"])] = r
+            last_rows = len(rows)
+            if not footer_total:
+                footer_total = int(more.get("count") or 0)
+            if not rows:
+                stop_reason = "empty_page"
+                break
+            new = [r for r in rows if str(r["ticket"]) not in by_ticket]
+            for r in rows:
+                by_ticket[str(r["ticket"])] = r
+            if not new:
+                stop_reason = "no_new_rows"
+                break
+        else:
+            stop_reason = "max_pages"
         rows = list(by_ticket.values())
+        cost_sum = round(sum(float(r["cost"]) for r in rows), 2)
+        paid_sum = round(sum(float(r["paid"]) for r in rows), 2)
+        debt_sum = round(sum(float(r["debt"]) for r in rows), 2)
         return {
-            **totals,
             "orders": len(rows),
+            "cost_sum": cost_sum,
+            "paid_sum": paid_sum,
+            "expected_payment_sum": debt_sum,
             "rows": rows,
             "listed_total": footer_total,
+            "pages": page,
+            "page_size": page_size,
+            "stop_reason": stop_reason,
+            "complete": (
+                (not footer_total or len(rows) >= footer_total)
+                and stop_reason != "max_pages"
+            ),
             "crm_params": params,
         }
 
