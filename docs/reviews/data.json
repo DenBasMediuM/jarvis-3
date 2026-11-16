@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "exported_at": "2026-11-05T05:59:57.550242+00:00",
+  "exported_at": "2026-11-16T05:58:58.339774+00:00",
   "source": "jarvis-reviews",
   "branches": [
     {
@@ -4233,31 +4233,31 @@
   ],
   "google_latest": [
     {
-      "id": 28,
-      "day": "2026-11-04",
+      "id": 31,
+      "day": "2026-11-13",
       "branch_id": "karetnaya",
       "rating": 3.9,
-      "review_count": 835,
+      "review_count": 836,
       "noted_by": "zlatal",
-      "noted_at": "2026-11-04T10:53:35.189Z"
+      "noted_at": "2026-11-13T12:00:46.304Z"
     },
     {
-      "id": 30,
-      "day": "2026-11-04",
+      "id": 33,
+      "day": "2026-11-13",
       "branch_id": "levitana",
       "rating": 3.0,
       "review_count": 10,
       "noted_by": "zlatal",
-      "noted_at": "2026-11-04T10:53:35.189Z"
+      "noted_at": "2026-11-13T12:00:46.304Z"
     },
     {
-      "id": 29,
-      "day": "2026-11-04",
+      "id": 32,
+      "day": "2026-11-13",
       "branch_id": "segedskaya",
       "rating": 4.3,
       "review_count": 236,
       "noted_by": "zlatal",
-      "noted_at": "2026-11-04T10:53:35.189Z"
+      "noted_at": "2026-11-13T12:00:46.304Z"
     }
   ],
   "google_series": {
@@ -4267,7 +4267,8 @@
       "2026-10-26",
       "2026-11-01",
       "2026-11-03",
-      "2026-11-04"
+      "2026-11-04",
+      "2026-11-13"
     ],
     "by_branch": {
       "karetnaya": [
@@ -4306,6 +4307,12 @@
           "rating": 3.9,
           "review_count": 835,
           "noted_at": "2026-11-04T10:53:35.189Z"
+        },
+        {
+          "day": "2026-11-13",
+          "rating": 3.9,
+          "review_count": 836,
+          "noted_at": "2026-11-13T12:00:46.304Z"
         }
       ],
       "levitana": [
@@ -4344,6 +4351,12 @@
           "rating": 3.0,
           "review_count": 10,
           "noted_at": "2026-11-04T10:53:35.189Z"
+        },
+        {
+          "day": "2026-11-13",
+          "rating": 3.0,
+          "review_count": 10,
+          "noted_at": "2026-11-13T12:00:46.304Z"
         }
       ],
       "segedskaya": [
@@ -4382,6 +4395,12 @@
           "rating": 4.3,
           "review_count": 236,
           "noted_at": "2026-11-04T10:53:35.189Z"
+        },
+        {
+          "day": "2026-11-13",
+          "rating": 4.3,
+          "review_count": 236,
+          "noted_at": "2026-11-13T12:00:46.304Z"
         }
       ]
     }
@@ -4393,7 +4412,8 @@
       "2026-10-26",
       "2026-11-01",
       "2026-11-03",
-      "2026-11-04"
+      "2026-11-04",
+      "2026-11-13"
     ],
     "total": [
       {
@@ -4419,6 +4439,10 @@
       {
         "day": "2026-11-04",
         "count": 31
+      },
+      {
+        "day": "2026-11-13",
+        "count": 7
       }
     ],
     "by_manager": {
@@ -4446,6 +4470,10 @@
         {
           "day": "2026-11-04",
           "count": 0
+        },
+        {
+          "day": "2026-11-13",
+          "count": 0
         }
       ],
       "zlatal": [
@@ -4472,6 +4500,10 @@
         {
           "day": "2026-11-04",
           "count": 31
+        },
+        {
+          "day": "2026-11-13",
+          "count": 7
         }
       ]
     }
@@ -4479,18 +4511,18 @@
   "outcome_counts": {
     "will_review": 6,
     "no_answer": 5,
-    "wont_review": 25,
+    "wont_review": 32,
     "unhappy": 1
   },
   "managers": [
     {
       "manager": "zlatal",
-      "total": 32,
+      "total": 39,
       "will_review": 5,
       "no_answer": 1,
-      "wont_review": 25,
+      "wont_review": 32,
       "unhappy": 1,
-      "will_review_rate": 0.156
+      "will_review_rate": 0.128
     },
     {
       "manager": "demo",
@@ -4502,13 +4534,13 @@
       "will_review_rate": 0.2
     }
   ],
-  "calls_total": 37,
-  "will_review_rate": 0.162,
+  "calls_total": 44,
+  "will_review_rate": 0.136,
   "counts": {
     "pool": 50,
     "batch": 50,
     "queue_size": 10,
     "branches": 3,
-    "calls": 37
+    "calls": 44
   }
 }
