@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import asyncio
 import json
 from datetime import date, datetime, timezone
@@ -625,9 +627,10 @@ class VyrobotkaService:
                 try:
                     await self._run_sync(full=full)
                 except Exception as exc:  # noqa: BLE001
+                    logging.getLogger(__name__).exception("Фоновая задача упала")
                     await self.db.vyrobotka_set_sync_state(
                         status="error",
-                        message=str(exc),
+                        message=(f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__),
                         finished_at=_now(),
                     )
 
@@ -897,9 +900,10 @@ class VyrobotkaService:
                 try:
                     await self._run_debt_verify(mode_norm)
                 except Exception as exc:  # noqa: BLE001
+                    logging.getLogger(__name__).exception("Фоновая задача упала")
                     await self.db.vyrobotka_set_debt_verify_state(
                         status="error",
-                        message=str(exc),
+                        message=(f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__),
                         finished_at=_now(),
                         cancel_requested=0,
                     )

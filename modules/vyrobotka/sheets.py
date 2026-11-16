@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -11,6 +12,10 @@ from google.oauth2 import service_account
 
 SCOPES = ("https://www.googleapis.com/auth/spreadsheets.readonly",)
 SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets"
+_TIMEOUT = httpx.Timeout(90.0, connect=20.0)
+_MAX_ATTEMPTS = 4
+_BACKOFF = (3.0, 10.0, 30.0)
+_RETRY_STATUS = {429, 500, 502, 503, 504}
 
 
 class SheetsError(RuntimeError):
@@ -51,10 +56,30 @@ class GoogleSheetsClient:
         *,
         params: dict[str, Any] | list[tuple[str, str]] | None = None,
     ) -> dict[str, Any]:
-        headers = {"Authorization": f"Bearer {self._token()}"}
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            res = await client.get(url, headers=headers, params=params)
-            data = res.json() if res.content else {}
+        # Google Sheets периодически подвисает/отвечает 429/5xx — повторяем с паузой,
+        # чтобы разовый сбой сети не валил всю синхронизацию.
+        last_exc: Exception | None = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            headers = {"Authorization": f"Bearer {self._token()}"}
+            try:
+                async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+                    res = await client.get(url, headers=headers, params=params)
+            except httpx.TransportError as exc:  # таймауты, обрывы соединения
+                last_exc = exc
+                if attempt < _MAX_ATTEMPTS:
+                    await asyncio.sleep(_BACKOFF[attempt - 1])
+                    continue
+                raise SheetsError(
+                    f"Google Sheets API недоступен после {_MAX_ATTEMPTS} попыток: "
+                    f"{type(exc).__name__}: {exc}".rstrip(": ")
+                ) from exc
+            if res.status_code in _RETRY_STATUS and attempt < _MAX_ATTEMPTS:
+                await asyncio.sleep(_BACKOFF[attempt - 1])
+                continue
+            try:
+                data = res.json() if res.content else {}
+            except ValueError:
+                data = {}
             if res.status_code >= 400:
                 err = data.get("error") if isinstance(data, dict) else None
                 msg = ""
@@ -64,6 +89,7 @@ class GoogleSheetsClient:
             if not isinstance(data, dict):
                 raise SheetsError("Неожиданный ответ Sheets API")
             return data
+        raise SheetsError(f"Google Sheets API: {last_exc!r}")
 
     async def probe(self, spreadsheet_id: str) -> dict[str, Any]:
         """Проверка доступа: метаданные таблицы + список листов."""

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import json
 from datetime import date, datetime, timezone
 from typing import Any
@@ -240,9 +242,10 @@ class BufferQualityService:
                 "sync": await self.get_sync_state(),
             }
         except Exception as exc:  # noqa: BLE001
+            logging.getLogger(__name__).exception("Фоновая задача упала")
             await self.db.buffer_quality_set_sync_state(
                 status="error",
-                message=str(exc),
+                message=(f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__),
                 finished_at=datetime.now(timezone.utc).isoformat(),
             )
             raise

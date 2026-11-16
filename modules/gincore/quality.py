@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import asyncio
 import json
 import re
@@ -1884,9 +1886,10 @@ class QualityService:
                 queued=0,
             )
         except Exception as exc:  # noqa: BLE001
+            logging.getLogger(__name__).exception("Фоновая задача упала")
             await self.db.quality_set_sync_state(
                 status="error",
-                message=str(exc),
+                message=(f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__),
                 finished_at=datetime.now(timezone.utc).isoformat(),
             )
         finally:
