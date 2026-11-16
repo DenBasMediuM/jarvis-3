@@ -745,3 +745,20 @@ def test_paren_bare_amount_needs_matching_total():
     r = reconcile_cash_journal("Касса: 1000\n-700 грн Вова ЗЧ (125135 провод 100, 124764 кнопки 150)")
     w = r.get("cash_journal") or r
     assert not [l for l in w["lines"] if is_parts_attach_line(l) and l["amount"] in (100.0, 150.0)]
+
+
+def test_paren_breakdown_period_separator_and_grn_items():
+    """Позиции через «грн.» и «,», № квитанции + количество в названии, «+50 грн курьер»."""
+    from modules.cash_journal.parser import is_parts_attach_line, reconcile_cash_journal
+
+    line = (
+        "-3422 грн (124626 2 набора амбушюр 1081 грн. Кабель USB для зарядки часов Garmin "
+        "на сервис 277 грн, 125077 жесткий диск BarraCuda 2014 грн +50 грн курьер)"
+    )
+    r = reconcile_cash_journal("Касса: 4000\n" + line + "\nКасса: 578")
+    w = r.get("cash_journal") or r
+    ops = [(l.get("order_id"), l["amount"]) for l in w["lines"] if l.get("action") == "cash_out"]
+    assert ops == [("124626", 1081.0), (None, 277.0), ("125077", 2014.0), (None, 50.0)]
+    attach = [l["order_id"] for l in w["lines"] if is_parts_attach_line(l)]
+    assert attach == ["124626", "125077"]
+    assert w["closing_cash"] == 578.0

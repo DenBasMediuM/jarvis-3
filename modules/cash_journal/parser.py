@@ -500,6 +500,13 @@ def _parse_paren_breakdown_item(
             raw=part,
         )
 
+    # «124626 2 набора амбушюр 1081 грн»: сумма с валютой в конце важнее числа сразу после №
+    m = _PAREN_ORDER_LABEL_AMT.match(part)
+    if m:
+        val = parse_money(m.group("amount"))
+        if val is not None and abs(val) >= 1e-9:
+            return _op(parent_sign * abs(val), order_id=m.group("order"))
+
     m = _PAREN_ORDER_AMT.match(part)
     if m:
         val = parse_money(m.group("amount"))
@@ -568,7 +575,9 @@ def _merge_paren_parts_without_amount(parts: list[str]) -> list[str]:
 def _split_paren_breakdown_parts(inner: str) -> list[str]:
     """Split «a, b, c + d» into items (comma and trailing signed amounts)."""
     out: list[str] = []
-    for chunk in re.split(r"\s*,\s*", inner):
+    # Разделители позиций: запятая, «;» и точка после суммы с валютой («… 1081 грн. Кабель …»)
+    inner = re.sub(r"(?<=грн|uah)\.\s+|(?<=₴)\.\s+", ", ", inner, flags=re.I)
+    for chunk in re.split(r"\s*[,;]\s*", inner):
         chunk = _norm_space(chunk)
         if not chunk:
             continue
@@ -1049,10 +1058,11 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
         return True
     if re.match(rf"^{oid}\s*[-−–]\s*.+,\s*\d+(?:[.,]\d+)?\s*$", core):
         return True
-    # «122084 енкодер глайди 700» / «122361 акб 700»
+    # «122084 енкодер глайди 700» / «122361 акб 700» / «125077 жесткий диск 2014 грн»
     m = re.match(
-        rf"^{oid}\s+(?P<label>(?![+\-−–]).+?)\s+(?P<amt>\d+(?:[.,]\d+)?)\s*$",
+        rf"^{oid}\s+(?P<label>(?![+\-−–]).+?)\s+(?P<amt>\d+(?:[.,]\d+)?)\s*(?:грн|uah|₴)?\.?\s*$",
         core,
+        re.I,
     )
     if m and not _is_payment_label(m.group("label")):
         return True
