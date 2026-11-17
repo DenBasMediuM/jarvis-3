@@ -30,6 +30,15 @@ log = logging.getLogger(__name__)
 GincoreFactory = Callable[[], Awaitable[Any]]
 
 MAX_REPAIR_DAYS = 10
+# Прозваниваем только успешно закрытые: статус «Выдан» (не «Выдан без ремонта» и т.п.),
+# без долга, все филиалы кроме Сахарова.
+POOL_STATUS_ID = "40"  # «Выдан»
+EXCLUDED_BRANCH_MARKERS = ("сахаров",)
+
+
+def _excluded_branch(text: str | None) -> bool:
+    t = (text or "").casefold()
+    return any(m in t for m in EXCLUDED_BRANCH_MARKERS)
 LOOKBACK_DAYS = 21
 # Пул кандидатов в снимке; витрина сама держит «окно» из QUEUE_SIZE и доливает при обработке.
 POOL_SIZE = 50
@@ -286,7 +295,7 @@ class ReviewsService:
         result = await client.repair_orders(
             date_from=date_from.isoformat(),
             date_to=date_to.isoformat(),
-            filters={"date_type": "issued"},
+            filters={"date_type": "issued", "status": POOL_STATUS_ID},
             group_by="list",
             max_sample=400,
         )
@@ -301,9 +310,17 @@ class ReviewsService:
         candidates: list[dict[str, Any]] = []
         seen_phones: set[str] = set()
 
+        skipped = {"status": 0, "branch": 0, "debt": 0, "long": 0}
         for o in orders:
             ticket = str(o.get("id") or o.get("ticket") or "").strip()
             if not ticket.isdigit() or ticket in called_tickets:
+                continue
+            status = str(o.get("status") or "").strip()
+            if status and status.casefold() != "выдан":
+                skipped["status"] += 1
+                continue
+            if _excluded_branch(str(o.get("location") or "")):
+                skipped["branch"] += 1
                 continue
             # accepted_at в списке CRM — это имя приёмщика, не дата; срок ремонта считаем после enrich
             phone_raw = str(o.get("phone") or o.get("client_phone") or "")
@@ -340,6 +357,13 @@ class ReviewsService:
                 log.warning("reviews enrich %s: %s", cand.get("ticket"), exc)
                 continue
             if card is None:
+                skipped["long"] += 1
+                continue
+            if card.get("excluded_branch"):
+                skipped["branch"] += 1
+                continue
+            if float(card.get("crm_debt") or 0) > 0.5:
+                skipped["debt"] += 1  # не оплачен полностью — это дебиторка, а не «успешно закрыт»
                 continue
             pn = card.get("phone_norm") or normalize_phone(card.get("phone"))
             if pn and (pn in called_phones or any(c.get("phone_norm") == pn for c in cards)):
@@ -350,10 +374,32 @@ class ReviewsService:
                 card["phone_norm"] = pn
             cards.append(card)
 
+        # Не потерять необработанные (в т.ч. отложенные) квитанции прошлого пула:
+        # результаты звонков уже в reviews_calls, всё остальное переносим в конец нового пула.
+        carried = 0
+        try:
+            prev_cards = json.loads((existing or {}).get("cards_json") or "[]")
+        except json.JSONDecodeError:
+            prev_cards = []
+        have = {str(c.get("ticket")) for c in cards}
+        for pc in prev_cards if isinstance(prev_cards, list) else []:
+            t = str(pc.get("ticket") or "")
+            pn = pc.get("phone_norm") or normalize_phone(pc.get("phone"))
+            if not t or t in have or t in called_tickets or (pn and pn in called_phones):
+                continue
+            if _excluded_branch(pc.get("location")) or pc.get("excluded_branch"):
+                continue
+            cards.append(pc)
+            have.add(t)
+            carried += 1
+
         tickets = [str(c["ticket"]) for c in cards]
         msg = (
             f"Пул {today}: {len(cards)} кандидатов "
-            f"(витрина держит {QUEUE_SIZE} в очереди; окно {LOOKBACK_DAYS}д, ремонт ≤{MAX_REPAIR_DAYS}д)"
+            f"(витрина держит {QUEUE_SIZE} в очереди; окно {LOOKBACK_DAYS}д, ремонт ≤{MAX_REPAIR_DAYS}д; "
+            f"только «Выдан» без долга, без Сахарова; отсеяно: Сахарова {skipped['branch']}, "
+            f"с долгом {skipped['debt']}, другой статус {skipped['status']}, долгий ремонт {skipped['long']}; "
+            f"перенесено из прошлого пула {carried})"
         )
         await self.db.reviews_set_batch(day=today, tickets=tickets, cards=cards, message=msg)
         await self._safe_export()
@@ -416,7 +462,10 @@ class ReviewsService:
         base = getattr(client, "base_url", "") or app_settings.default_gincore_base_url
         crm_url = f"{base.rstrip('/')}/orders#edit_order_form?id={ticket}&kind=repair"
         branch_id = cand.get("branch_id") or guess_branch_id(cand.get("location"))
+        m_acc = re.search(r"Был принят:(.{0,400})", html, re.S)
+        excluded = _excluded_branch(re.sub(r"<[^>]+>", " ", m_acc.group(1)) if m_acc else "")
         return {
+            "excluded_branch": excluded,
             **cand,
             "phone": phone,
             "phone_norm": normalize_phone(phone),
