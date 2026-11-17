@@ -416,6 +416,20 @@ class ReviewsService:
                 continue
             if float(pc.get("crm_debt") or 0) > 0.5:
                 continue
+            if "accepted_where" not in pc:
+                # карточка из старого пула — филиал там угадан по складу; уточняем по карточке CRM
+                try:
+                    fresh = await self._enrich_card(client, {k: pc.get(k) for k in (
+                        "ticket", "client_name", "device", "status", "location", "phone", "phone_norm")})
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("reviews re-enrich %s: %s", t, exc)
+                    fresh = None
+                if fresh is not None:
+                    if fresh.get("excluded_branch"):
+                        skipped["branch"] += 1
+                        continue
+                    pc = {**pc, **{k: fresh.get(k) for k in (
+                        "accepted_where", "branch_id", "branch_name", "review_url", "excluded_branch")}}
             cards.append(pc)
             have.add(t)
             carried += 1
@@ -489,12 +503,21 @@ class ReviewsService:
                 client_name = m.group(1).strip()[:120]
         base = getattr(client, "base_url", "") or app_settings.default_gincore_base_url
         crm_url = f"{base.rstrip('/')}/orders#edit_order_form?id={ticket}&kind=repair"
-        branch_id = cand.get("branch_id") or guess_branch_id(cand.get("location"))
+        # Колонка «location» в списке — склад после выдачи (у всех «Каретный Клиент»),
+        # реальный филиал приёма — в карточке: «Был принят: 6 Окт. Левитан Центральный».
         m_acc = re.search(r"Был принят:(.{0,400})", html, re.S)
-        excluded = _excluded_branch(re.sub(r"<[^>]+>", " ", m_acc.group(1)) if m_acc else "")
+        acc_text = ""
+        if m_acc:
+            acc_text = re.sub(r"<[^>]+>", " ", m_acc.group(1)).replace("&nbsp;", " ")
+            acc_text = re.sub(r"\s+", " ", acc_text).strip()[:120]
+        excluded = _excluded_branch(acc_text)
+        branch_id = guess_branch_id(acc_text) if acc_text else None
+        if not branch_id:
+            branch_id = cand.get("branch_id") or guess_branch_id(cand.get("location"))
         return {
             "excluded_branch": excluded,
             **cand,
+            "accepted_where": acc_text or None,
             "phone": phone,
             "phone_norm": normalize_phone(phone),
             "client_name": client_name,
