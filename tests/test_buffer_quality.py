@@ -298,3 +298,18 @@ def test_build_assign_history_by_day():
     assert h[0]["gap_days"] == 2 and h[0]["total"] == 3
     assert [(m["display_name"], m["assigned"], m["quality"]) for m in h[0]["masters"]] == [("B", 2, "bad"), ("A", 1, "ok")]
     assert h[1]["masters"] == []
+
+
+def test_reviews_feed_day_parsing():
+    import core.main  # noqa: F401  (порядок импорта как в приложении)
+    from datetime import date as _d
+
+    from modules.reviews.service import _ISSUED_RE, _feed_day
+
+    today = _d(2026, 1, 10)
+    assert _feed_day("16\xa0Ноя.", today=today) == _d(2025, 11, 16)
+    assert _feed_day("5 Янв.", today=today) == _d(2026, 1, 5)
+    assert _feed_day("0:55", today=today) == today
+    assert _feed_day("", today=today) is None
+    assert _ISSUED_RE.search("Изменил статус на Выдан")
+    assert not _ISSUED_RE.search("Изменил статус на Выдан без ремонта")

@@ -53,6 +53,31 @@ def _today() -> str:
     return date.today().isoformat()
 
 
+_ISSUED_RE = re.compile(r"статус на выдан(?!\s+без)", re.I)
+
+
+def _feed_day(raw: str | None, *, today: date | None = None) -> date | None:
+    """Дата из живой ленты CRM: «16 Ноя.», «0:55» (сегодня), ISO/«dd.mm.yyyy»."""
+    from modules.gincore.client import parse_gincore_date
+
+    today = today or date.today()
+    s = str(raw or "").strip()
+    if not s:
+        return None
+    d = _parse_day(s)
+    if d:
+        return d
+    if re.fullmatch(r"\d{1,2}:\d{2}", s):
+        return today
+    d = parse_gincore_date(s, default_year=today.year)
+    if d and d > today:  # «28 Дек.» в январе — это прошлый год
+        try:
+            d = d.replace(year=d.year - 1)
+        except ValueError:
+            return None
+    return d
+
+
 def _parse_day(raw: str | None) -> date | None:
     if not raw:
         return None
@@ -432,10 +457,11 @@ class ReviewsService:
         meta = parse_order_page_meta(html)
         accepted = _parse_day(meta.get("accepted_at"))
         issued = None
+        # Лента — от новых к старым: первое «Изменил статус на Выдан» = дата выдачи
         for ev in feed if isinstance(feed, list) else []:
-            blob = f"{ev.get('text') or ''} {ev.get('status') or ''}".casefold()
-            if "выдач" in blob or "выдан" in blob:
-                issued = _parse_day(ev.get("date"))
+            blob = f"{ev.get('text') or ''} {ev.get('status') or ''}"
+            if _ISSUED_RE.search(blob):
+                issued = _feed_day(ev.get("date"))
                 if issued:
                     break
         if not issued:
