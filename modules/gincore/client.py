@@ -2490,7 +2490,16 @@ class GincoreClient:
         orders = self._parse_repair_order_rows(meta.get("html") or "")
         page = 1
         seen_ids = {o["id"] for o in orders if o.get("id")}
-        while len(orders) < min(count, limit) and page < MAX_PAGES:
+        # Подвал «Всего: N» в CRM бывает не распознан (count=0) — тогда листаем,
+        # пока страницы полные (как первая), без опоры на итог.
+        page_size = len(orders)
+        last_rows = page_size
+        while page < MAX_PAGES and len(orders) < limit:
+            if count:
+                if len(orders) >= count:
+                    break
+            elif page_size == 0 or last_rows < page_size:
+                break
             page += 1
             more = await self._repair_orders_page(
                 date_from=date_from,
@@ -2499,6 +2508,9 @@ class GincoreClient:
                 page=page,
             )
             chunk = self._parse_repair_order_rows(more.get("html") or "")
+            last_rows = len(chunk)
+            if not count:
+                count = int(more.get("count") or 0)
             if not chunk:
                 break
             new = 0

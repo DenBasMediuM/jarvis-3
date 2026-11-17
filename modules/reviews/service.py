@@ -389,6 +389,8 @@ class ReviewsService:
                 continue
             if _excluded_branch(pc.get("location")) or pc.get("excluded_branch"):
                 continue
+            if float(pc.get("crm_debt") or 0) > 0.5:
+                continue
             cards.append(pc)
             have.add(t)
             carried += 1

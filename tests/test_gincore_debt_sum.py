@@ -136,3 +136,27 @@ def test_pay_list_stops_when_page_param_ignored():
     data = _run(client.fetch_orders_expected_payment_list(page_pause_s=0))
     assert data["orders"] == 30
     assert data["stop_reason"] == "no_new_rows"
+
+
+def test_collect_repair_orders_pages_without_footer_total():
+    """Нет «Всего: N» в подвале — листаем, пока страницы полные."""
+    import asyncio
+
+    from modules.gincore.client import GincoreClient
+
+    pages = {1: [str(i) for i in range(100, 130)], 2: [str(i) for i in range(130, 160)], 3: ["160", "161"]}
+    c = GincoreClient("https://x", "u", "p")
+
+    async def fake_count(**kw):
+        return {"count": 0, "html": "1"}
+
+    async def fake_page(**kw):
+        return {"count": 0, "html": str(kw["page"])}
+
+    c._repair_orders_count = fake_count
+    c._repair_orders_page = fake_page
+    c._parse_repair_order_rows = lambda html: [{"id": t} for t in pages.get(int(html), [])]
+    count, orders = asyncio.run(
+        c._collect_repair_orders(date_from=None, date_to=None, crm_params={}, limit=400)
+    )
+    assert len(orders) == 62
