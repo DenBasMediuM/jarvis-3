@@ -202,6 +202,9 @@ def build_outsourcer_metrics(
         mkey = str(r.get("accepted_at") or "")[:7] or "—"
         mr = month_row(mkey)
         mr["orders"] += 1
+        if kind == "ready" and str(r.get("order_id")) not in seen_working:
+            # рабочий список Качества не включает «Готов» — готовые берём из истории
+            res["ready"] += 1
         if kind == "issued":
             res["issued"] += 1
             mr["issued"] += 1

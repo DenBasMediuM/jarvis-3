@@ -220,3 +220,21 @@ def test_sync_end_to_end(tmp_path, monkeypatch):
     # повторный прогон: старые завершённые месяцы из кэша не перекачиваются
     hist = db.s["outsource_history"]["months"]
     assert set(hist) == {"2026-08", "2026-09", "2026-10", "2026-11"} or len(hist) == 4
+
+
+def test_ready_counted_from_history_when_not_in_working():
+    from datetime import date
+
+    from modules.outsource.compute import build_outsourcer_metrics
+
+    m = build_outsourcer_metrics(
+        {"id": 1, "crm_engineer": "Андрусяк"},
+        working=[{"order_id": "1", "engineer": "Саша Андрусяк", "status": "Готов"}],
+        history=[
+            {"order_id": "1", "engineer": "Саша Андрусяк", "status": "Готов", "accepted_at": "2026-11-01"},
+            {"order_id": "2", "engineer": "Саша Андрусяк", "status": "Готов", "accepted_at": "2026-11-02"},
+        ],
+        payouts=None,
+        today=date(2026, 11, 19),
+    )
+    assert m["ready"] == 2

@@ -14,6 +14,7 @@
  *   GET  /admin/outsource/state
  */
 import {
+  OUT_DECISIONS,
   OUT_STAGES,
   OutsourceInputError,
   describeChanges,
@@ -220,6 +221,7 @@ export async function handleOutsource(ctx) {
     const id = Number(m[1]);
     const trial = await env.DB.prepare("SELECT * FROM outsource_trials WHERE id = ?").bind(id).first();
     if (!trial) throw new HttpError(404, "not_found", "Передача не найдена");
+    if (trial.result_decision) throw new HttpError(409, "already_rated", "Эта передача уже оценена");
     const body = await readJson(request);
     const r = wrapInput(HttpError, () => normalizeTrialResult(body));
     const at = nowIso();
@@ -234,7 +236,7 @@ export async function handleOutsource(ctx) {
       action: "trial_result",
       candidate_id: trial.candidate_id,
       trial_id: id,
-      text: `№${trial.ticket}: качество ${r.result_quality}/5, ${r.result_on_time ? "в срок" : "не в срок"}, ${r.result_decision}${
+      text: `№${trial.ticket}: качество ${r.result_quality}/5, ${r.result_on_time ? "в срок" : "не в срок"}, ${OUT_DECISIONS[r.result_decision] || r.result_decision}${
         r.result_comment ? ` · ${r.result_comment}` : ""
       }`,
     });

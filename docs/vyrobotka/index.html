@@ -35,6 +35,11 @@
       else if (auth.hasAccess(s.access, "processes.reviews")) active = "processes.reviews";
       else if (auth.hasAccess(s.access, "processes.reviews_stats")) active = "processes.reviews_stats";
       else if (auth.hasAccess(s.access, "processes.buffer_quality")) active = "processes.buffer_quality";
+      else if (auth.hasAccess(s.access, "processes.outsource")) {
+        // в Процессах доступен только аутсорс — сразу на его страницу
+        location.replace("../outsource/");
+        return;
+      }
       auth.applyShellNav(active);
       auth.filterProcessesTabs(s.access);
       if (want === "reviews" && auth.hasAccess(s.access, "processes.reviews")) {
