@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-19T08:10:28.401598+00:00",
+  "exported_at": "2026-11-19T12:31:38.754363+00:00",
   "source": "jarvis-outsource",
-  "generated_at": "2026-11-19T08:10:28.397152+00:00",
+  "generated_at": "2026-11-19T12:30:31.174047+00:00",
   "today": "2026-11-19",
   "window": {
     "from": "2026-08-01",
@@ -38,16 +38,353 @@
     "Свидерко Никита Михайлович",
     "Тарасенко Игорь Викторович"
   ],
-  "outsourcers": {},
+  "outsourcers": {
+    "1": {
+      "candidate_id": 1,
+      "crm_engineer": "Саша Андрусяк",
+      "bound": true,
+      "engineers_matched": [
+        "Саша Андрусяк"
+      ],
+      "in_work": 25,
+      "ready": 1,
+      "long_at_master": 10,
+      "in_work_orders": [
+        {
+          "ticket": "117923",
+          "status": "Принят на доработку",
+          "device": "инвертор гибридный",
+          "accepted_at": "2025-12-05",
+          "days_total": 349,
+          "days_at_master": 385,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/117923"
+        },
+        {
+          "ticket": "123094",
+          "status": "Принят на доработку",
+          "device": "зар.станція Powe Flu...",
+          "accepted_at": "2026-08-12",
+          "days_total": 99,
+          "days_at_master": 99,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/123094"
+        },
+        {
+          "ticket": "123824",
+          "status": "В процессе ремонта",
+          "device": "зарядная станция Vto...",
+          "accepted_at": "2026-09-09",
+          "days_total": 71,
+          "days_at_master": 69,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/123824"
+        },
+        {
+          "ticket": "124448",
+          "status": "Принят в ремонт",
+          "device": "ИБП APC",
+          "accepted_at": "2026-10-06",
+          "days_total": 44,
+          "days_at_master": 44,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124448"
+        },
+        {
+          "ticket": "124447",
+          "status": "Принят в ремонт",
+          "device": "ИБП APC",
+          "accepted_at": "2026-10-06",
+          "days_total": 44,
+          "days_at_master": 44,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124447"
+        },
+        {
+          "ticket": "124436",
+          "status": "В процессе ремонта",
+          "device": "зар. станція powerOa...",
+          "accepted_at": "2026-10-05",
+          "days_total": 45,
+          "days_at_master": 44,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124436"
+        },
+        {
+          "ticket": "124727",
+          "status": "На согласовании",
+          "device": "зарядная станция Gro...",
+          "accepted_at": "2026-10-18",
+          "days_total": 32,
+          "days_at_master": 31,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124727"
+        },
+        {
+          "ticket": "124917",
+          "status": "В процессе ремонта",
+          "device": "видеокарта MSI radeo...",
+          "accepted_at": "2026-10-26",
+          "days_total": 24,
+          "days_at_master": 21,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124917"
+        },
+        {
+          "ticket": "124130",
+          "status": "В процессе ремонта",
+          "device": "зар. станция PECRON ...",
+          "accepted_at": "2026-09-22",
+          "days_total": 58,
+          "days_at_master": 20,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124130"
+        },
+        {
+          "ticket": "125019",
+          "status": "В процессе ремонта",
+          "device": "видеокарта INN03D GE...",
+          "accepted_at": "2026-10-29",
+          "days_total": 21,
+          "days_at_master": 16,
+          "long": true,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125019"
+        },
+        {
+          "ticket": "125194",
+          "status": "В процессе ремонта",
+          "device": "инвертор  Pure sine ...",
+          "accepted_at": "2026-11-06",
+          "days_total": 13,
+          "days_at_master": 13,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125194"
+        },
+        {
+          "ticket": "125149",
+          "status": "Принят в ремонт",
+          "device": "зарядная станция OUK...",
+          "accepted_at": "2026-11-04",
+          "days_total": 15,
+          "days_at_master": 13,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125149"
+        },
+        {
+          "ticket": "125144",
+          "status": "На согласовании",
+          "device": "зарядная станция Rea...",
+          "accepted_at": "2026-11-04",
+          "days_total": 15,
+          "days_at_master": 13,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125144"
+        },
+        {
+          "ticket": "125140",
+          "status": "На диагностике",
+          "device": "Зарядная станция Fla...",
+          "accepted_at": "2026-11-04",
+          "days_total": 15,
+          "days_at_master": 13,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125140"
+        },
+        {
+          "ticket": "125305",
+          "status": "Не дозвонились",
+          "device": "зарядная станция ANK...",
+          "accepted_at": "2026-11-10",
+          "days_total": 9,
+          "days_at_master": 9,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125305"
+        },
+        {
+          "ticket": "125236",
+          "status": "Принят в ремонт",
+          "device": "зарядная станция pec...",
+          "accepted_at": "2026-11-07",
+          "days_total": 12,
+          "days_at_master": 9,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125236"
+        },
+        {
+          "ticket": "125229",
+          "status": "Принят в ремонт",
+          "device": "УПС Logic Power 1200 va",
+          "accepted_at": "2026-11-07",
+          "days_total": 12,
+          "days_at_master": 9,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125229"
+        },
+        {
+          "ticket": "125319",
+          "status": "В процессе ремонта",
+          "device": "видеокарта msi 3090",
+          "accepted_at": "2026-11-10",
+          "days_total": 9,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125319"
+        },
+        {
+          "ticket": "125478",
+          "status": "На согласовании",
+          "device": "зарядная станция brand",
+          "accepted_at": "2026-11-16",
+          "days_total": 3,
+          "days_at_master": 3,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125478"
+        },
+        {
+          "ticket": "125459",
+          "status": "В процессе ремонта",
+          "device": "зар.станція s&olab 1...",
+          "accepted_at": "2026-11-16",
+          "days_total": 3,
+          "days_at_master": 3,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125459"
+        },
+        {
+          "ticket": "125488",
+          "status": "Не дозвонились",
+          "device": "зарядная станция Eco...",
+          "accepted_at": "2026-11-17",
+          "days_total": 2,
+          "days_at_master": 2,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125488"
+        },
+        {
+          "ticket": "125477",
+          "status": "Принят в ремонт",
+          "device": "зар. станція solar p...",
+          "accepted_at": "2026-11-16",
+          "days_total": 3,
+          "days_at_master": 2,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125477"
+        },
+        {
+          "ticket": "125454",
+          "status": "Ждем оплату",
+          "device": "зарядная станция pre...",
+          "accepted_at": "2026-11-16",
+          "days_total": 3,
+          "days_at_master": 2,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125454"
+        },
+        {
+          "ticket": "125426",
+          "status": "Принят в ремонт",
+          "device": "зарядная станция Pro...",
+          "accepted_at": "2026-11-14",
+          "days_total": 5,
+          "days_at_master": 2,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125426"
+        },
+        {
+          "ticket": "125403",
+          "status": "В процессе ремонта",
+          "device": "Видеокарта Ichill in...",
+          "accepted_at": "2026-11-13",
+          "days_total": 6,
+          "days_at_master": 2,
+          "long": false,
+          "location": "Аутсорс Андрусяк",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125403"
+        }
+      ],
+      "orders_total": 76,
+      "issued": 12,
+      "refusals": 39,
+      "in_progress": 25,
+      "return_rate": 0.7647,
+      "gross": 57750.0,
+      "payouts": null,
+      "net": null,
+      "by_month": [
+        {
+          "month": "2026-08",
+          "orders": 12,
+          "issued": 4,
+          "refusals": 7,
+          "gross": 21200.0,
+          "payouts": 0.0,
+          "net": null
+        },
+        {
+          "month": "2026-09",
+          "orders": 21,
+          "issued": 7,
+          "refusals": 12,
+          "gross": 33250.0,
+          "payouts": 0.0,
+          "net": null
+        },
+        {
+          "month": "2026-10",
+          "orders": 21,
+          "issued": 1,
+          "refusals": 13,
+          "gross": 2550.0,
+          "payouts": 0.0,
+          "net": null
+        },
+        {
+          "month": "2026-11",
+          "orders": 22,
+          "issued": 0,
+          "refusals": 7,
+          "gross": 750.0,
+          "payouts": 0.0,
+          "net": null
+        }
+      ],
+      "payouts_contractor": null,
+      "payouts_matched": null
+    }
+  },
   "trials": {},
-  "history_orders": 2051,
+  "history_orders": 2069,
   "warnings": [],
   "sync": {
-    "status": "running",
-    "message": "История 2026-11: стр. 13",
-    "started_at": "2026-11-19T08:09:13.531743+00:00",
-    "finished_at": null,
-    "done": 4,
-    "total": 4
+    "status": "idle",
+    "message": "Готово: кандидатов 1, в работе у аутсорсеров 25 устр., без устройств 0, история 2069 квит., pages ок",
+    "started_at": "2026-11-19T12:29:56.527104+00:00",
+    "finished_at": "2026-11-19T12:30:31.180036+00:00",
+    "done": 2,
+    "total": 2
   }
 }
