@@ -345,9 +345,7 @@ function renderBoard() {
   }
   const q = $("#os-search").value.trim();
   const showClosed = $("#os-show-closed").checked;
-  const stages = showClosed ? STAGE_ORDER : OPEN_STAGES;
-  board.innerHTML = stages
-    .map((st) => {
+  const column = (st) => {
       const list = cands()
         .filter((c) => c.stage === st && candidateMatches(c, q))
         .sort((a, b) => String(b.stage_at).localeCompare(String(a.stage_at)));
@@ -365,11 +363,14 @@ function renderBoard() {
                 <span class="os-tags">${cardTags(c)}</span>
               </button>`;
             })
-            .join("") || `<p class="os-muted" style="font-size:.8rem;padding:4px 6px">пусто</p>`
+            .join("") || `<p class="os-muted os-col-empty">пусто</p>`
         }</div>
       </div>`;
-    })
-    .join("");
+  };
+  // основная воронка — 4 колонки во всю ширину; «Пауза» и «Отказ» — отдельной строкой ниже
+  board.innerHTML =
+    `<div class="os-board-main">${OPEN_STAGES.map(column).join("")}</div>` +
+    (showClosed ? `<div class="os-board-closed">${["paused", "lost"].map(column).join("")}</div>` : "");
   const alerts = computeAlerts();
   $("#os-todo").innerHTML = alerts.length
     ? `<div class="os-todo-card"><h3>Что сделать сейчас (${alerts.length})</h3>${alertsHtml(alerts.slice(0, 12))}${

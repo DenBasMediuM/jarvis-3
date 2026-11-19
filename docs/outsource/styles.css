@@ -59,8 +59,14 @@
   border-radius: 10px; padding: 6px 10px; background: #fff; cursor: pointer; color: var(--ink); font-weight: 600; }
 
 /* Канбан */
-.os-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 6px; }
-.os-col { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.55); padding: 8px; min-height: 120px; }
+.os-board { display: grid; gap: 10px; }
+.os-board-main { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.os-board-closed { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.os-col { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.55); padding: 8px; min-width: 0; }
+.os-col-empty { font-size: 0.8rem; padding: 2px 6px 4px; margin: 0; }
+@media (max-width: 1100px) {
+  .os-board-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .os-col-head { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 6px 8px; font-weight: 700; font-size: 0.86rem; }
 .os-col-head span { color: var(--muted); font-weight: 600; }
 .os-cards { display: grid; gap: 8px; }
@@ -134,7 +140,7 @@
 .os-table-scroll { overflow-x: auto; }
 
 @media (max-width: 720px) {
-  .os-board { grid-auto-flow: row; grid-auto-columns: auto; }
+  .os-board-main, .os-board-closed { grid-template-columns: 1fr; }
   .os-funnel-row { grid-template-columns: 90px 1fr 120px; }
   .os-form-inline { grid-template-columns: 1fr 1fr; }
 }
