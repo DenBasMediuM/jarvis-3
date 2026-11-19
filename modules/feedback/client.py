@@ -112,6 +112,10 @@ class FeedbackClient:
             raise FeedbackError(f"Worker {res.status_code}: {msg}")
         return data
 
+    async def get_outsource_state(self) -> dict[str, Any]:
+        """Раздел «Аутсорс мастера»: кандидаты, передачи, журнал, план (D1 Worker'а)."""
+        return await self._request("GET", "/admin/outsource/state")
+
     async def list_requests(self) -> list[dict[str, Any]]:
         data = await self._request("GET", "/admin/requests")
         return list(data.get("items") or [])

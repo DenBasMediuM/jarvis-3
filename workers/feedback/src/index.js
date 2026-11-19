@@ -1,5 +1,6 @@
 /**
  * jarvis-feedback — модуль «Улучшения»: заявки пользователей витрины → ИИ → дорожная карта в Jarvis.
+ * Также раздел «Аутсорс мастера» (src/outsource.js).
  * Bindings: DB (D1). Vars: USERS_URL, ALLOWED_ORIGINS, OPENAI_MODEL, MAX_ROUNDS.
  * Secrets: OPENAI_API_KEY, TOKEN_SECRET, ADMIN_KEY.
  */
@@ -16,6 +17,7 @@ import {
   verifyToken,
   verifyUserProof,
 } from "./lib.js";
+import { handleOutsource } from "./outsource.js";
 
 class HttpError extends Error {
   constructor(status, code, message) {
@@ -406,6 +408,20 @@ async function handle(request, env) {
       items: (results || []).map((r) => ({ ...rowToRequest(r), supported: r.login !== user.login })),
     };
   }
+
+  // ---------- Аутсорс мастера ----------
+  const outsource = await handleOutsource({
+    request,
+    env,
+    path,
+    method,
+    requireUser,
+    requireAdmin,
+    loadUsers,
+    readJson,
+    HttpError,
+  });
+  if (outsource !== undefined) return outsource;
 
   // ---------- админ (Jarvis) ----------
   if (path.startsWith("/admin/")) {

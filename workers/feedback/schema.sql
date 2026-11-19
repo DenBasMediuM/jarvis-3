@@ -50,3 +50,61 @@ CREATE TABLE IF NOT EXISTS meta (
   value TEXT,
   updated_at TEXT NOT NULL
 );
+
+-- ---------- Аутсорс мастера (раздел витрины «Аутсорс мастера») ----------
+-- Кандидаты в аутсорсеры: воронка менеджера.
+CREATE TABLE IF NOT EXISTS outsource_candidates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL DEFAULT 'master_home',     -- master_home | master_sc | service
+  name TEXT NOT NULL,
+  contact TEXT,                                  -- телефон / телеграм
+  source_url TEXT,                               -- ссылка на объявление
+  area TEXT,                                     -- город / район
+  devices TEXT,                                  -- какую технику берёт
+  terms TEXT,                                    -- условия оплаты
+  stage TEXT NOT NULL DEFAULT 'found',           -- found | contacted | trial | regular | paused | lost
+  stage_at TEXT NOT NULL,
+  lost_reason TEXT,
+  crm_engineer TEXT,                             -- мастер в Gincore (как в карточке заказа)
+  cash_contractor TEXT,                          -- получатель выплат в кассе Gincore
+  notes TEXT,
+  created_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_out_cand_stage ON outsource_candidates(stage);
+
+-- Пробные (и последующие отслеживаемые) передачи устройств.
+CREATE TABLE IF NOT EXISTS outsource_trials (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  candidate_id INTEGER NOT NULL,
+  ticket TEXT NOT NULL,                          -- № квитанции Gincore
+  source TEXT NOT NULL DEFAULT 'client',         -- donor | client
+  device TEXT,
+  issue TEXT,
+  handed_at TEXT NOT NULL,                       -- YYYY-MM-DD
+  due_at TEXT,                                   -- обещанный срок, YYYY-MM-DD
+  price REAL,                                    -- согласованная цена работы
+  comment TEXT,
+  created_by TEXT,
+  created_at TEXT NOT NULL,
+  result_quality INTEGER,                        -- 1..5
+  result_on_time INTEGER,                        -- 1 / 0
+  result_decision TEXT,                          -- take | again | reject
+  result_comment TEXT,
+  result_by TEXT,
+  result_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_out_trial_cand ON outsource_trials(candidate_id);
+
+-- Журнал действий менеджера (отчётность по процессу).
+CREATE TABLE IF NOT EXISTS outsource_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL,
+  login TEXT,
+  action TEXT NOT NULL,                          -- candidate_created | candidate_updated | stage_changed | trial_created | trial_result | note
+  candidate_id INTEGER,
+  trial_id INTEGER,
+  text TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_out_log_at ON outsource_log(at);

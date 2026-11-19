@@ -48,3 +48,29 @@ JARVIS_FEEDBACK_ADMIN_KEY=<тот же ADMIN_KEY>
 Лимиты: 10 новых заявок в день на пользователя, 10 сообщений в диалоге, 2000 символов на сообщение.
 
 Тесты чистых функций: `npm test` (Node ≥ 20).
+
+## Раздел «Аутсорс мастера» (`src/outsource.js`)
+
+Тот же Worker хранит воронку аутсорсеров: таблицы `outsource_candidates`, `outsource_trials`,
+`outsource_log`, план — `meta.outsource_plan`. Доступ — токен входа витрины + доступ
+`processes.outsource` (менеджер) или `processes.outsource_lead` (руководитель, может менять план).
+
+Подключение (один раз, после обновления кода):
+
+```bash
+cd workers/feedback
+npx wrangler d1 execute jarvis-feedback --remote --file=migrations/0002_outsource.sql
+npx wrangler deploy
+```
+
+| Метод | Путь | Что |
+|---|---|---|
+| GET | `/outsource/state` | кандидаты, передачи, журнал (180 дн.), план, права |
+| POST | `/outsource/candidates` | новый кандидат |
+| PATCH | `/outsource/candidates/:id` | правка карточки |
+| POST | `/outsource/candidates/:id/stage` | смена стадии (`lost` — с причиной) |
+| POST | `/outsource/candidates/:id/note` | запись в журнал |
+| POST | `/outsource/trials` | передача устройства (первая → стадия «Пробник») |
+| POST | `/outsource/trials/:id/result` | оценка пробника (take → «Постоянный», reject → «Отказ») |
+| PUT | `/outsource/plan` | недельный план и цель (руководитель) |
+| GET | `/admin/outsource/state` | то же для Jarvis (`ADMIN_KEY`) |

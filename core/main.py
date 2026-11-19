@@ -31,6 +31,7 @@ from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
 from modules.buffer_quality import BufferQualityService
+from modules.outsource import OutsourceService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
 from modules.reviews.service import ReviewsService
@@ -52,6 +53,7 @@ quality_service: QualityService | None = None
 vyrobotka_service: VyrobotkaService | None = None
 branch_kpi_service: BranchKpiService | None = None
 buffer_quality_service: BufferQualityService | None = None
+outsource_service: OutsourceService | None = None
 masters_kpi_service: MastersKpiService | None = None
 reviews_service: ReviewsService | None = None
 
@@ -159,7 +161,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
-    global buffer_quality_service, masters_kpi_service, reviews_service
+    global buffer_quality_service, masters_kpi_service, reviews_service, outsource_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -203,6 +205,18 @@ async def lifespan(_: FastAPI):
         return client
 
     reviews_service = ReviewsService(db, gincore_client_factory=_reviews_gincore)
+
+    async def _outsource_gincore():
+        client = await _gincore_client()
+        await client.ensure_login()
+        return client
+
+    outsource_service = OutsourceService(
+        db,
+        quality_service=quality_service,
+        gincore_client_factory=_outsource_gincore,
+        feedback_client_factory=_feedback_client,
+    )
     # Подтянуть решения витрины из Cloudflare KV (если настроено)
     if vyrobotka_service is not None:
         try:
@@ -680,6 +694,40 @@ async def buffer_quality_export_pages() -> dict[str, Any]:
         raise HTTPException(503, "Сервис буфера не готов")
     try:
         return await buffer_quality_service.export_pages_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/outsource/stats")
+async def outsource_stats() -> dict[str, Any]:
+    if not outsource_service:
+        raise HTTPException(503, "Сервис аутсорса не готов")
+    return await outsource_service.get_stats()
+
+
+@app.get("/api/outsource/sync")
+async def outsource_sync_status() -> dict[str, Any]:
+    if not outsource_service:
+        raise HTTPException(503, "Сервис аутсорса не готов")
+    return {"ok": True, "sync": await outsource_service.get_sync_state()}
+
+
+@app.post("/api/outsource/sync")
+async def outsource_sync_start() -> dict[str, Any]:
+    if not outsource_service:
+        raise HTTPException(503, "Сервис аутсорса не готов")
+    try:
+        return await outsource_service.sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/outsource/export-pages")
+async def outsource_export_pages() -> dict[str, Any]:
+    if not outsource_service:
+        raise HTTPException(503, "Сервис аутсорса не готов")
+    try:
+        return await outsource_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
 

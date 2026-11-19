@@ -551,6 +551,10 @@ function setTab(tab) {
     location.href = "../reviews/";
     return;
   }
+  if (tab === "outsource") {
+    location.href = "../outsource/";
+    return;
+  }
   document.querySelectorAll(".mod-tab").forEach((btn) => {
     const on = btn.getAttribute("data-tab") === tab;
     btn.classList.toggle("is-active", on);
