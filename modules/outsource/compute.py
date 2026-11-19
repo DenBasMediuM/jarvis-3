@@ -20,7 +20,11 @@ from modules.gincore.quality import (
 )
 
 # «Возврат» по договорённости с руководителем: не подлежит ремонту / выдан без ремонта / клиент отказался.
-REFUSAL_RE = re.compile(r"не\s*подлеж|не\s*підляг|без\s*ремонт|отказ|відмов", re.IGNORECASE)
+# «Собран(ираем) на возврат» и «Переведен в донор» — тоже итог без ремонта.
+REFUSAL_RE = re.compile(
+    r"не\s*подлеж|не\s*підляг|без\s*ремонт|отказ|відмов|на\s*возврат|в\s*донор",
+    re.IGNORECASE,
+)
 
 # Долго у аутсорсера (дней с назначения мастера) — подсветка на витрине.
 LONG_AT_MASTER_DAYS = 14
@@ -57,7 +61,7 @@ def classify_status(name: Any) -> str:
         return "refusal"
     if _is_closed_status(s):
         return "issued"
-    if _is_ready_status(s):
+    if _is_ready_status(s) or re.search(r"курьер.*готов", s, re.IGNORECASE):
         return "ready"
     return "working"
 
