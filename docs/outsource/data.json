@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-19T12:39:53.328984+00:00",
+  "exported_at": "2026-11-19T12:51:50.032927+00:00",
   "source": "jarvis-outsource",
-  "generated_at": "2026-11-19T12:39:53.325863+00:00",
+  "generated_at": "2026-11-19T12:51:08.594410+00:00",
   "today": "2026-11-19",
   "window": {
     "from": "2026-08-01",
@@ -332,8 +332,8 @@
       "in_progress": 25,
       "return_rate": 0.7647,
       "gross": 57750.0,
-      "payouts": null,
-      "net": null,
+      "payouts": 41100.0,
+      "net": 16650.0,
       "by_month": [
         {
           "month": "2026-08",
@@ -341,8 +341,8 @@
           "issued": 4,
           "refusals": 7,
           "gross": 21200.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 6100.0,
+          "net": 15100.0
         },
         {
           "month": "2026-09",
@@ -350,8 +350,8 @@
           "issued": 7,
           "refusals": 12,
           "gross": 33250.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 17000.0,
+          "net": 16250.0
         },
         {
           "month": "2026-10",
@@ -359,8 +359,8 @@
           "issued": 1,
           "refusals": 13,
           "gross": 2550.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 13000.0,
+          "net": -10450.0
         },
         {
           "month": "2026-11",
@@ -368,12 +368,13 @@
           "issued": 0,
           "refusals": 7,
           "gross": 750.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 5000.0,
+          "net": -4250.0
         }
       ],
-      "payouts_contractor": null,
-      "payouts_matched": null
+      "payouts_contractor": "Андрусяк Александр",
+      "payouts_matched": true,
+      "payouts_auto": true
     },
     "2": {
       "candidate_id": 2,
@@ -415,11 +416,12 @@
       "in_progress": 0,
       "return_rate": null,
       "gross": 0.0,
-      "payouts": null,
-      "net": null,
+      "payouts": 0.0,
+      "net": 0.0,
       "by_month": [],
-      "payouts_contractor": null,
-      "payouts_matched": null
+      "payouts_contractor": "Михайлюк Роман",
+      "payouts_matched": true,
+      "payouts_auto": true
     },
     "3": {
       "candidate_id": 3,
@@ -505,8 +507,8 @@
       "in_progress": 7,
       "return_rate": 0.3333,
       "gross": 6150.0,
-      "payouts": null,
-      "net": null,
+      "payouts": 4450.0,
+      "net": 1700.0,
       "by_month": [
         {
           "month": "2026-09",
@@ -515,7 +517,7 @@
           "refusals": 0,
           "gross": 0.0,
           "payouts": 0.0,
-          "net": null
+          "net": 0.0
         },
         {
           "month": "2026-10",
@@ -523,8 +525,8 @@
           "issued": 4,
           "refusals": 2,
           "gross": 6150.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 1950.0,
+          "net": 4200.0
         },
         {
           "month": "2026-11",
@@ -532,22 +534,23 @@
           "issued": 0,
           "refusals": 0,
           "gross": 0.0,
-          "payouts": 0.0,
-          "net": null
+          "payouts": 2500.0,
+          "net": -2500.0
         }
       ],
-      "payouts_contractor": null,
-      "payouts_matched": null
+      "payouts_contractor": "Селиванов",
+      "payouts_matched": true,
+      "payouts_auto": true
     }
   },
   "trials": {},
   "history_orders": 2070,
   "warnings": [],
   "sync": {
-    "status": "running",
-    "message": "История 2026-11: стр. 13",
-    "started_at": "2026-11-19T12:39:19.188527+00:00",
-    "finished_at": null,
+    "status": "idle",
+    "message": "Готово: кандидатов 3, в работе у аутсорсеров 33 устр., без устройств 0, история 2070 квит., pages ок",
+    "started_at": "2026-11-19T12:50:31.860739+00:00",
+    "finished_at": "2026-11-19T12:51:08.599689+00:00",
     "done": 2,
     "total": 2
   }
