@@ -17,6 +17,7 @@ from modules.gincore.client import to_gincore_date
 from modules.gincore.quality import QUALITY_LIST_QUERY
 from modules.outsource.compute import (
     ACTIVE_STAGES,
+    guess_surname_tokens,
     build_outsourcer_metrics,
     engineer_names,
     parse_history_rows,
@@ -190,16 +191,29 @@ class OutsourceService:
             months = history_months(today)
             window_from = months[0][1]
             payouts_by_cand: dict[Any, dict[str, Any]] = {}
-            bound = [c for c in candidates if (c.get("cash_contractor") or "").strip()]
+            bound = [
+                c for c in candidates if (c.get("cash_contractor") or c.get("crm_engineer") or "").strip()
+            ]
             for i, cand in enumerate(bound, 1):
                 await self._set_sync(message=f"Выплаты из кассы {i}/{len(bound)}")
-                query = str(cand.get("cash_contractor")).strip()
-                entry: dict[str, Any] = {"contractor": query, "matched": False}
+                explicit = str(cand.get("cash_contractor") or "").strip()
+                query = explicit or str(cand.get("crm_engineer") or "").strip()
+                entry: dict[str, Any] = {"contractor": explicit or None, "matched": False, "auto": not explicit}
                 try:
-                    found = await client.find_contractor(query)
+                    if explicit:
+                        found = await client.find_contractor(explicit)
+                    else:
+                        # получатель не указан — ищем в кассе по фамилии мастера; берём только однозначное совпадение
+                        # только самое длинное слово (фамилия): по имени «Саша» легко попасть в чужого
+                        found = []
+                        toks = sorted(guess_surname_tokens(query), key=len, reverse=True)
+                        if toks:
+                            hits = await client.find_contractor(toks[0])
+                            if len(hits) == 1:
+                                found = hits
                     if found:
                         ct = found[0]
-                        if len(found) > 1:
+                        if explicit and len(found) > 1:
                             warnings.append(
                                 f"«{query}» в кассе: {len(found)} совпадений, взят «{ct.get('name')}»"
                             )
@@ -209,10 +223,15 @@ class OutsourceService:
                         entry = {
                             "contractor": ct.get("name") or query,
                             "matched": True,
+                            "auto": not explicit,
                             **sum_payouts(list(data.get("rows") or [])),
                         }
-                    else:
+                    elif explicit:
                         warnings.append(f"в кассе нет получателя «{query}»")
+                    else:
+                        warnings.append(
+                            f"«{cand.get('name')}»: получатель выплат в кассе не указан и не найден по фамилии"
+                        )
                 except Exception as exc:  # noqa: BLE001
                     warnings.append(f"выплаты «{query}»: {exc}")
                 payouts_by_cand[cand.get("id")] = entry

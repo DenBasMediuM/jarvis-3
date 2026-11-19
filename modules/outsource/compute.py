@@ -39,6 +39,14 @@ def norm_name(value: Any) -> str:
     return " ".join(s.split())
 
 
+_NOT_SURNAME = {"аутсорс", "мастер", "сц", "сервис"}
+
+
+def guess_surname_tokens(name: Any) -> list[str]:
+    """Слова имени мастера, по которым можно искать получателя в кассе (без «аутсорс» и коротких)."""
+    return [t for t in norm_name(name).split() if len(t) >= 4 and t not in _NOT_SURNAME]
+
+
 def engineer_matches(binding: Any, engineer: Any) -> bool:
     """Мастер из CRM совпадает с привязкой: все слова привязки есть в имени мастера.
 
@@ -228,6 +236,7 @@ def build_outsourcer_metrics(
 
     if payouts is not None:
         res["payouts_contractor"] = payouts.get("contractor")
+        res["payouts_auto"] = bool(payouts.get("auto"))
         res["payouts_matched"] = bool(payouts.get("matched"))
         if payouts.get("matched"):
             res["payouts"] = round(_money(payouts.get("total")), 2)

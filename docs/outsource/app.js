@@ -408,7 +408,13 @@ function outsourcersTable() {
         <td class="os-num">${m ? `${m.issued} / ${m.refusals}` : "—"}</td>
         <td class="os-num ${rateBad ? "os-bad" : ""}">${m ? pct(m.return_rate) : "—"}</td>
         <td class="os-num">${m ? money(m.gross) : "—"}</td>
-        <td class="os-num">${m?.payouts_matched ? money(m.payouts) : c.cash_contractor ? `<span class="os-warn" title="получатель не найден в кассе">?</span>` : "—"}</td>
+        <td class="os-num">${
+          m?.payouts_matched
+            ? `<span title="получатель в кассе: ${esc(m.payouts_contractor || "")}${m.payouts_auto ? " (найден по фамилии)" : ""}">${money(m.payouts)}</span>`
+            : c.cash_contractor
+              ? `<span class="os-warn" title="получатель «${esc(c.cash_contractor)}» не найден в кассе">не найден</span>`
+              : `<span class="os-muted" title="укажите в карточке «Получатель выплат в кассе»">не указан</span>`
+        }</td>
         <td class="os-num"><b>${m?.net !== null && m?.net !== undefined ? money(m.net) : "—"}</b></td>
         <td class="os-num">${tr.length} · ${avgQ}</td>
         <td>${fmtDate(lastActivity(c))}</td>
@@ -861,7 +867,9 @@ function openCandidate(id) {
         <div><span>Выдано / возврат</span><b>${m.issued} / ${m.refusals}</b></div>
         <div><span>Коэф. возврата</span><b class="${m.return_rate > HIGH_RETURN && closed >= MIN_CLOSED_FOR_RATE ? "os-bad" : ""}">${pct(m.return_rate)}</b></div>
         <div><span>Вал</span><b>${money(m.gross)}</b></div>
-        <div><span>Выплаты из кассы</span><b>${m.payouts_matched ? money(m.payouts) : c.cash_contractor ? "не найден" : "—"}</b></div>
+        <div><span>Выплаты из кассы</span><b>${m.payouts_matched ? money(m.payouts) : c.cash_contractor ? "не найден" : "получатель не указан"}</b>${
+          m.payouts_matched ? `<small class="os-muted">${esc(m.payouts_contractor || "")}${m.payouts_auto ? " · по фамилии" : ""}</small>` : ""
+        }</div>
         <div><span>Чистые</span><b>${m.net !== null && m.net !== undefined ? money(m.net) : "—"}</b></div>
       </div>
       <p class="card-sub" style="margin-top:6px">Мастер в CRM: ${esc((m.engineers_matched || []).join(", ") || c.crm_engineer)}
