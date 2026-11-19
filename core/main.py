@@ -1394,6 +1394,9 @@ async def updates_status() -> dict[str, Any]:
     last_daily = debt_daily[-1] if debt_daily else None
     branch_kpi_sync = await db.branch_kpi_get_sync_state()
     buffer_quality_sync = await db.buffer_quality_get_sync_state()
+    outsource_sync_state = (
+        await outsource_service.get_sync_state() if outsource_service else {"status": "idle"}
+    )
     modules = [
         {
             "id": "quality",
@@ -1474,6 +1477,28 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
+        },
+        {
+            "id": "processes-outsource",
+            "block": "Процессы",
+            "title": "Аутсорс мастера",
+            "description": (
+                "Устройства в работе у аутсорсеров, возвраты, вал, выплаты из кассы и статусы "
+                "пробников (CRM за 4 месяца). Воронка менеджера — в облаке, видна сразу."
+            ),
+            "status": outsource_sync_state.get("status") or "idle",
+            "message": outsource_sync_state.get("message"),
+            "started_at": outsource_sync_state.get("started_at"),
+            "finished_at": outsource_sync_state.get("finished_at"),
+            "progress": {
+                "done": int(outsource_sync_state.get("done") or 0),
+                "total": int(outsource_sync_state.get("total") or 0),
+            },
+            "actions": [
+                {"id": "outsource-sync", "label": "Обновить из CRM", "kind": "primary"},
+                {"id": "outsource-export", "label": "Экспорт в Pages", "kind": "muted"},
+            ],
+            "pages": _read_pages_export_meta("docs/outsource/data.json"),
         },
         {
             "id": "processes-buffer-quality",

@@ -79,6 +79,7 @@ function setProcessesTab(tab) {
     tab === "branch_kpi" ||
     tab === "reviews" ||
     tab === "buffer_quality" ||
+    tab === "outsource" ||
     tab === "upsell"
       ? tab
       : "upsell";
@@ -111,7 +112,12 @@ function setProcessesTab(tab) {
   const isBranchKpi = id === "branch_kpi";
   const isReviews = id === "reviews";
   const isBuffer = id === "buffer_quality";
-  const isStandalone = isBranchKpi || isReviews || isBuffer;
+  const isOutsource = id === "outsource";
+  const isStandalone = isBranchKpi || isReviews || isBuffer || isOutsource;
+  const outsourceToolbar = $("#outsource-toolbar");
+  const outsourceBody = $("#outsource-body");
+  if (outsourceToolbar) outsourceToolbar.hidden = !isOutsource;
+  if (outsourceBody) outsourceBody.hidden = !isOutsource;
   if (sheetsToolbar) sheetsToolbar.hidden = isStandalone;
   if (kpiToolbar) kpiToolbar.hidden = !isBranchKpi;
   if (reviewsToolbar) reviewsToolbar.hidden = !isReviews;
@@ -132,6 +138,13 @@ function setProcessesTab(tab) {
     if (debt) debt.hidden = true;
     if (empty) empty.hidden = true;
     loadReviewsStats();
+    return;
+  }
+  if (isOutsource) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadOutsourceStats();
     return;
   }
   if (isBuffer) {
@@ -171,6 +184,7 @@ function initProcessesTabs() {
     saved !== "branch_kpi" &&
     saved !== "reviews" &&
     saved !== "buffer_quality" &&
+    saved !== "outsource" &&
     saved !== "upsell"
   ) {
     saved = "upsell";
@@ -6484,6 +6498,10 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/buffer-quality/sync", { method: "POST" });
     } else if (actionId === "buffer-quality-export") {
       res = await fetch("/api/buffer-quality/export-pages", { method: "POST" });
+    } else if (actionId === "outsource-sync") {
+      res = await fetch("/api/outsource/sync", { method: "POST" });
+    } else if (actionId === "outsource-export") {
+      res = await fetch("/api/outsource/export-pages", { method: "POST" });
     } else {
       throw new Error(`Неизвестное действие: ${actionId}`);
     }
@@ -6508,7 +6526,8 @@ async function runUpdatesAction(actionId) {
       actionId === "vyrobotka-full" ||
       actionId === "debt-verify-new" ||
       actionId === "debt-verify-all" ||
-      actionId === "branch-kpi-sync";
+      actionId === "branch-kpi-sync" ||
+      actionId === "outsource-sync";
     if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {
@@ -7383,3 +7402,175 @@ function buildAssignHistoryChart(canvas, history, assignLabel) {
     },
   });
 }
+
+
+// ---------- Процессы → Аутсорс мастера ----------
+const OUTSOURCE_STAGES = {
+  found: "Найден",
+  contacted: "Связались",
+  trial: "Пробник",
+  regular: "Постоянный",
+  paused: "Пауза",
+  lost: "Отказ",
+};
+const OUTSOURCE_KINDS = { master_home: "Мастер на дому", master_sc: "Мастер другого СЦ", service: "Сервисный центр" };
+let outsourcePoll = null;
+
+function osMoney(v) {
+  return v == null ? "—" : `${fmtMoney(Math.round(Number(v) || 0))} грн`;
+}
+function osPct(v) {
+  return v == null ? "—" : `${(Number(v) * 100).toFixed(1)}%`;
+}
+
+function renderOutsourceStats(data) {
+  const sync = data?.sync || {};
+  const live = data?.live || {};
+  const crm = data?.outsourcers || {};
+  const cands = live.ok ? live.candidates || [] : [];
+  const statusEl = $("#outsource-sync-status");
+  if (statusEl) {
+    statusEl.textContent =
+      sync.status === "running"
+        ? `${sync.message || "Идёт…"} (${sync.done || 0}/${sync.total || 0})`
+        : sync.status === "error"
+          ? `Ошибка: ${sync.message || "—"}`
+          : sync.message || "—";
+  }
+  const meta = $("#outsource-meta");
+  if (meta) {
+    const bits = [];
+    if (data?.generated_at) bits.push(`CRM-снимок ${fmtUpdatesWhen(data.generated_at)}`);
+    if (data?.window?.from) bits.push(`история с ${data.window.from} (${data.history_orders || 0} квит.)`);
+    bits.push(live.ok ? `облако: ${cands.length} кандидатов, ${live.log_total || 0} действий за 180 дн.` : `облако недоступно: ${live.error || "—"}`);
+    meta.textContent = bits.join(" · ");
+  }
+  const byStage = {};
+  cands.forEach((c) => (byStage[c.stage] = (byStage[c.stage] || 0) + 1));
+  const active = cands.filter((c) => c.stage === "trial" || c.stage === "regular");
+  const ms = active.map((c) => crm[String(c.id)]).filter(Boolean);
+  const inWork = ms.reduce((a, m) => a + (m.in_work || 0), 0);
+  const idle = ms.filter((m) => m.bound && !m.in_work).length;
+  const issued = ms.reduce((a, m) => a + (m.issued || 0), 0);
+  const refusals = ms.reduce((a, m) => a + (m.refusals || 0), 0);
+  const gross = ms.reduce((a, m) => a + (m.gross || 0), 0);
+  const netList = ms.filter((m) => m.net != null);
+  const net = netList.reduce((a, m) => a + m.net, 0);
+  const plan = live.plan || {};
+  const kpi = (label, value, sub) => `<div class="vyrobotka-kpi">
+      <span class="vyrobotka-kpi-label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+      <span class="vyrobotka-kpi-sub">${escapeHtml(sub)}</span>
+    </div>`;
+  const kpis = $("#outsource-kpis");
+  if (kpis) {
+    kpis.innerHTML = [
+      kpi("Постоянных", byStage.regular || 0, `цель ${plan.target_min ?? 5}–${plan.target_max ?? 10}`),
+      kpi("На пробнике", byStage.trial || 0, `в воронке ещё ${(byStage.found || 0) + (byStage.contacted || 0)}`),
+      kpi("Устройств у аутсорсеров", inWork, `без устройств: ${idle}`),
+      kpi("Коэф. возврата", issued + refusals ? osPct(refusals / (issued + refusals)) : "—", `${refusals} из ${issued + refusals} закрытых`),
+      kpi("Вал", osMoney(gross), "оплачено по закрытым"),
+      kpi("Чистые", netList.length ? osMoney(net) : "—", `по ${netList.length} из ${ms.length} с выплатами`),
+    ].join("");
+  }
+  const warn = $("#outsource-warnings");
+  if (warn) {
+    const w = data?.warnings || [];
+    warn.innerHTML = w.length
+      ? `<p class="vyrobotka-chart-sub" style="color:#a15c00">⚠ ${w.map(escapeHtml).join(" · ")}</p>`
+      : "";
+  }
+  const tbody = $("#outsource-tbody");
+  if (tbody) {
+    const order = ["regular", "trial", "paused", "contacted", "found", "lost"];
+    const rows = [...cands].sort((a, b) => order.indexOf(a.stage) - order.indexOf(b.stage));
+    tbody.innerHTML = rows.length
+      ? rows
+          .map((c) => {
+            const m = crm[String(c.id)] || {};
+            const bound = c.crm_engineer;
+            return `<tr>
+              <td><strong>${escapeHtml(c.name || "—")}</strong><br><small>${escapeHtml(OUTSOURCE_KINDS[c.kind] || c.kind || "")}</small></td>
+              <td>${escapeHtml(OUTSOURCE_STAGES[c.stage] || c.stage || "—")}${c.stage === "lost" && c.lost_reason ? `<br><small>${escapeHtml(c.lost_reason)}</small>` : ""}</td>
+              <td>${bound ? escapeHtml(c.crm_engineer) : '<span style="color:#a15c00">не привязан</span>'}</td>
+              <td>${bound ? m.in_work ?? 0 : "—"}</td>
+              <td>${bound ? m.long_at_master ?? 0 : "—"}</td>
+              <td>${bound ? m.ready ?? 0 : "—"}</td>
+              <td>${bound ? `${m.issued ?? 0} / ${m.refusals ?? 0}` : "—"}</td>
+              <td>${bound ? osPct(m.return_rate) : "—"}</td>
+              <td>${bound ? osMoney(m.gross) : "—"}</td>
+              <td>${m.payouts_matched ? osMoney(m.payouts) : c.cash_contractor ? "не найден в кассе" : "—"}</td>
+              <td>${m.net != null ? `<strong>${osMoney(m.net)}</strong>` : "—"}</td>
+              <td>${c.trials || 0}${c.trials_open ? ` (откр. ${c.trials_open})` : ""} · ${c.avg_quality ?? "—"}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="12" class="quality-empty">${
+          live.ok ? "Кандидатов пока нет — менеджер заводит их на витрине." : "Облако недоступно."
+        }</td></tr>`;
+  }
+  const otb = $("#outsource-orders-tbody");
+  if (otb) {
+    const list = [];
+    cands.forEach((c) => {
+      ((crm[String(c.id)] || {}).in_work_orders || []).forEach((o) => list.push({ who: c.name, ...o }));
+    });
+    list.sort((a, b) => (b.days_at_master || 0) - (a.days_at_master || 0));
+    otb.innerHTML = list.length
+      ? list
+          .map(
+            (o) => `<tr${o.long ? ' style="background:#fff4e5"' : ""}>
+              <td>${escapeHtml(o.who || "—")}</td>
+              <td>${o.url ? `<a href="${escapeHtml(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.ticket)}</a>` : escapeHtml(o.ticket)}</td>
+              <td>${escapeHtml(o.device || "—")}</td>
+              <td>${escapeHtml(o.status || "—")}</td>
+              <td>${o.days_at_master ?? "—"}</td>
+              <td>${o.days_total ?? "—"}</td>
+            </tr>`,
+          )
+          .join("")
+      : '<tr><td colspan="6" class="quality-empty">Нет устройств в работе у привязанных аутсорсеров.</td></tr>';
+  }
+  if (sync.status === "running") {
+    if (!outsourcePoll) outsourcePoll = setInterval(() => loadOutsourceStats({ quiet: true }), 4000);
+  } else if (outsourcePoll) {
+    clearInterval(outsourcePoll);
+    outsourcePoll = null;
+  }
+}
+
+async function loadOutsourceStats({ quiet = false } = {}) {
+  const statusEl = $("#outsource-sync-status");
+  try {
+    const res = await fetch("/api/outsource/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderOutsourceStats(data);
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+$("#outsource-sync-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#outsource-sync-status");
+  try {
+    const res = await fetch("/api/outsource/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
+    await loadOutsourceStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+});
+$("#outsource-export-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#outsource-sync-status");
+  try {
+    const res = await fetch("/api/outsource/export-pages", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = `Экспорт → ${data.path || "docs/outsource/data.json"} (git push)`;
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+});

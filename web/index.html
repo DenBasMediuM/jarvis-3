@@ -31,6 +31,7 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="branch_kpi">КПД филиалов</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="reviews">Сбор отзывов</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="buffer_quality">Качество буфера</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="outsource">Аутсорс мастера</button>
           </div>
         </div>
         <button class="nav-btn" data-view="finance">Финансы</button>
@@ -272,6 +273,13 @@
               <button type="button" id="buffer-quality-export-btn" class="cj-import-btn is-muted" title="Записать docs/buffer-quality/data.json">Экспорт в Pages</button>
               <span id="buffer-quality-sync-status" class="quality-sync-status">—</span>
             </div>
+            <div class="quality-toolbar" id="outsource-toolbar" hidden>
+              <span class="quality-toolbar-label">Аутсорс мастера</span>
+              <button type="button" id="outsource-sync-btn" class="cj-import-open" title="Заказы аутсорсеров, возвраты, вал, выплаты из кассы, статусы пробников">Обновить из CRM</button>
+              <button type="button" id="outsource-export-btn" class="cj-import-btn is-muted" title="Записать docs/outsource/data.json">Экспорт в Pages</button>
+              <a class="cj-import-btn is-muted" href="https://denbasmedium.github.io/jarvis-3/outsource/" target="_blank" rel="noopener">Открыть на витрине</a>
+              <span id="outsource-sync-status" class="quality-sync-status">—</span>
+            </div>
           </div>
         </div>
         <nav class="quality-tabs" role="tablist" aria-label="Процессы">
@@ -280,6 +288,7 @@
           <button type="button" class="quality-tab" data-processes-tab="branch_kpi" role="tab" aria-selected="false">КПД филиалов</button>
           <button type="button" class="quality-tab" data-processes-tab="reviews" role="tab" aria-selected="false">Сбор отзывов</button>
           <button type="button" class="quality-tab" data-processes-tab="buffer_quality" role="tab" aria-selected="false">Качество буфера</button>
+          <button type="button" class="quality-tab" data-processes-tab="outsource" role="tab" aria-selected="false">Аутсорс мастера</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
@@ -655,6 +664,41 @@
               </div>
             </div>
           </article>
+
+          <article id="outsource-body" class="vyrobotka-section" hidden>
+            <header class="vyrobotka-section-head">
+              <h2>Аутсорс мастера</h2>
+              <p id="outsource-meta">Воронка менеджера (облако, живая) и CRM-показатели аутсорсеров (снимок пересборки).</p>
+            </header>
+            <div class="vyrobotka-kpis" id="outsource-kpis" aria-label="Сводка аутсорса"></div>
+            <div id="outsource-warnings"></div>
+            <div class="vyrobotka-side-head">
+              <h3>Аутсорсеры и кандидаты</h3>
+              <p class="vyrobotka-chart-sub" style="margin:0">Возврат = не подлежит ремонту / выдан без ремонта / отказ / на возврат ÷ закрытые · вал — оплачено по закрытым · чистые = вал − выплаты из кассы. Карточки и передачи ведутся на витрине.</p>
+            </div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table" id="outsource-table">
+                <thead>
+                  <tr>
+                    <th>Кандидат</th><th>Стадия</th><th>Мастер в CRM</th><th>В работе</th><th>&gt;14 дн.</th><th>Готово</th>
+                    <th>Выдано / возврат</th><th>Возврат</th><th>Вал</th><th>Выплаты</th><th>Чистые</th><th>Пробники · оценка</th>
+                  </tr>
+                </thead>
+                <tbody id="outsource-tbody">
+                  <tr><td colspan="12" class="quality-empty">Нет данных.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="vyrobotka-side-head" style="margin-top:16px">
+              <h3>Устройства у аутсорсеров сейчас</h3>
+            </div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table">
+                <thead><tr><th>Аутсорсер</th><th>№</th><th>Устройство</th><th>Статус</th><th>Дней у мастера</th><th>Дней всего</th></tr></thead>
+                <tbody id="outsource-orders-tbody"><tr><td colspan="6" class="quality-empty">—</td></tr></tbody>
+              </table>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -805,6 +849,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261103-vyr-full1"></script>
+  <script src="/static/app.js?v=20261119-outsource1"></script>
 </body>
 </html>

@@ -102,8 +102,39 @@ class OutsourceService:
         await self.db.set_setting(SYNC_KEY, st)
 
     async def get_stats(self) -> dict[str, Any]:
+        """Снимок CRM + живая воронка из облака (для админки; контакты не отдаём)."""
         snap = await self.db.get_setting(SNAPSHOT_KEY, None) or {}
-        return {"ok": True, **snap, "sync": await self.get_sync_state()}
+        live: dict[str, Any] = {"ok": False}
+        fb = self._feedback_factory()
+        if getattr(fb, "configured", False):
+            try:
+                state = await fb.get_outsource_state()
+                trials = list(state.get("trials") or [])
+                keep = ("id", "name", "kind", "stage", "stage_at", "lost_reason", "crm_engineer", "cash_contractor", "created_by")
+                cands = []
+                for c in state.get("candidates") or []:
+                    row = {k: c.get(k) for k in keep}
+                    ct = [t for t in trials if t.get("candidate_id") == c.get("id")]
+                    rated = [t for t in ct if t.get("result_quality")]
+                    row["trials"] = len(ct)
+                    row["trials_open"] = sum(1 for t in ct if not t.get("result_decision"))
+                    row["avg_quality"] = (
+                        round(sum(t["result_quality"] for t in rated) / len(rated), 1) if rated else None
+                    )
+                    cands.append(row)
+                log = list(state.get("log") or [])
+                live = {
+                    "ok": True,
+                    "candidates": cands,
+                    "plan": state.get("plan"),
+                    "log_total": len(log),
+                    "last_action": log[0] if log else None,
+                }
+            except Exception as exc:  # noqa: BLE001
+                live = {"ok": False, "error": str(exc)}
+        else:
+            live = {"ok": False, "error": "облако «Улучшения» не настроено"}
+        return {"ok": True, **snap, "live": live, "sync": await self.get_sync_state()}
 
     async def sync(self) -> dict[str, Any]:
         async with self._lock:
