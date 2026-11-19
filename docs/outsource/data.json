@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-19T12:31:38.754363+00:00",
+  "exported_at": "2026-11-19T12:39:53.328984+00:00",
   "source": "jarvis-outsource",
-  "generated_at": "2026-11-19T12:30:31.174047+00:00",
+  "generated_at": "2026-11-19T12:39:53.325863+00:00",
   "today": "2026-11-19",
   "window": {
     "from": "2026-08-01",
@@ -374,16 +374,180 @@
       ],
       "payouts_contractor": null,
       "payouts_matched": null
+    },
+    "2": {
+      "candidate_id": 2,
+      "crm_engineer": "Роман Михайлюк",
+      "bound": true,
+      "engineers_matched": [
+        "Роман Михайлюк"
+      ],
+      "in_work": 2,
+      "ready": 0,
+      "long_at_master": 2,
+      "in_work_orders": [
+        {
+          "ticket": "114890",
+          "status": "На диагностике",
+          "device": "ноутбук Asus",
+          "accepted_at": "2025-08-19",
+          "days_total": 457,
+          "days_at_master": 457,
+          "long": true,
+          "location": "Сегедская Центральный Сегедска...",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/114890"
+        },
+        {
+          "ticket": "115018",
+          "status": "Принят в ремонт",
+          "device": "ноутбук Asus",
+          "accepted_at": "2025-08-23",
+          "days_total": 453,
+          "days_at_master": 453,
+          "long": true,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/115018"
+        }
+      ],
+      "orders_total": 0,
+      "issued": 0,
+      "refusals": 0,
+      "in_progress": 0,
+      "return_rate": null,
+      "gross": 0.0,
+      "payouts": null,
+      "net": null,
+      "by_month": [],
+      "payouts_contractor": null,
+      "payouts_matched": null
+    },
+    "3": {
+      "candidate_id": 3,
+      "crm_engineer": "Максим Селиванов",
+      "bound": true,
+      "engineers_matched": [
+        "Максим Селиванов"
+      ],
+      "in_work": 6,
+      "ready": 1,
+      "long_at_master": 1,
+      "in_work_orders": [
+        {
+          "ticket": "124197",
+          "status": "На диагностике",
+          "device": "калонка marshall EMB...",
+          "accepted_at": "2026-09-24",
+          "days_total": 56,
+          "days_at_master": 50,
+          "long": true,
+          "location": "Каретный Центральный Центральн...",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/124197"
+        },
+        {
+          "ticket": "125380",
+          "status": "Принят в ремонт",
+          "device": "пауербанк Hoco 65W",
+          "accepted_at": "2026-11-13",
+          "days_total": 6,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125380"
+        },
+        {
+          "ticket": "125361",
+          "status": "Принят в ремонт",
+          "device": "пускове baseus CGNL0...",
+          "accepted_at": "2026-11-12",
+          "days_total": 7,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125361"
+        },
+        {
+          "ticket": "125327",
+          "status": "Принят в ремонт",
+          "device": "телефон realmi c67 R...",
+          "accepted_at": "2026-11-11",
+          "days_total": 8,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125327"
+        },
+        {
+          "ticket": "125308",
+          "status": "Принят в ремонт",
+          "device": "беспроводные наушник...",
+          "accepted_at": "2026-11-10",
+          "days_total": 9,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125308"
+        },
+        {
+          "ticket": "125293",
+          "status": "Принят в ремонт",
+          "device": "Наушники Anker",
+          "accepted_at": "2026-11-09",
+          "days_total": 10,
+          "days_at_master": 6,
+          "long": false,
+          "location": "Сегедская, основной Сегедская",
+          "url": "https://itserviceoutsourcing.gincore.net/orders/125293"
+        }
+      ],
+      "orders_total": 13,
+      "issued": 4,
+      "refusals": 2,
+      "in_progress": 7,
+      "return_rate": 0.3333,
+      "gross": 6150.0,
+      "payouts": null,
+      "net": null,
+      "by_month": [
+        {
+          "month": "2026-09",
+          "orders": 1,
+          "issued": 0,
+          "refusals": 0,
+          "gross": 0.0,
+          "payouts": 0.0,
+          "net": null
+        },
+        {
+          "month": "2026-10",
+          "orders": 7,
+          "issued": 4,
+          "refusals": 2,
+          "gross": 6150.0,
+          "payouts": 0.0,
+          "net": null
+        },
+        {
+          "month": "2026-11",
+          "orders": 5,
+          "issued": 0,
+          "refusals": 0,
+          "gross": 0.0,
+          "payouts": 0.0,
+          "net": null
+        }
+      ],
+      "payouts_contractor": null,
+      "payouts_matched": null
     }
   },
   "trials": {},
-  "history_orders": 2069,
+  "history_orders": 2070,
   "warnings": [],
   "sync": {
-    "status": "idle",
-    "message": "Готово: кандидатов 1, в работе у аутсорсеров 25 устр., без устройств 0, история 2069 квит., pages ок",
-    "started_at": "2026-11-19T12:29:56.527104+00:00",
-    "finished_at": "2026-11-19T12:30:31.180036+00:00",
+    "status": "running",
+    "message": "История 2026-11: стр. 13",
+    "started_at": "2026-11-19T12:39:19.188527+00:00",
+    "finished_at": null,
     "done": 2,
     "total": 2
   }
