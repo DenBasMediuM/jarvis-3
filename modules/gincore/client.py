@@ -409,6 +409,7 @@ class GincoreClient:
         title = BeautifulSoup(html, "lxml").title
         return {
             "ok": True,
+            "branch": self.parse_order_branch(html),
             "order_id": oid,
             "url": f"{self.base_url}/orders/{oid}",
             "title": title.get_text(strip=True) if title else None,
@@ -572,6 +573,30 @@ class GincoreClient:
                 "msg": payload.get("msg") or payload.get("message"),
             },
         }
+
+    # Филиалы, которые к нам не относятся: квитанция с таким «Был принят» — почти наверняка ошибка в номере.
+    FOREIGN_BRANCH_MARKERS = ("сахаров",)
+
+    @classmethod
+    def parse_order_branch(cls, html: str) -> dict[str, Any]:
+        """Где принят заказ: «Был принят: 6 Окт. Левитан Центральный» → текст и флаг «чужой филиал»."""
+        m = re.search(r"Был принят:(.{0,400})", html or "", re.S)
+        text = ""
+        if m:
+            text = re.sub(r"<[^>]+>", " ", m.group(1)).replace("&nbsp;", " ")
+            text = re.sub(r"\s+", " ", text).strip()
+            # дата в начале («6 Окт.» / «16 Ноя. 2025») не нужна
+            text = re.sub(r"^\d{1,2}\s+[А-Яа-яЁёІіЇї]+\.?\s*(?:\d{4}\s*)?", "", text).strip()
+            text = text[:80]
+        low = text.casefold()
+        return {
+            "accepted_where": text or None,
+            "foreign": any(mk in low for mk in cls.FOREIGN_BRANCH_MARKERS),
+        }
+
+    async def order_branch(self, order_id: str | int) -> dict[str, Any]:
+        html = await self.fetch_order_html(str(order_id).strip())
+        return {"order_id": str(order_id).strip(), **self.parse_order_branch(html)}
 
     async def begin_client_order_refund(self, order_id: str | int) -> dict[str, Any]:
         """Окно «Вернуть деньги» в карточке заказа (orders/ajax?act=show_repay_client_order)."""
@@ -1002,6 +1027,7 @@ class GincoreClient:
         cur_id = status.get("status_id")
         return {
             "ok": True,
+            "branch": self.parse_order_branch(html),
             "kind": "parts_attach",
             "order_id": oid,
             "amount": price,

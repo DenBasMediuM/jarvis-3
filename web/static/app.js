@@ -809,6 +809,33 @@ async function runCashImportStep(queue, index, { onUpdate } = {}) {
     return;
   }
 
+  if (preview.branch?.foreign) {
+    CJ_BRANCH_CACHE.set(String(line.order_id), preview.branch);
+    line.branch_foreign = true;
+    line.branch_where = preview.branch.accepted_where || null;
+    const go = await new Promise((resolve) => {
+      card.innerHTML = `
+        <div class="cj-import-head"><strong>Проверьте номер квитанции</strong><span>${index + 1} / ${queue.length}</span></div>
+        <div class="cj-import-line">${escapeHtml(line.raw || line.note || "")}</div>
+        <div class="cj-foreign-alert">⚠ Квитанция №${escapeHtml(String(line.order_id))} принята на филиале
+          «${escapeHtml(preview.branch.accepted_where || "Сахарова")}» — он к нам не относится.
+          Скорее всего, в журнале ошибка в номере. Действие с этой квитанцией изменит чужой заказ.</div>
+        <div class="cj-import-actions"></div>`;
+      const actionsEl = card.querySelector(".cj-import-actions");
+      addImportBtn(actionsEl, "Закрыть", "is-muted", () => resolve("close"));
+      addImportBtn(actionsEl, "Пропустить строку", "is-primary", () => resolve("skip"));
+      addImportBtn(actionsEl, "Всё равно продолжить", "is-skip", () => resolve("go"));
+    });
+    if (go === "close") {
+      closeCashImportModal();
+      return;
+    }
+    if (go === "skip") {
+      runCashImportStep(queue, index + 1, { onUpdate });
+      return;
+    }
+  }
+
   if (preview.kind === "cashbox_expense") {
     await renderCashExpenseImport(card, {
       queue,
@@ -1479,6 +1506,38 @@ async function renderPartsAttachImport(card, { queue, index, line, preview, onUp
   render();
 }
 
+const CJ_BRANCH_CACHE = new Map();
+
+async function checkJournalBranches(data, onDone) {
+  const ids = [...new Set((data.lines || []).map((l) => String(l.order_id || "")).filter((x) => /^\d{4,}$/.test(x)))];
+  const need = ids.filter((id) => !CJ_BRANCH_CACHE.has(id));
+  if (need.length) {
+    try {
+      const resp = await fetch("/api/cash-journal/orders-branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_ids: need }),
+      });
+      const res = await resp.json().catch(() => ({}));
+      if (resp.ok) Object.entries(res.items || {}).forEach(([k, v]) => CJ_BRANCH_CACHE.set(k, v));
+    } catch {
+      return; // CRM недоступна — просто без подсветки
+    }
+  }
+  let changed = false;
+  for (const l of data.lines || []) {
+    const info = CJ_BRANCH_CACHE.get(String(l.order_id || ""));
+    if (!info || info.error) continue;
+    const foreign = !!info.foreign;
+    if (l.branch_foreign !== foreign || l.branch_where !== info.accepted_where) {
+      l.branch_foreign = foreign;
+      l.branch_where = info.accepted_where || null;
+      changed = true;
+    }
+  }
+  if (changed) onDone?.();
+}
+
 function renderCashJournal(journal) {
   const root = document.createElement("div");
   root.className = "cash-journal";
@@ -1489,6 +1548,11 @@ function renderCashJournal(journal) {
   };
   // Текущий подход без перезапуска: строки вида «акб 700» → ЗЧ
   reclassifyPartsLines(data.lines);
+  // где приняты квитанции журнала: Сахарова — чужой филиал, скорее всего ошибка в номере
+  setTimeout(() => checkJournalBranches(data, () => {
+    renderLines();
+    refreshSummary();
+  }), 0);
 
   const title = document.createElement("div");
   title.className = "cash-journal-title";
@@ -1567,7 +1631,10 @@ function renderCashJournal(journal) {
                 : line.action === "ignore"
                   ? " is-ignored"
                   : ""
-      }${line.posted ? " is-posted" : ""}`;
+      }${line.posted ? " is-posted" : ""}${line.branch_foreign ? " is-foreign-branch" : ""}`;
+      if (line.branch_foreign) {
+        row.title = `Квитанция №${line.order_id} принята: ${line.branch_where || "Сахарова"} — не наш филиал. Проверьте номер!`;
+      }
 
       const num = document.createElement("div");
       num.className = "cj-num";
@@ -1602,6 +1669,12 @@ function renderCashJournal(journal) {
         const badge = document.createElement("span");
         badge.className = "cj-quote-badge";
         badge.textContent = "цитата";
+        text.appendChild(badge);
+      }
+      if (line.branch_foreign) {
+        const badge = document.createElement("span");
+        badge.className = "cj-foreign-badge";
+        badge.textContent = `⚠ ${line.branch_where || "Сахарова"} — не наш филиал`;
         text.appendChild(badge);
       }
       let label = line.raw || line.note || "";

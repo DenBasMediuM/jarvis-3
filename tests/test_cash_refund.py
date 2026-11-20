@@ -48,3 +48,13 @@ def test_plain_parts_untouched():
     assert not is_refund_line(_line("123956 -256 елемент пельтье", order_id="123956"))
     assert is_parts_attach_line(_line("123956 -256 елемент пельтье", order_id="123956"))
     assert not is_refund_line({"action": "cash_out", "order_id": None, "raw": "-200 возврат такси"})
+
+
+def test_order_branch_foreign():
+    g = GincoreClient.parse_order_branch
+    assert g("<b>Был принят:</b> 14&nbsp;Ноя. Сахарова Центральный <span>") == {
+        "accepted_where": "Сахарова Центральный",
+        "foreign": True,
+    }
+    assert g("Был принят: 6 Окт. Левитан Центральный <span>")["foreign"] is False
+    assert g("нет такой строки") == {"accepted_where": None, "foreign": False}

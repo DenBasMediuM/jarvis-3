@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from contextlib import asynccontextmanager
 from typing import Any
@@ -795,6 +796,7 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
             return {
                 "ok": True,
                 "kind": "client_order_cash_in",
+                "branch": preview.get("branch"),
                 "line_id": body.line_id,
                 "amount": body.amount,
                 "action": body.action,
@@ -814,6 +816,7 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
             return {
                 "ok": True,
                 "kind": "client_order_refund",
+                "branch": preview.get("branch"),
                 "line_id": body.line_id,
                 "amount": body.amount,
                 "action": body.action,
@@ -886,6 +889,49 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
         raise HTTPException(400, str(exc)) from exc
     finally:
         await client.aclose()
+
+
+class CashJournalBranchCheck(BaseModel):
+    order_ids: list[str]
+
+
+_ORDER_BRANCH_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+_ORDER_BRANCH_TTL = 6 * 3600
+
+
+@app.post("/api/cash-journal/orders-branch")
+async def cash_journal_orders_branch(body: CashJournalBranchCheck) -> dict[str, Any]:
+    """Где принята каждая квитанция журнала; foreign=True — чужой филиал (Сахарова)."""
+    import time
+
+    ids = sorted({str(x).strip() for x in body.order_ids if str(x).strip().isdigit()})[:80]
+    now = time.time()
+    items: dict[str, Any] = {}
+    todo = []
+    for oid in ids:
+        hit = _ORDER_BRANCH_CACHE.get(oid)
+        if hit and now - hit[0] < _ORDER_BRANCH_TTL:
+            items[oid] = hit[1]
+        else:
+            todo.append(oid)
+    if todo:
+        client = await _gincore_client()
+        sem = asyncio.Semaphore(4)
+
+        async def one(oid: str) -> None:
+            async with sem:
+                try:
+                    info = await client.order_branch(oid)
+                    _ORDER_BRANCH_CACHE[oid] = (time.time(), info)
+                    items[oid] = info
+                except Exception as exc:  # noqa: BLE001
+                    items[oid] = {"order_id": oid, "error": str(exc)[:200]}
+
+        try:
+            await asyncio.gather(*(one(o) for o in todo))
+        finally:
+            await client.aclose()
+    return {"ok": True, "items": items}
 
 
 @app.get("/api/cash-journal/import/contractors")

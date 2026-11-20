@@ -3425,3 +3425,29 @@ details.fbadm-sec summary { cursor: pointer; font-weight: 600; color: var(--acce
   border-color: #c62828;
   box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.18);
 }
+
+.cash-journal-line.is-foreign-branch {
+  background: #fdecea;
+  border-left: 4px solid #c62828;
+}
+.cj-foreign-badge {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #c62828;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.cj-foreign-alert {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fdecea;
+  border: 1px solid #f5c2bd;
+  color: #8e1b12;
+  font-weight: 600;
+  line-height: 1.4;
+}
