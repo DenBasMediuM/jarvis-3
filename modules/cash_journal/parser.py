@@ -1026,6 +1026,26 @@ def _guess_action(op: JournalOp) -> str:
     return "cash_in" if op.amount > 0 else "cash_out"
 
 
+REFUND_RE = re.compile(r"возврат|вернул|верну(?:ть|ли)?\b|поверн", re.I)
+
+
+def is_refund_line(line: dict[str, Any]) -> bool:
+    """Возврат денег клиенту по квитанции: «125267 -750 возврат» (из кассы/карты, с номером).
+
+    Ручная отметка в UI: refund_manual True/False; явная запчасть (parts_manual) — не возврат.
+    """
+    if str(line.get("action") or "") not in ("cash_out", "card_out"):
+        return False
+    if not line.get("order_id") or line.get("is_breakdown_total"):
+        return False
+    if line.get("refund_manual") is True:
+        return True
+    if line.get("refund_manual") is False or line.get("parts_manual") or line.get("force_parts"):
+        return False
+    raw = str(line.get("raw") or line.get("note") or "")
+    return bool(REFUND_RE.search(raw))
+
+
 def is_parts_attach_line(line: dict[str, Any]) -> bool:
     """Привязка запчасти в CRM: «123956 -256 …», «122361 акб 700», «121985 - Шлейфы…, 2000».
 
@@ -1040,6 +1060,8 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
         return False
     if line.get("parts_manual") or line.get("force_parts"):
         return True
+    if is_refund_line(line):
+        return False
     # позиции под итогом ЗЧ уже учтены в кассе; в CRM тоже привязываем каждую
     raw = (line.get("raw") or line.get("note") or "").strip()
     core = ZCH_LINE_PREFIX.sub("", raw).strip()

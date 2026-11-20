@@ -81,6 +81,7 @@ class CashJournalImportPreview(BaseModel):
     cashbox_id: str | None = None
     note: str | None = None
     parts_manual: bool = False
+    refund: bool = False
 
 
 class CashJournalImportAccept(BaseModel):
@@ -801,6 +802,25 @@ async def cash_journal_import_preview(body: CashJournalImportPreview) -> dict[st
                 "payment_form": {**pay_form, "cashboxes": cashboxes},
             }
 
+        if body.refund and body.action in ("cash_out", "card_out") and body.order_id:
+            preview = await client.get_order_payment_preview(body.order_id)
+            form = await client.begin_client_order_refund(body.order_id)
+            boxes = await client.list_cashboxes()
+            by_id = {str(b.get("id")): b for b in boxes if b.get("id")}
+            form["cashboxes"] = [
+                {**cb, "total_uah": (by_id.get(str(cb["id"])) or {}).get("total_uah")}
+                for cb in form.get("cashboxes") or []
+            ]
+            return {
+                "ok": True,
+                "kind": "client_order_refund",
+                "line_id": body.line_id,
+                "amount": body.amount,
+                "action": body.action,
+                "order": preview,
+                "refund_form": form,
+            }
+
         if body.action == "cash_out" and body.order_id:
             if not is_parts_attach_line(
                 {
@@ -894,6 +914,16 @@ async def cash_journal_import_accept(body: CashJournalImportAccept) -> dict[str,
                 note=body.note or body.comment or "",
             )
             return {**result, "line_id": body.line_id}
+
+        if body.kind == "client_order_refund":
+            if not body.order_id:
+                raise HTTPException(400, "Нужен номер квитанции для возврата")
+            if not body.cashbox_id:
+                raise HTTPException(400, "Выберите кассу")
+            result = await client.refund_client_order(
+                body.order_id, cashbox_id=body.cashbox_id, amount=abs(float(body.amount))
+            )
+            return {**result, "line_id": body.line_id, "kind": "client_order_refund"}
 
         if body.kind == "cashbox_expense":
             if not body.cashbox_id:

@@ -559,6 +559,8 @@ function checkpointLineHtml(line) {
   return parts.join(" · ");
 }
 
+const CJ_REFUND_ICON = `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 9L6 15l6 6" fill="none" stroke="#c62828" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 15h12a6 6 0 010 12h-4" fill="none" stroke="#c62828" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+
 const CJ_ACTION_ICONS = {
   cash_in: `<svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="22" rx="9" ry="6" fill="#c4a574" stroke="#8a6b3d" stroke-width="1.2"/><path d="M10 18c0-5 2.5-10 6-10s6 5 6 10" fill="#d4b896" stroke="#8a6b3d" stroke-width="1.2"/><circle cx="24" cy="10" r="6" fill="#2e7d32"/><path d="M24 7v6M21 10h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`,
   cash_out: `<svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="22" rx="9" ry="6" fill="#c4a574" stroke="#8a6b3d" stroke-width="1.2"/><path d="M10 18c0-5 2.5-10 6-10s6 5 6 10" fill="#d4b896" stroke="#8a6b3d" stroke-width="1.2"/><circle cx="24" cy="10" r="6" fill="#c62828"/><path d="M21 10h6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`,
@@ -618,12 +620,24 @@ function extractOrderIdFromText(raw) {
   return m ? m[1] : "";
 }
 
+const CJ_REFUND_RE = /возврат|вернул|верну(?:ть|ли)?(?![а-яё])|поверн/i;
+
+/** Возврат денег клиенту по квитанции: «125267 -750 возврат» (из кассы/карты, с номером). */
+function isRefundLine(line) {
+  if (!line || (line.action !== "cash_out" && line.action !== "card_out") || !line.order_id) return false;
+  if (line.is_breakdown_total) return false;
+  if (line.refund_manual === true) return true;
+  if (line.refund_manual === false || line.parts_manual === true || line.force_parts) return false;
+  return CJ_REFUND_RE.test(String(line.raw || line.note || ""));
+}
+
 function isPartsAttachLine(line) {
   if (!line || line.action !== "cash_out" || !line.order_id) return false;
   if (line.is_breakdown_total) return false;
   // false — явно снято кнопкой; true — принудительно ЗЧ
   if (line.parts_manual === false) return false;
   if (line.parts_manual === true || line.force_parts) return true;
+  if (isRefundLine(line)) return false;
   const raw = String(line.raw || line.note || "").trim();
   const core = raw.replace(/^зч\.?\s+/i, "").trim();
   // приход «+2500 …» / «… грн» — не ЗЧ (кроме ручной отметки выше)
@@ -672,6 +686,7 @@ function reclassifyPartsLines(lines) {
     );
     if (!space || isPaymentLabel(space[1])) continue;
     if (/(^|\s)(зп|зарплат\w*)(\s|$)/i.test(core)) continue;
+    if (CJ_REFUND_RE.test(core)) continue;
     const spaceAmt = Number(String(space[2]).replace(",", "."));
     const lineAmt = Math.abs(Number(line.amount) || 0);
     // «+2500 … 08,10» ловит 08,10 — сумма должна совпасть с суммой строки
@@ -689,6 +704,7 @@ function importableCashJournalLines(lines) {
     if (l.is_quote || l.is_checkpoint || l.is_breakdown_total) return false;
     const amt = Math.abs(Number(l.amount) || 0);
     if (amt <= 0) return false;
+    if (isRefundLine(l)) return true;
     if (isPartsAttachLine(l)) return true;
     if (l.is_breakdown) return false;
     if ((l.action === "cash_in" || l.action === "card_in") && l.order_id) return true;
@@ -730,7 +746,7 @@ async function openCashImportFlow(lines, { onUpdate } = {}) {
   const queue = importableCashJournalLines(lines);
   if (!queue.length) {
     alert(
-      "Нет строк для внесения: «в кассу»/«в карту» с квитанцией, «из кассы» без заказа (расход) или «из кассы» с номером (привязка запчасти)."
+      "Нет строк для внесения: «в кассу»/«в карту» с квитанцией, «из кассы» без заказа (расход), «из кассы» с номером (привязка запчасти) или возврат клиенту по квитанции."
     );
     return;
   }
@@ -749,8 +765,9 @@ async function runCashImportStep(queue, index, { onUpdate } = {}) {
   overlay.className = "cj-import-overlay";
   const card = document.createElement("div");
   card.className = "cj-import-card";
-  const loadingLabel =
-    isPartsAttachLine(line)
+  const loadingLabel = isRefundLine(line)
+    ? `Загрузка квитанции №${line.order_id} (возврат)…`
+    : isPartsAttachLine(line)
       ? `Загрузка квитанции №${line.order_id} (запчасть)…`
       : line.action === "cash_out"
         ? "Загрузка формы расхода…"
@@ -775,6 +792,7 @@ async function runCashImportStep(queue, index, { onUpdate } = {}) {
         cashbox_id: getLastCashboxId() || null,
         note: line.raw || line.note || "",
         parts_manual: !!(line.parts_manual || line.force_parts),
+        refund: isRefundLine(line),
       }),
     });
     const data = await resp.json().catch(() => ({}));
@@ -799,6 +817,11 @@ async function runCashImportStep(queue, index, { onUpdate } = {}) {
       preview,
       onUpdate,
     });
+    return;
+  }
+
+  if (preview.kind === "client_order_refund") {
+    await renderRefundImport(card, { queue, index, line, preview, onUpdate });
     return;
   }
 
@@ -1050,6 +1073,130 @@ async function renderCashPaymentImport(card, { queue, index, line, preview, onUp
         runCashImportStep(queue, index + 1, { onUpdate })
       );
     }
+  }
+
+  render();
+}
+
+async function renderRefundImport(card, { queue, index, line, preview, onUpdate }) {
+  const order = preview.order || {};
+  const pay = order.payment || {};
+  const form = preview.refund_form || {};
+  const cashboxes = form.cashboxes || [];
+  const amount = Math.abs(Number(preview.amount || line.amount) || 0);
+  const paid = form.paid != null ? Number(form.paid) : pay.paid != null ? Number(pay.paid) : null;
+  const tooMuch = paid != null && amount > paid + 0.009;
+  const fromCard = line.action === "card_out";
+  let selectedCashbox = "";
+  const last = getLastCashboxId(fromCard);
+  if (last && cashboxes.some((b) => String(b.id) === String(last))) selectedCashbox = String(last);
+  else if (fromCard) selectedCashbox = String((cashboxes.find((b) => /безнал|карт/i.test(b.name || "")) || cashboxes[0] || {}).id || "");
+  else selectedCashbox = String((cashboxes.find((b) => !/безнал|сейф/i.test(b.name || "")) || cashboxes[0] || {}).id || "");
+  let step = "form";
+
+  function render() {
+    const feedHtml = (order.live_feed || [])
+      .slice(0, 20)
+      .map(
+        (f) =>
+          `<div class="cj-feed-row"><span class="cj-feed-date">${escapeHtml(f.date || "")}</span>
+           <span class="cj-feed-author">${escapeHtml(f.author || "")}</span>
+           <span class="cj-feed-text">${escapeHtml(f.text || "")}</span></div>`
+      )
+      .join("");
+    const boxOpts = cashboxes
+      .map((b) => {
+        const bal = b.total_uah != null ? ` (${fmtMoney(b.total_uah)})` : "";
+        const sel = String(b.id) === String(selectedCashbox) ? " selected" : "";
+        return `<option value="${escapeHtml(String(b.id))}"${sel}>${escapeHtml(b.name || b.id)}${escapeHtml(bal)}</option>`;
+      })
+      .join("");
+    const blocked = !form.has_form || tooMuch || !cashboxes.length;
+    const reason = !form.has_form
+      ? form.warning || "CRM не даёт сделать возврат по этому заказу."
+      : tooMuch
+        ? `Возврат ${fmtMoney(amount)} больше оплаченного по заказу (${fmtMoney(paid)}). Проверьте сумму или номер квитанции.`
+        : !cashboxes.length
+          ? "CRM не предложила ни одной кассы для возврата."
+          : form.warning || "";
+    card.innerHTML = `
+      <div class="cj-import-head">
+        <strong>Возврат клиенту · ${fromCard ? "с карты" : "из кассы"}</strong>
+        <span>${index + 1} / ${queue.length}</span>
+      </div>
+      <div class="cj-import-line">${escapeHtml(line.raw || line.note || "")} → <b>${fmtMoney(amount)}</b></div>
+      <div class="cj-import-section">
+        <div class="cj-import-sec-title">Квитанция
+          <a href="${escapeHtml(order.url || "#")}" target="_blank" rel="noopener">№${escapeHtml(order.order_id || line.order_id || "")}</a>
+        </div>
+        <div class="cj-pay-grid">
+          <div><span>Форма оплаты</span><strong>${escapeHtml(form.payment_method || pay.payment_method || "—")}</strong></div>
+          <div><span>Стоимость ремонта</span><strong>${fmtMoney(form.repair_cost ?? pay.repair_cost)}</strong></div>
+          <div><span>Оплачено</span><strong>${fmtMoney(paid)}</strong></div>
+          <div><span>Вернуть</span><strong style="color:#c62828">${fmtMoney(amount)}</strong></div>
+        </div>
+      </div>
+      <div class="cj-import-section">
+        <div class="cj-import-sec-title">Живая лента</div>
+        <div class="cj-feed">${feedHtml || "<em>пусто</em>"}</div>
+      </div>
+      <div class="cj-import-section">
+        <div class="cj-import-sec-title">Выдать из кассы</div>
+        <select class="cj-cashbox-select"${blocked ? " disabled" : ""}>${boxOpts}</select>
+      </div>
+      <div class="cj-import-status" data-status>${escapeHtml(reason)}</div>
+      <div class="cj-import-actions"></div>
+    `;
+    const actionsEl = card.querySelector(".cj-import-actions");
+    const statusEl = card.querySelector("[data-status]");
+    card.querySelector(".cj-cashbox-select")?.addEventListener("change", (e) => {
+      selectedCashbox = e.target.value;
+    });
+    addImportBtn(actionsEl, "Закрыть", "is-muted", closeCashImportModal);
+    if (step === "done") {
+      addImportBtn(actionsEl, "Следующая", "is-primary", () =>
+        runCashImportStep(queue, index + 1, { onUpdate })
+      );
+      return;
+    }
+    addImportBtn(actionsEl, "Пропустить", "is-skip", () =>
+      runCashImportStep(queue, index + 1, { onUpdate })
+    );
+    if (blocked) return;
+    const btn = addImportBtn(actionsEl, `Вернуть ${fmtMoney(amount)}`, "is-success", async () => {
+      if (!selectedCashbox) {
+        statusEl.textContent = "Выберите кассу";
+        return;
+      }
+      const boxName = (cashboxes.find((b) => String(b.id) === String(selectedCashbox)) || {}).name || "";
+      if (!confirm(`Вернуть клиенту ${fmtMoney(amount)} грн по №${line.order_id} из кассы «${boxName}»?`)) return;
+      btn.disabled = true;
+      statusEl.textContent = "Отправка в CRM…";
+      try {
+        const resp = await fetch("/api/cash-journal/import/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: "client_order_refund",
+            order_id: String(line.order_id),
+            amount,
+            cashbox_id: String(selectedCashbox),
+            line_id: line.id,
+          }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(data.detail || data.error || resp.statusText);
+        setLastCashboxId(selectedCashbox, fromCard);
+        line.posted = true;
+        step = "done";
+        render();
+        card.querySelector("[data-status]").textContent = data.crm?.msg || "Возврат проведён.";
+        onUpdate?.();
+      } catch (err) {
+        btn.disabled = false;
+        statusEl.textContent = `Ошибка: ${err.message || err}`;
+      }
+    });
   }
 
   render();
@@ -1446,6 +1593,11 @@ function renderCashJournal(journal) {
         badge.className = "cj-breakdown-badge";
         badge.textContent = "ЗЧ";
         text.appendChild(badge);
+      } else if (isRefundLine(line)) {
+        const badge = document.createElement("span");
+        badge.className = "cj-breakdown-badge cj-refund-badge";
+        badge.textContent = "возврат";
+        text.appendChild(badge);
       } else if (line.is_quote) {
         const badge = document.createElement("span");
         badge.className = "cj-quote-badge";
@@ -1487,6 +1639,9 @@ function renderCashJournal(journal) {
             if (act.id !== "cash_out" && row.parts_manual) {
               row.parts_manual = false;
               row.is_breakdown = false;
+            }
+            if (act.id !== "cash_out" && act.id !== "card_out" && row.refund_manual) {
+              row.refund_manual = undefined;
             }
             renderLines();
             refreshSummary();
@@ -1534,11 +1689,46 @@ function renderCashJournal(journal) {
             }
             row.parts_manual = true;
             row.is_breakdown = true;
+            row.refund_manual = false;
             row.action = "cash_out";
             renderLines();
             refreshSummary();
           });
           btns.appendChild(pb);
+
+          const refundOn = isRefundLine(line);
+          const rb = document.createElement("button");
+          rb.type = "button";
+          rb.className = `cj-btn cj-btn-icon cj-btn-refund${refundOn ? " active" : ""}`;
+          rb.title = refundOn ? "Снять отметку «возврат клиенту»" : "Возврат денег клиенту по квитанции";
+          rb.setAttribute("aria-label", rb.title);
+          rb.disabled = !!line.posted;
+          rb.innerHTML = CJ_REFUND_ICON;
+          rb.addEventListener("click", () => {
+            const row = data.lines[idx];
+            if (isRefundLine(row)) {
+              row.refund_manual = false;
+              renderLines();
+              refreshSummary();
+              return;
+            }
+            let oid = row.order_id ? String(row.order_id) : "";
+            if (!oid) {
+              oid = extractOrderIdFromText(row.raw || row.note || "");
+              if (oid) row.order_id = oid;
+            }
+            if (!oid) {
+              alert("Для возврата нужен номер квитанции в тексте строки.");
+              return;
+            }
+            row.refund_manual = true;
+            row.parts_manual = false;
+            row.is_breakdown = false;
+            if (row.action !== "cash_out" && row.action !== "card_out") row.action = "cash_out";
+            renderLines();
+            refreshSummary();
+          });
+          btns.appendChild(rb);
         }
         main.appendChild(btns);
       }

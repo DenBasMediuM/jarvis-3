@@ -573,6 +573,100 @@ class GincoreClient:
             },
         }
 
+    async def begin_client_order_refund(self, order_id: str | int) -> dict[str, Any]:
+        """Окно «Вернуть деньги» в карточке заказа (orders/ajax?act=show_repay_client_order)."""
+        oid = str(order_id).strip()
+        resp = await self.request(
+            "POST",
+            "/orders/ajax?act=show_repay_client_order&show=modal",
+            data={"order_id": oid},
+            headers=self._ajax_headers(f"{self.base_url}/orders/{oid}"),
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        if not payload.get("state"):
+            raise GincoreError(
+                payload.get("message") or payload.get("msg") or "Не удалось открыть окно возврата"
+            )
+        return self.parse_refund_form(str(payload.get("content") or ""), oid)
+
+    @staticmethod
+    def parse_refund_form(content: str, order_id: str = "") -> dict[str, Any]:
+        soup = BeautifulSoup(content or "", "lxml")
+        info: dict[str, Any] = {}
+        for row in soup.select(".col-sm-12"):
+            cols = row.find_all("div", recursive=False)
+            if len(cols) >= 2:
+                k = cols[0].get_text(" ", strip=True).lower()
+                v = parse_money(cols[1].get_text(" ", strip=True))
+                if "стоимость" in k:
+                    info["repair_cost"] = v
+                elif "оплачено" in k:
+                    info["paid"] = v
+        method = soup.select_one("label.payment_method")
+        cashboxes = [
+            {"id": str(o.get("value")), "name": o.get_text(" ", strip=True)}
+            for o in soup.select('select[name="cashboxes"] option')
+            if str(o.get("value") or "").strip()
+        ]
+        amount_el = soup.select_one('input[name="amount"]')
+        danger = " ".join(
+            el.get_text(" ", strip=True) for el in soup.select("#repay-order .text-danger")
+        ).strip()
+        return {
+            "ok": True,
+            "order_id": order_id,
+            "has_form": soup.select_one("form#repay-order") is not None,
+            "repair_cost": info.get("repair_cost"),
+            "paid": info.get("paid"),
+            "payment_method": method.get_text(" ", strip=True) if method else None,
+            "cashboxes": cashboxes,
+            "max_amount": parse_money(amount_el.get("value")) if amount_el else None,
+            "warning": danger or None,
+        }
+
+    async def refund_client_order(
+        self, order_id: str | int, *, cashbox_id: str | int, amount: float
+    ) -> dict[str, Any]:
+        """«Вернуть деньги» клиенту из кассы (orders/ajax?act=repay_client_order)."""
+        oid = str(order_id).strip()
+        amt = float(amount)
+        if amt <= 0:
+            raise GincoreError("Сумма возврата должна быть больше 0")
+        form = await self.begin_client_order_refund(oid)
+        if not form.get("has_form"):
+            raise GincoreError(form.get("warning") or "CRM не даёт сделать возврат по этому заказу")
+        paid = form.get("paid")
+        if paid is not None and amt > float(paid) + 0.009:
+            raise GincoreError(f"Возврат {amt:g} больше оплаченного по заказу ({float(paid):g})")
+        if str(cashbox_id) not in {c["id"] for c in form.get("cashboxes") or []}:
+            raise GincoreError("Эта касса недоступна для возврата")
+        resp = await self.request(
+            "POST",
+            "/orders/ajax?act=repay_client_order",
+            data={
+                "order_id": oid,
+                "cashboxes": str(cashbox_id),
+                "amount": f"{amt:.2f}".rstrip("0").rstrip("."),
+                "transaction_id": "0",
+            },
+            headers=self._ajax_headers(f"{self.base_url}/orders/{oid}"),
+        )
+        resp.raise_for_status()
+        try:
+            payload = resp.json()
+        except Exception as exc:  # noqa: BLE001
+            raise GincoreError(f"Неожиданный ответ CRM: {resp.text[:300]}") from exc
+        if not payload.get("state"):
+            raise GincoreError(payload.get("message") or payload.get("msg") or "Ошибка возврата")
+        return {
+            "ok": True,
+            "order_id": oid,
+            "cashbox_id": str(cashbox_id),
+            "amount": amt,
+            "crm": {"state": payload.get("state"), "msg": payload.get("message") or payload.get("msg")},
+        }
+
     @staticmethod
     def parse_order_status(html: str) -> dict[str, Any]:
         soup = BeautifulSoup(html, "lxml")

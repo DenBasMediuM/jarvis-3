@@ -3415,3 +3415,13 @@ details.fbadm-sec summary { cursor: pointer; font-weight: 600; color: var(--acce
 .fbadm-setup pre { background: #f3f1ea; padding: 10px; border-radius: 8px; }
 
 .vitrine-fb-warn { color: var(--accent-2); }
+
+.cj-breakdown-badge.cj-refund-badge {
+  background: #fdecea;
+  color: #c62828;
+  border-color: #f5c2bd;
+}
+.cj-btn-refund.active {
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.18);
+}
