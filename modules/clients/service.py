@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 
 SYNC_KEY = "clients_sync"
 SUMMARY_KEY = "clients_summary"
-HISTORY_KEY = "clients_history"
+HISTORY_KEY = "clients_history_v2"  # v2: телефон из полного текста ячейки «Клиент»
 MAX_PAGES_PER_MONTH = 80
 
 

@@ -53,6 +53,7 @@ def parse_history_rows(html: str) -> list[dict[str, Any]]:
     """Строки списка ремонтов: поля Качества + клиент/телефон + стоимость/оплачено."""
     base = {r["order_id"]: r for r in parse_quality_list_rows(html)}
     money: dict[str, tuple[float | None, float | None]] = {}
+    client_full: dict[str, str] = {}
     soup = BeautifulSoup(html or "", "lxml")
     for tr in soup.select("table.table-of-repair-orders tbody tr"):
         tds = tr.find_all("td", recursive=False) or tr.select("td")
@@ -62,9 +63,12 @@ def parse_history_rows(html: str) -> list[dict[str, Any]]:
         if not re.fullmatch(r"\d{4,}", oid or ""):
             continue
         money[oid] = (GincoreClient._money_from_td(tds[11]), GincoreClient._money_from_td(tds[12]))
+        if len(tds) > 13:
+            # телефон — в полном тексте ячейки «Клиент», а не в .visible-lg (там только имя)
+            client_full[oid] = tds[13].get_text(" ", strip=True)
     out: list[dict[str, Any]] = []
     for oid, r in base.items():
-        name, phone = split_client(r.get("client") or "")
+        name, phone = split_client(client_full.get(oid) or r.get("client") or "")
         cost, paid = money.get(oid, (None, None))
         out.append(
             {

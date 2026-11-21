@@ -137,3 +137,14 @@ def test_service_sync_end_to_end(monkeypatch):
     assert phones == ["0670000000"]  # клиент уже в разделе, 0990… отклонён
     assert snap["totals"]["orders_90"] >= 5
     assert db.d["clients_summary"]["candidates_total"] == 1
+
+
+def test_parse_history_rows_phone_from_full_cell(monkeypatch):
+    import modules.clients.compute as cm
+
+    monkeypatch.setattr(cm, "parse_quality_list_rows", lambda html: [{"order_id": "125470", "status": "Выдан", "client": "Геннадий", "device": "UFO", "accepted_at": "2026-11-16"}])
+    tds = "".join(f"<td>{i}</td>" for i in range(1)) + "<td>125470</td>" + "".join("<td>x</td>" for _ in range(9)) + "<td>950</td><td>950</td>"
+    tds += '<td><span class="visible-lg">Геннадий Геннадий</span> +380969195362</td>'
+    html = f'<table class="table-of-repair-orders"><tbody><tr>{tds}</tr></tbody></table>'
+    rows = cm.parse_history_rows(html)
+    assert rows[0]["phone"] == "0969195362" and rows[0]["name"] == "Геннадий" and rows[0]["paid"] == 950
