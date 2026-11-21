@@ -148,3 +148,16 @@ def test_parse_history_rows_phone_from_full_cell(monkeypatch):
     html = f'<table class="table-of-repair-orders"><tbody><tr>{tds}</tr></tbody></table>'
     rows = cm.parse_history_rows(html)
     assert rows[0]["phone"] == "0969195362" and rows[0]["name"] == "Геннадий" and rows[0]["paid"] == 950
+
+
+def test_staff_excluded():
+    from modules.clients.compute import looks_like_staff, staff_name_sets
+
+    staff = staff_name_sets(["Перебейнос Игорь", "Дубовой Юрий Владими...", "", "Інна Балта"])
+    assert looks_like_staff("Игорь Перебейнос (для себя)", staff)
+    assert looks_like_staff("Юрий Дубовой", staff)
+    assert not looks_like_staff("Игорь Петров", staff)
+    rows = [_r(str(i), "0501112233", "2026-11-0%d" % (i + 1), name="Игорь Перебейнос (дл") for i in range(3)]
+    skipped = {}
+    assert find_candidates(index_by_phone(rows), today=TODAY, thresholds={"orders": 3}, skip_phones=set(), staff=staff, skipped=skipped) == []
+    assert skipped == {"staff": 1}

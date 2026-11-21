@@ -232,6 +232,29 @@ def client_metrics(
     return res
 
 
+def _tokens(name: Any) -> set[str]:
+    t = str(name or "").lower().replace("ё", "е").replace("...", " ")
+    return {w for w in re.findall(r"[a-zа-яіїєґ']{3,}", t)}
+
+
+def staff_name_sets(names: list[str]) -> list[set[str]]:
+    """Сотрудники/мастера из CRM: множества из имени и фамилии (первые два слова, без отчества)."""
+    out: list[set[str]] = []
+    seen: set[frozenset] = set()
+    for n in names:
+        words = [w for w in re.findall(r"[A-Za-zА-Яа-яЁёІіЇїЄєҐґ']{3,}", str(n or "").replace("...", " "))][:2]
+        toks = _tokens(" ".join(words))
+        if len(toks) == 2 and frozenset(toks) not in seen:
+            seen.add(frozenset(toks))
+            out.append(toks)
+    return out
+
+
+def looks_like_staff(name: Any, staff: list[set[str]]) -> bool:
+    toks = _tokens(name)
+    return any(s <= toks for s in staff)
+
+
 def find_candidates(
     by_phone: dict[str, list[dict[str, Any]]],
     *,
@@ -239,8 +262,13 @@ def find_candidates(
     thresholds: dict[str, Any],
     skip_phones: set[str],
     order_url: Any = None,
+    staff: list[set[str]] | None = None,
+    skipped: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """Клиенты, которые часто обращаются в последнее время и ещё не в разделе."""
+    """Клиенты, которые часто обращаются в последнее время и ещё не в разделе.
+
+    staff — имена сотрудников/мастеров CRM: такие «клиенты» (свои номера) не предлагаются.
+    """
     url = order_url or (lambda oid: None)
     months = int(thresholds.get("months") or 6)
     min_orders = int(thresholds.get("orders") or 3)
@@ -275,6 +303,10 @@ def find_candidates(
             if r.get("name"):
                 names[r["name"]] = names.get(r["name"], 0) + 1
         name = max(names, key=lambda n: names[n]) if names else ""
+        if staff and any(looks_like_staff(n, staff) for n in names):
+            if skipped is not None:
+                skipped["staff"] = skipped.get("staff", 0) + 1
+            continue
         last = max(d for d, _ in win)
         first = min(d for d, _ in win)
         refusals = sum(1 for _, r in win if classify_status(r.get("status")) == "refusal")

@@ -19,6 +19,7 @@ from modules.clients.compute import (
     find_candidates,
     index_by_phone,
     parse_history_rows,
+    staff_name_sets,
 )
 from modules.gincore.client import to_gincore_date
 from modules.outsource.compute import classify_status
@@ -147,13 +148,24 @@ class ClientsService:
                     skip.add(str(d.get("phone")))
                 elif d.get("decision") == "snoozed" and str(d.get("until") or "") > today_s:
                     skip.add(str(d.get("phone")))
+            staff_names: list[str] = []
+            try:
+                for o in await self.db.quality_list_orders():
+                    staff_names += [str(o.get(k) or "") for k in ("engineer", "manager", "accepter")]
+            except Exception as exc:  # noqa: BLE001
+                warnings.append(f"список сотрудников из Качества: {exc}")
+            skipped: dict[str, int] = {}
             candidates = find_candidates(
                 by_phone,
                 today=today,
                 thresholds=settings.get("thresholds") or {},
                 skip_phones=skip,
                 order_url=order_url,
+                staff=staff_name_sets(staff_names),
+                skipped=skipped,
             )
+            if skipped.get("staff"):
+                warnings.append(f"не предложено как сотрудники/мастера: {skipped['staff']}")
 
             totals = {"gross_90": 0.0, "orders_90": 0}
             for r in history:

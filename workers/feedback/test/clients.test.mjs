@@ -71,7 +71,7 @@ test("decision and settings", () => {
   const d = normalizeDecision({ phone: "0501112233", decision: "snoozed", days: 30 });
   assert.ok(d.until);
   const s = normalizeSettings({ thresholds: { orders: 1 }, excluded_phones: "0501112233\nabc" });
-  assert.equal(s.thresholds.orders, 3);
+  assert.equal(s.thresholds.orders, 4);
   assert.deepEqual(s.excluded_phones, ["0501112233"]);
 });
 

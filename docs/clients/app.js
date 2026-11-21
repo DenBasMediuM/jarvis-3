@@ -442,8 +442,8 @@ function renderCandidates() {
   const crm = STATE.crm;
   const th = settings().thresholds || {};
   $("#cl-cand-sub").textContent =
-    `Клиенты, которые часто обращаются в последнее время и ещё не заведены в раздел: от ${th.orders || 3} заказов за ${th.months || 6} мес., ` +
-    `или от ${th.recent_orders || 2} за ${th.recent_days || 60} дн.${th.gross ? `, или вал от ${money(th.gross)}` : ""}. ` +
+    `Клиенты, которые часто обращаются в последнее время и ещё не заведены в раздел: от ${th.orders || 4} заказов за ${th.months || 6} мес., ` +
+    `или от ${th.recent_orders || 3} за ${th.recent_days || 60} дн.${th.gross ? `, или вал от ${money(th.gross)}` : ""}. ` +
     `${crm?.generated_at ? `Снимок CRM: ${fmtDateTime(crm.generated_at)}.` : "Снимка CRM ещё нет — его делает Jarvis при утренней пересборке."}`;
   const q = $("#cl-cand-search").value.trim().toLowerCase();
   const onlyB2b = $("#cl-cand-b2b").checked;
@@ -1267,10 +1267,10 @@ function renderSettings() {
   const th = settings().thresholds || {};
   $("#cl-thr-form").innerHTML = `<div class="os-row">
       <label>Окно, мес.<input type="number" min="2" max="12" name="months" value="${th.months ?? 6}" /></label>
-      <label>Заказов за окно (от)<input type="number" min="2" name="orders" value="${th.orders ?? 3}" /></label>
+      <label>Заказов за окно (от)<input type="number" min="2" name="orders" value="${th.orders ?? 4}" /></label>
       <label>«Недавно», дн.<input type="number" min="14" max="180" name="recent_days" value="${th.recent_days ?? 60}" /></label>
-      <label>Заказов за «недавно» (от)<input type="number" min="2" name="recent_orders" value="${th.recent_orders ?? 2}" /></label>
-      <label>Или вал за окно от, грн<input type="number" min="0" name="gross" value="${th.gross ?? 10000}" /></label>
+      <label>Заказов за «недавно» (от)<input type="number" min="2" name="recent_orders" value="${th.recent_orders ?? 3}" /></label>
+      <label>Или вал за окно от, грн<input type="number" min="0" name="gross" value="${th.gross ?? 20000}" /></label>
     </div>
     <label>Не предлагать эти телефоны <span class="os-muted">(сотрудники, мастера, свои номера — через запятую или с новой строки)</span>
       <textarea name="excluded_phones">${esc((settings().excluded_phones || []).map(fmtPhone).join("\n"))}</textarea></label>

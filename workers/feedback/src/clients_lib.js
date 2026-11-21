@@ -304,7 +304,7 @@ export const DEFAULT_SETTINGS = {
     signer: "",
     city: "Одеса",
   },
-  thresholds: { months: 6, orders: 3, recent_days: 60, recent_orders: 2, gross: 10000 },
+  thresholds: { months: 6, orders: 4, recent_days: 60, recent_orders: 3, gross: 20000 },
   excluded_phones: [],
   touch_every_days: 30,
 };
