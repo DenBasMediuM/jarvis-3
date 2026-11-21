@@ -16,6 +16,7 @@
     reviews_stats: "reviews_stats",
     buffer_quality: "buffer",
     outsource: "outsource",
+    clients: "clients",
   };
 
   const esc = (s) =>
@@ -39,7 +40,7 @@
   function defaultArticle(list) {
     const page = currentPage();
     const byTab = page === "vyrobotka" ? TAB_TO_ARTICLE[activeTab()] : null;
-    const byPage = { quality: "quality", reviews: "reviews", outsource: "outsource" }[page];
+    const byPage = { quality: "quality", reviews: "reviews", outsource: "outsource", clients: "clients" }[page];
     const want = byTab || byPage || "start";
     return list.find((a) => a.id === want) || list[0];
   }

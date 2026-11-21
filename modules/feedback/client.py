@@ -112,6 +112,14 @@ class FeedbackClient:
             raise FeedbackError(f"Worker {res.status_code}: {msg}")
         return data
 
+    async def get_clients_state(self) -> dict[str, Any]:
+        """Раздел «Постоянные клиенты»: клиенты (телефоны, условия), решения по кандидатам, настройки."""
+        return await self._request("GET", "/admin/clients/state")
+
+    async def put_clients_snapshot(self, snapshot: dict[str, Any]) -> dict[str, Any]:
+        """CRM-снимок клиентов и кандидатов — в облако (витрина читает по токену, не из репозитория)."""
+        return await self._request("PUT", "/admin/clients/snapshot", json=snapshot)
+
     async def get_outsource_state(self) -> dict[str, Any]:
         """Раздел «Аутсорс мастера»: кандидаты, передачи, журнал, план (D1 Worker'а)."""
         return await self._request("GET", "/admin/outsource/state")

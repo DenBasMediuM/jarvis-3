@@ -32,6 +32,7 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="reviews">Сбор отзывов</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="buffer_quality">Качество буфера</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="outsource">Аутсорс мастера</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="clients">Постоянные клиенты</button>
           </div>
         </div>
         <button class="nav-btn" data-view="finance">Финансы</button>
@@ -280,6 +281,12 @@
               <a class="cj-import-btn is-muted" href="https://denbasmedium.github.io/jarvis-3/outsource/" target="_blank" rel="noopener">Открыть на витрине</a>
               <span id="outsource-sync-status" class="quality-sync-status">—</span>
             </div>
+            <div class="quality-toolbar" id="clients-toolbar" hidden>
+              <span class="quality-toolbar-label">Постоянные клиенты</span>
+              <button type="button" id="clients-sync-btn" class="cj-import-open" title="История ремонтов за 12 мес. по телефонам → метрики клиентов и кандидаты (в облако)">Обновить из CRM</button>
+              <a class="cj-import-btn is-muted" href="https://denbasmedium.github.io/jarvis-3/clients/" target="_blank" rel="noopener">Открыть на витрине</a>
+              <span id="clients-sync-status" class="quality-sync-status">—</span>
+            </div>
           </div>
         </div>
         <nav class="quality-tabs" role="tablist" aria-label="Процессы">
@@ -289,6 +296,7 @@
           <button type="button" class="quality-tab" data-processes-tab="reviews" role="tab" aria-selected="false">Сбор отзывов</button>
           <button type="button" class="quality-tab" data-processes-tab="buffer_quality" role="tab" aria-selected="false">Качество буфера</button>
           <button type="button" class="quality-tab" data-processes-tab="outsource" role="tab" aria-selected="false">Аутсорс мастера</button>
+          <button type="button" class="quality-tab" data-processes-tab="clients" role="tab" aria-selected="false">Постоянные клиенты</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
@@ -665,6 +673,31 @@
             </div>
           </article>
 
+          <article id="clients-body" class="vyrobotka-section" hidden>
+            <header class="vyrobotka-section-head">
+              <h2>Постоянные клиенты</h2>
+              <p id="clients-meta">Карточки, договоры и касания ведёт менеджер на витрине; CRM-метрики и кандидаты — снимок пересборки.</p>
+            </header>
+            <div class="vyrobotka-kpis" id="clients-kpis" aria-label="Сводка по постоянным клиентам"></div>
+            <div id="clients-warnings"></div>
+            <div class="vyrobotka-side-head"><h3>Клиенты</h3>
+              <p class="vyrobotka-chart-sub" style="margin:0">Заказы и вал — за 90 дней; тренд — к предыдущим 90; «заснул» — не заказывает вдвое дольше своего обычного интервала.</p></div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table">
+                <thead><tr><th>Клиент</th><th>Стадия</th><th>Договор</th><th>Заказов 90 дн.</th><th>Вал 90 дн.</th><th>Тренд</th><th>Дней с заказа</th><th>Долг</th><th>Следующий шаг</th></tr></thead>
+                <tbody id="clients-tbody"><tr><td colspan="9" class="quality-empty">Нет данных.</td></tr></tbody>
+              </table>
+            </div>
+            <div class="vyrobotka-side-head" style="margin-top:16px"><h3>Кандидаты из базы (топ-15)</h3>
+              <p class="vyrobotka-chart-sub" style="margin:0">Часто обращаются в последнее время и ещё не в разделе. Разбирает менеджер на витрине: «взять в работу», «не постоянный», «отложить».</p></div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table">
+                <thead><tr><th>Клиент</th><th>Заказов за период</th><th>Недавних</th><th>Вал</th><th>Последний</th><th>Оценка</th></tr></thead>
+                <tbody id="clients-cand-tbody"><tr><td colspan="6" class="quality-empty">—</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
           <article id="outsource-body" class="vyrobotka-section" hidden>
             <header class="vyrobotka-section-head">
               <h2>Аутсорс мастера</h2>
@@ -849,6 +882,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261120-refund2"></script>
+  <script src="/static/app.js?v=20261121-clients1"></script>
 </body>
 </html>

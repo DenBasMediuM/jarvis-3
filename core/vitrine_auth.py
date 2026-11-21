@@ -57,6 +57,16 @@ ACCESS_OPTIONS: list[dict[str, str]] = [
         "label": "Аутсорс мастера — сводка руководителя и план",
         "group": "Процессы",
     },
+    {
+        "id": "processes.clients",
+        "label": "Постоянные клиенты — работа менеджера",
+        "group": "Процессы",
+    },
+    {
+        "id": "processes.clients_lead",
+        "label": "Постоянные клиенты — сводка руководителя и план",
+        "group": "Процессы",
+    },
     {"id": "finance", "label": "Финансы", "group": "Финансы"},
 ]
 

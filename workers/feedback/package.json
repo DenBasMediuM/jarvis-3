@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/lib.test.mjs test/outsource.test.mjs",
+    "test": "node --test test/lib.test.mjs test/outsource.test.mjs test/clients.test.mjs",
     "deploy": "wrangler deploy"
   }
 }

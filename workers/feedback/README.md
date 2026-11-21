@@ -74,3 +74,17 @@ npx wrangler deploy
 | POST | `/outsource/trials/:id/result` | оценка пробника (take → «Постоянный», reject → «Отказ») |
 | PUT | `/outsource/plan` | недельный план и цель (руководитель) |
 | GET | `/admin/outsource/state` | то же для Jarvis (`ADMIN_KEY`) |
+
+## Раздел «Постоянные клиенты» (`src/clients.js`)
+
+Таблицы `clients_clients`, `clients_contracts`, `clients_log`, `clients_decisions`, `clients_templates`,
+`clients_snapshot`; справочник условий, настройки и план — в `meta`. Доступ — токен входа витрины +
+`processes.clients` (менеджер) или `processes.clients_lead` (руководитель, может менять план).
+CRM-снимок (метрики клиентов, кандидаты из базы) присылает Jarvis через `PUT /admin/clients/snapshot` —
+в публичный репозиторий витрины клиентские данные не попадают.
+
+```bash
+cd workers/feedback
+npx wrangler d1 execute jarvis-feedback --remote --file=migrations/0003_clients.sql
+npx wrangler deploy
+```

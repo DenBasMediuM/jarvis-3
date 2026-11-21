@@ -80,6 +80,7 @@ function setProcessesTab(tab) {
     tab === "reviews" ||
     tab === "buffer_quality" ||
     tab === "outsource" ||
+    tab === "clients" ||
     tab === "upsell"
       ? tab
       : "upsell";
@@ -113,7 +114,12 @@ function setProcessesTab(tab) {
   const isReviews = id === "reviews";
   const isBuffer = id === "buffer_quality";
   const isOutsource = id === "outsource";
-  const isStandalone = isBranchKpi || isReviews || isBuffer || isOutsource;
+  const isClients = id === "clients";
+  const isStandalone = isBranchKpi || isReviews || isBuffer || isOutsource || isClients;
+  const clientsToolbar = $("#clients-toolbar");
+  const clientsBody = $("#clients-body");
+  if (clientsToolbar) clientsToolbar.hidden = !isClients;
+  if (clientsBody) clientsBody.hidden = !isClients;
   const outsourceToolbar = $("#outsource-toolbar");
   const outsourceBody = $("#outsource-body");
   if (outsourceToolbar) outsourceToolbar.hidden = !isOutsource;
@@ -138,6 +144,13 @@ function setProcessesTab(tab) {
     if (debt) debt.hidden = true;
     if (empty) empty.hidden = true;
     loadReviewsStats();
+    return;
+  }
+  if (isClients) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadClientsStats();
     return;
   }
   if (isOutsource) {
@@ -185,6 +198,7 @@ function initProcessesTabs() {
     saved !== "reviews" &&
     saved !== "buffer_quality" &&
     saved !== "outsource" &&
+    saved !== "clients" &&
     saved !== "upsell"
   ) {
     saved = "upsell";
@@ -6761,6 +6775,8 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/buffer-quality/sync", { method: "POST" });
     } else if (actionId === "buffer-quality-export") {
       res = await fetch("/api/buffer-quality/export-pages", { method: "POST" });
+    } else if (actionId === "clients-sync") {
+      res = await fetch("/api/clients/sync", { method: "POST" });
     } else if (actionId === "outsource-sync") {
       res = await fetch("/api/outsource/sync", { method: "POST" });
     } else if (actionId === "outsource-export") {
@@ -6790,7 +6806,8 @@ async function runUpdatesAction(actionId) {
       actionId === "debt-verify-new" ||
       actionId === "debt-verify-all" ||
       actionId === "branch-kpi-sync" ||
-      actionId === "outsource-sync";
+      actionId === "outsource-sync" ||
+      actionId === "clients-sync";
     if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {
@@ -7835,5 +7852,148 @@ $("#outsource-export-btn")?.addEventListener("click", async () => {
     if (statusEl) statusEl.textContent = `Экспорт → ${data.path || "docs/outsource/data.json"} (git push)`;
   } catch (err) {
     if (statusEl) statusEl.textContent = `Экспорт: ${err.message || err}`;
+  }
+});
+
+
+// ---------- Процессы → Постоянные клиенты ----------
+const CLIENT_STAGES = {
+  found: "Найден",
+  contacted: "Связались",
+  offer: "Предложение",
+  trial: "Пробный заказ",
+  active: "Постоянный",
+  paused: "Пауза",
+  lost: "Отказ",
+};
+let clientsPoll = null;
+
+function renderClientsStats(data) {
+  const sync = data?.sync || {};
+  const live = data?.live || {};
+  const metrics = data?.metrics || {};
+  const clients = live.ok ? live.clients || [] : [];
+  const contracts = live.ok ? live.contracts || [] : [];
+  const statusEl = $("#clients-sync-status");
+  if (statusEl) {
+    statusEl.textContent =
+      sync.status === "running"
+        ? `${sync.message || "Идёт…"} (${sync.done || 0}/${sync.total || 0})`
+        : sync.status === "error"
+          ? `Ошибка: ${sync.message || "—"}`
+          : sync.message || "—";
+  }
+  const meta = $("#clients-meta");
+  if (meta) {
+    const bits = [];
+    if (data?.generated_at) bits.push(`CRM-снимок ${fmtUpdatesWhen(data.generated_at)}`);
+    if (data?.window?.from) bits.push(`история с ${data.window.from} (${data.history_orders || 0} квит., ${data.phones || 0} телефонов)`);
+    bits.push(live.ok ? `облако: ${clients.length} клиентов` : `облако недоступно: ${live.error || "—"}`);
+    meta.textContent = bits.join(" · ");
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const active = clients.filter((c) => c.stage === "active");
+  const activeContract = new Set(contracts.filter((c) => c.status === "active" && (!c.valid_to || c.valid_to >= today)).map((c) => c.client_id));
+  const expiring = contracts.filter((c) => c.status === "active" && c.valid_to && c.valid_to >= today && c.valid_to <= in30).length;
+  const expired = contracts.filter((c) => c.status === "active" && c.valid_to && c.valid_to < today).length;
+  const asleep = active.filter((c) => metrics[String(c.id)]?.asleep).length;
+  const overdueSteps = clients.filter((c) => !["paused", "lost"].includes(c.stage) && (!c.next_step_at || c.next_step_at < today)).length;
+  const kpi = (label, value, sub) => `<div class="vyrobotka-kpi">
+      <span class="vyrobotka-kpi-label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+      <span class="vyrobotka-kpi-sub">${escapeHtml(sub)}</span>
+    </div>`;
+  const kpis = $("#clients-kpis");
+  if (kpis) {
+    kpis.innerHTML = [
+      kpi("Постоянных", active.length, `с договором: ${active.filter((c) => activeContract.has(c.id)).length}`),
+      kpi("В воронке", clients.filter((c) => ["found", "contacted", "offer", "trial"].includes(c.stage)).length, "найден → пробный заказ"),
+      kpi("Кандидатов из базы", data?.candidates_total ?? "—", "ещё не разобраны"),
+      kpi("Договоры", expiring + expired, `истекают за 30 дн.: ${expiring} · истекли: ${expired}`),
+      kpi("«Заснули»", asleep, "не заказывают дольше обычного"),
+      kpi("Шаги просрочены", overdueSteps, "нет следующего шага или дата прошла"),
+    ].join("");
+  }
+  const warn = $("#clients-warnings");
+  if (warn) {
+    const w = data?.warnings || [];
+    warn.innerHTML = w.length ? `<p class="vyrobotka-chart-sub" style="color:#a15c00">⚠ ${w.map(escapeHtml).join(" · ")}</p>` : "";
+  }
+  const tbody = $("#clients-tbody");
+  if (tbody) {
+    const order = ["active", "trial", "offer", "contacted", "found", "paused", "lost"];
+    const rows = [...clients].sort((a, b) => order.indexOf(a.stage) - order.indexOf(b.stage));
+    const lastContract = (id) =>
+      contracts.filter((c) => c.client_id === id).sort((a, b) => String(b.valid_to || "").localeCompare(String(a.valid_to || "")))[0];
+    tbody.innerHTML = rows.length
+      ? rows
+          .map((c) => {
+            const m = metrics[String(c.id)] || {};
+            const ct = lastContract(c.id);
+            const trend = m.trend == null ? "—" : `${m.trend > 0 ? "+" : ""}${Math.round(m.trend * 100)}%`;
+            const stepLate = !["paused", "lost"].includes(c.stage) && (!c.next_step_at || c.next_step_at < today);
+            return `<tr>
+              <td><strong>${escapeHtml(c.name || "—")}</strong></td>
+              <td>${escapeHtml(CLIENT_STAGES[c.stage] || c.stage || "—")}</td>
+              <td>${ct ? `${escapeHtml(ct.number || "б/н")}${ct.valid_to ? ` · до ${escapeHtml(ct.valid_to)}` : ""}` : "—"}</td>
+              <td>${m.orders_90 ?? "—"}</td>
+              <td>${m.gross_90 != null ? `${fmtMoney(Math.round(m.gross_90))} грн` : "—"}</td>
+              <td${m.trend != null && m.trend < -0.3 ? ' style="color:#b3261e"' : ""}>${trend}</td>
+              <td${m.asleep ? ' style="color:#b3261e"' : ""}>${m.days_since_last ?? "—"}${m.asleep ? " · заснул" : ""}</td>
+              <td>${m.debt ? `${fmtMoney(Math.round(m.debt))} грн` : "—"}</td>
+              <td${stepLate ? ' style="color:#b3261e"' : ""}>${escapeHtml(c.next_step || "—")}${c.next_step_at ? ` · ${escapeHtml(c.next_step_at)}` : ""}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="9" class="quality-empty">${live.ok ? "Клиентов пока нет — менеджер заводит их на витрине (или берёт из кандидатов)." : "Облако недоступно."}</td></tr>`;
+  }
+  const ctb = $("#clients-cand-tbody");
+  if (ctb) {
+    const list = data?.candidates_top || [];
+    ctb.innerHTML = list.length
+      ? list
+          .map(
+            (c) => `<tr>
+              <td>${escapeHtml(c.name || "—")}${c.b2b ? " <small>· компания?</small>" : ""}</td>
+              <td>${c.orders}</td><td>${c.recent}</td>
+              <td>${fmtMoney(Math.round(c.gross || 0))} грн</td>
+              <td>${escapeHtml(c.last_at || "—")}</td>
+              <td>${c.score}</td>
+            </tr>`,
+          )
+          .join("")
+      : '<tr><td colspan="6" class="quality-empty">Нет кандидатов — запустите «Обновить из CRM».</td></tr>';
+  }
+  if (sync.status === "running") {
+    if (!clientsPoll) clientsPoll = setInterval(() => loadClientsStats({ quiet: true }), 4000);
+  } else if (clientsPoll) {
+    clearInterval(clientsPoll);
+    clientsPoll = null;
+  }
+}
+
+async function loadClientsStats({ quiet = false } = {}) {
+  const statusEl = $("#clients-sync-status");
+  try {
+    const res = await fetch("/api/clients/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderClientsStats(data);
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+$("#clients-sync-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#clients-sync-status");
+  try {
+    const res = await fetch("/api/clients/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
+    await loadClientsStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
   }
 });

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Постоянные клиенты · Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
+  <link rel="stylesheet" href="./styles.css?v=20261121-clients1" />
+  <script src="../shared/auth.js?v=20261121-clients1"></script>
+  <script src="./app.js?v=20261121-clients1" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const auth = window.JarvisVitrineAuth;
+      if (!auth?.requireAuth("processes.clients")) return;
+      auth.applyShellNav("processes.clients");
+    });
+  </script>
+</head>
+<body>
+  <div class="shell">
+    <nav class="shell-nav" aria-label="Витрина">
+      <a class="shell-brand" href="../">
+        <span class="shell-mark">J</span>
+        <span class="shell-brand-text">
+          <span class="shell-brand-name">Jarvis</span>
+          <span class="shell-brand-sub">витрина</span>
+        </span>
+      </a>
+      <div class="shell-mods"></div>
+    </nav>
+
+    <header class="mod-top">
+      <div>
+        <h1>Постоянные клиенты</h1>
+        <p class="mod-sub">Договоры и договорённости с постоянными клиентами · поиск новых, в том числе в своей базе</p>
+      </div>
+      <div class="mod-meta" id="cl-meta">Загрузка…</div>
+    </header>
+
+    <div class="os-banner" id="cl-banner" hidden></div>
+
+    <nav class="mod-tabs" role="tablist">
+      <button type="button" class="mod-tab" data-cltab="summary" hidden>Сводка</button>
+      <button type="button" class="mod-tab" data-cltab="clients">Клиенты</button>
+      <button type="button" class="mod-tab" data-cltab="candidates">Кандидаты из базы <span id="cl-cand-count"></span></button>
+      <button type="button" class="mod-tab" data-cltab="funnel">Воронка</button>
+      <button type="button" class="mod-tab" data-cltab="contracts">Договоры</button>
+      <button type="button" class="mod-tab" data-cltab="activity">Активность</button>
+      <button type="button" class="mod-tab" data-cltab="settings">Настройки</button>
+    </nav>
+
+    <main class="stack">
+      <section class="os-panel stack" id="cl-panel-summary" hidden>
+        <div class="kpis" id="cl-sum-kpis"></div>
+        <div class="os-grid-2">
+          <article class="card"><h3>Воронка</h3><div id="cl-sum-funnel"></div></article>
+          <article class="card"><h3>Требует внимания</h3><div id="cl-sum-alerts"></div></article>
+        </div>
+        <div class="os-grid-2">
+          <article class="card"><h3>Растут и падают (вал за 90 дней к прошлым 90)</h3><div id="cl-sum-trend"></div></article>
+          <article class="card"><h3>Договоры: ближайшие сроки</h3><div id="cl-sum-contracts"></div></article>
+        </div>
+        <article class="card"><h3>Менеджер: план и факт</h3><div id="cl-sum-manager"></div></article>
+        <article class="card"><h3>Недельный план менеджера</h3><form id="cl-plan-form" class="os-form os-form-inline"></form></article>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-clients" hidden>
+        <div class="os-toolbar">
+          <button type="button" class="os-btn is-primary" id="cl-add">+ Новый клиент</button>
+          <input type="search" class="os-input os-search" id="cl-search" placeholder="Поиск: имя, телефон, техника, район…" />
+          <select class="os-input" id="cl-stage-filter">
+            <option value="work">Постоянные и в работе</option>
+            <option value="active">Только постоянные</option>
+            <option value="funnel">Только воронка</option>
+            <option value="all">Все, включая паузу и отказ</option>
+          </select>
+        </div>
+        <div id="cl-todo"></div>
+        <article class="card"><div id="cl-table"></div></article>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-candidates" hidden>
+        <article class="card">
+          <h3>Кандидаты в постоянные из базы CRM</h3>
+          <p class="card-sub" id="cl-cand-sub">Клиенты, которые часто обращаются в последнее время и ещё не заведены в раздел. Разберите каждого: «Взять в работу», «Не постоянный» или «Отложить».</p>
+          <div class="os-toolbar" style="margin-top:8px">
+            <input type="search" class="os-input os-search" id="cl-cand-search" placeholder="Поиск: имя, телефон, техника…" />
+            <label class="os-check"><input type="checkbox" id="cl-cand-b2b" /> только похожие на компании</label>
+            <button type="button" class="os-link" data-goto="settings">пороги поиска</button>
+          </div>
+        </article>
+        <div class="cl-list" id="cl-cand-list"></div>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-funnel" hidden>
+        <div class="os-toolbar">
+          <button type="button" class="os-btn is-primary" id="cl-add-2">+ Новый клиент</button>
+          <label class="os-check"><input type="checkbox" id="cl-show-closed" /> показать «Пауза» и «Отказ»</label>
+        </div>
+        <div class="os-board" id="cl-board"></div>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-contracts" hidden>
+        <article class="card">
+          <h3>Договоры</h3>
+          <p class="card-sub">Напоминания о продлении — за 30, 14 и 3 дня до окончания. Текст договора собирается из шаблона (вкладка «Настройки»), карточки клиента и его условий.</p>
+          <div id="cl-contracts"></div>
+        </article>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-activity" hidden>
+        <div class="os-toolbar">
+          <select class="os-input" id="cl-act-period">
+            <option value="week">Эта неделя</option>
+            <option value="prev">Прошлая неделя</option>
+            <option value="30">30 дней</option>
+          </select>
+        </div>
+        <div class="kpis" id="cl-act-kpis"></div>
+        <article class="card"><h3>Действия по дням (28 дней)</h3><div id="cl-act-days"></div></article>
+        <article class="card"><h3>Журнал</h3><div id="cl-act-log"></div></article>
+      </section>
+
+      <section class="os-panel stack" id="cl-panel-settings" hidden>
+        <article class="card">
+          <h3>Справочник условий</h3>
+          <p class="card-sub">Условия, которые можно включать клиенту. «Проверка по CRM» — Jarvis сам сверяет условие с заказами клиента; остальное менеджер отмечает вручную. «Текст в договоре» — пункт раздела «Індивідуальні умови», <code>{value}</code> заменяется значением.</p>
+          <form id="cl-cond-form" class="os-form"></form>
+        </article>
+        <article class="card">
+          <h3>Шаблон договора</h3>
+          <div class="cl-subtabs" id="cl-tpl-tabs"></div>
+          <form id="cl-tpl-form" class="os-form"></form>
+        </article>
+        <article class="card">
+          <h3>Реквизиты нашего сервиса (для договора)</h3>
+          <form id="cl-req-form" class="os-form"></form>
+        </article>
+        <article class="card">
+          <h3>Автопоиск кандидатов и контроль касаний</h3>
+          <form id="cl-thr-form" class="os-form"></form>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="os-dialog" id="cl-dialog">
+    <form method="dialog" class="os-dialog-close-form"><button class="os-x" aria-label="Закрыть">×</button></form>
+    <div id="cl-dialog-body"></div>
+  </dialog>
+</body>
+</html>

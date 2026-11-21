@@ -32,6 +32,7 @@ from modules.gincore.quality import QualityService, compute_quality_metrics
 from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
 from modules.buffer_quality import BufferQualityService
+from modules.clients import ClientsService
 from modules.outsource import OutsourceService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
@@ -55,6 +56,7 @@ vyrobotka_service: VyrobotkaService | None = None
 branch_kpi_service: BranchKpiService | None = None
 buffer_quality_service: BufferQualityService | None = None
 outsource_service: OutsourceService | None = None
+clients_service: ClientsService | None = None
 masters_kpi_service: MastersKpiService | None = None
 reviews_service: ReviewsService | None = None
 
@@ -163,7 +165,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
-    global buffer_quality_service, masters_kpi_service, reviews_service, outsource_service
+    global buffer_quality_service, masters_kpi_service, reviews_service, outsource_service, clients_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -216,6 +218,11 @@ async def lifespan(_: FastAPI):
     outsource_service = OutsourceService(
         db,
         quality_service=quality_service,
+        gincore_client_factory=_outsource_gincore,
+        feedback_client_factory=_feedback_client,
+    )
+    clients_service = ClientsService(
+        db,
         gincore_client_factory=_outsource_gincore,
         feedback_client_factory=_feedback_client,
     )
@@ -698,6 +705,30 @@ async def buffer_quality_export_pages() -> dict[str, Any]:
         return await buffer_quality_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/clients/stats")
+async def clients_stats() -> dict[str, Any]:
+    if not clients_service:
+        raise HTTPException(503, "Сервис постоянных клиентов не готов")
+    return await clients_service.get_stats()
+
+
+@app.get("/api/clients/sync")
+async def clients_sync_status() -> dict[str, Any]:
+    if not clients_service:
+        raise HTTPException(503, "Сервис постоянных клиентов не готов")
+    return {"ok": True, "sync": await clients_service.get_sync_state()}
+
+
+@app.post("/api/clients/sync")
+async def clients_sync_start() -> dict[str, Any]:
+    if not clients_service:
+        raise HTTPException(503, "Сервис постоянных клиентов не готов")
+    try:
+        return await clients_service.sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/api/outsource/stats")
@@ -1473,6 +1504,9 @@ async def updates_status() -> dict[str, Any]:
     outsource_sync_state = (
         await outsource_service.get_sync_state() if outsource_service else {"status": "idle"}
     )
+    clients_sync_state = (
+        await clients_service.get_sync_state() if clients_service else {"status": "idle"}
+    )
     modules = [
         {
             "id": "quality",
@@ -1553,6 +1587,24 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
+        },
+        {
+            "id": "processes-clients",
+            "block": "Процессы",
+            "title": "Постоянные клиенты",
+            "description": (
+                "История ремонтов за 12 месяцев по телефонам: метрики клиентов (частота, вал, «заснул», "
+                "долг, техника в работе) и кандидаты в постоянные. Снимок уходит в облако, не в репозиторий."
+            ),
+            "status": clients_sync_state.get("status") or "idle",
+            "message": clients_sync_state.get("message"),
+            "started_at": clients_sync_state.get("started_at"),
+            "finished_at": clients_sync_state.get("finished_at"),
+            "progress": {
+                "done": int(clients_sync_state.get("done") or 0),
+                "total": int(clients_sync_state.get("total") or 0),
+            },
+            "actions": [{"id": "clients-sync", "label": "Обновить из CRM", "kind": "primary"}],
         },
         {
             "id": "processes-outsource",
