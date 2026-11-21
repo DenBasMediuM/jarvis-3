@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-20T07:25:32.941072+00:00",
+  "exported_at": "2026-11-21T09:29:18.274319+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -18,7 +18,9 @@
         "processes.reviews_stats",
         "processes.buffer_quality",
         "processes.outsource",
-        "processes.outsource_lead"
+        "processes.outsource_lead",
+        "processes.clients",
+        "processes.clients_lead"
       ],
       "fb_salt": "247d765b734c7f1ae39c8869fc7be92a",
       "fb_verifier": "9dd499d8e7e1cca25d1000e0f40493728362acbec504f0fa9474c1bfecb35401"
