@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-23T02:23:48.884422+00:00",
+  "exported_at": "2026-11-23T02:46:07.927277+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -20,7 +20,9 @@
         "processes.outsource",
         "processes.outsource_lead",
         "processes.clients",
-        "processes.clients_lead"
+        "processes.clients_lead",
+        "processes.diag",
+        "processes.diag_lead"
       ],
       "fb_salt": "78caf3a032bf1a5c1119dd14d8a0f1ef",
       "fb_verifier": "3ae7a8513f708330a256a1e4c9720319abe3e5403b024696adb7b99c5b8a3250"
@@ -32,7 +34,8 @@
       "iters": 200000,
       "algo": "sha256",
       "access": [
-        "processes.reviews"
+        "processes.reviews",
+        "processes.diag"
       ],
       "fb_salt": "5acf720bdc658a915175b3550ffb5e2b",
       "fb_verifier": "8a4dbf6279aa5fb42bfd390de8f8b5eaf1d86631e9dd02f91e5715d585c97748"
@@ -73,7 +76,8 @@
         "processes.reviews_stats",
         "processes.buffer_quality",
         "processes.outsource_lead",
-        "processes.clients_lead"
+        "processes.clients_lead",
+        "processes.diag_lead"
       ],
       "fb_salt": "0044118284e5d7e5400c80a082e14027",
       "fb_verifier": "0ba17d89dc55ac3fafaa13b541d8e3fe4640933d83e71fdc3030f89c5b34774b"

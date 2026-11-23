@@ -111,14 +111,17 @@ def find_candidates(
         age = _days(o.get("accepted_at"), today)
         st = stats.get(cid) or {}
         share = st.get("refusal_share")
-        score = cx * 30 + (share or 0) * 40 + min(age or 0, 14) * 2 + (5 if buffer else 0)
+        # свежие важнее: платную диагностику надо согласовать ДО того, как мастер начал разбирать бесплатно;
+        # «Принят в ремонт» старше 3 недель без согласования — скорее всего уже продиагностирован или завис
+        fresh = 12 if (age or 0) <= 3 else 6 if (age or 0) <= 7 else 0 if (age or 0) <= 21 else -15
+        score = cx * 30 + (share or 0) * 40 + fresh + (8 if buffer else 0)
         reasons = [CATEGORY_LABELS.get(cid, cid)]
         if cx >= 3:
             reasons.append("сложная диагностика")
         if share is not None and st.get("closed", 0) >= 10:
             reasons.append(f"{round(share * 100)}% в категории уходят без ремонта")
         if age is not None:
-            reasons.append(f"принят {age} дн. назад")
+            reasons.append(f"принят {age} дн. назад" + (" — проверьте, не продиагностирован ли уже" if age > 21 else ""))
         out.append(
             {
                 "ticket": oid,

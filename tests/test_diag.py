@@ -131,3 +131,10 @@ def test_service_sync(monkeypatch):
     assert snap["tickets"]["100"]["paid"] == 1000 and snap["tickets"]["100"]["closed"]
     assert fetched == ["555"] and snap["tickets"]["555"]["paid"] == 750
     assert snap["categories"]["laptop"]["refusal_share"] == 1.0
+
+
+def test_fresh_first():
+    working = [_o("old", "ноутбук A", accepted="2026-09-01"), _o("new", "ноутбук B", accepted="2026-11-22")]
+    c = find_candidates(working, today=TODAY, stats={}, taken=set())
+    assert [x["ticket"] for x in c] == ["new", "old"]
+    assert any("не продиагностирован ли" in r for r in c[1]["reasons"])
