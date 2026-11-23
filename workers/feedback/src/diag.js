@@ -5,6 +5,7 @@
  *   GET   /diag/state            — записи, журнал, план, цены, CRM-снимок (кандидаты, статусы квитанций)
  *   POST  /diag/cases            — новая запись (устройство взято в работу)
  *   PATCH /diag/cases/:id        — правка / смена статуса
+ *   POST  /diag/cases/:id/delete — удалить запись (руководитель; ошибочные и тестовые записи)
  *   PUT   /diag/prices           — подсказки цен по категориям
  *   PUT   /diag/plan             — дневной план (руководитель)
  * Jarvis (ADMIN_KEY):
@@ -13,6 +14,7 @@
  */
 import {
   DEFAULT_PRICES,
+  DG_STATUSES,
   DiagInputError,
   diagRights,
   normalizeCase,
@@ -161,6 +163,25 @@ export async function handleDiag(ctx) {
     } else {
       await logAction(env, { login, action: "case_updated", case_id: id, ticket: before.ticket, text: `№${before.ticket}: изменены ${keys.join(", ")}` });
     }
+    return ok();
+  }
+
+  if (method === "POST" && (m = path.match(/^\/diag\/cases\/(\d+)\/delete$/))) {
+    if (!rights.lead) throw new HttpError(403, "forbidden", "Удалять записи может руководитель");
+    const id = Number(m[1]);
+    const before = await env.DB.prepare("SELECT * FROM diag_cases WHERE id = ?").bind(id).first();
+    if (!before) throw new HttpError(404, "not_found", "Запись не найдена");
+    const body = await readJson(request).catch(() => ({}));
+    await env.DB.prepare("DELETE FROM diag_cases WHERE id = ?").bind(id).run();
+    await logAction(env, {
+      login,
+      action: "case_deleted",
+      case_id: id,
+      ticket: before.ticket,
+      text: `№${before.ticket}: запись удалена (была «${DG_STATUSES[before.status] || before.status}»${before.price ? `, ${before.price} грн` : ""})${
+        body?.reason ? ` · ${String(body.reason).slice(0, 300)}` : ""
+      }`,
+    });
     return ok();
   }
 

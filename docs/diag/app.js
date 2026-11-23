@@ -38,6 +38,7 @@ const ACTIONS = {
   status_not_needed: "Платная не нужна",
   status_consult: "Консультация",
   prices_saved: "Цены",
+  case_deleted: "Запись удалена",
 };
 
 let STATE = null;
@@ -158,8 +159,9 @@ function events() {
   const offered = new Map(); // case_id → день первого предложения (включая сразу «согласовано»/«отказ»)
   const agreed = new Map(); // case_id → день согласования (последний)
   const log = [...(STATE?.log || [])].sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const alive = new Set(cases().map((c) => c.id));
   for (const l of log) {
-    if (!l.case_id) continue;
+    if (!l.case_id || !alive.has(l.case_id)) continue; // удалённые записи в статистику не идут
     const d = dayKey(l.at);
     if (["status_offered", "status_agreed", "status_declined"].includes(l.action) && !offered.has(l.case_id)) offered.set(l.case_id, d);
     if (l.action === "status_agreed") agreed.set(l.case_id, d);
@@ -512,6 +514,7 @@ function caseFormHtml(c, seed) {
       <p class="os-muted" style="margin:0">После согласования оставьте комментарий в квитанции Gincore («погоджено платну діагностику … грн») — так мастер не начнёт её бесплатно.</p>
       <div class="os-form-actions">
         <button class="os-btn is-primary" type="submit">${c ? "Сохранить" : "Создать запись"}</button>
+        ${c?.id && RIGHTS.lead ? '<button class="os-btn is-danger" type="button" id="dg-delete">Удалить запись</button>' : ""}
         <span class="os-status"></span>
       </div>
     </form>`;
@@ -522,6 +525,20 @@ function openCaseForm(c, seed = null) {
     $("#dg-cat", root).addEventListener("change", (e) => {
       const p = STATE.prices?.[e.target.value];
       if (p && !c?.price) $("#dg-price", root).value = p;
+    });
+    $("#dg-delete", root)?.addEventListener("click", async () => {
+      const reason = prompt(`Удалить запись по №${c.ticket}? Она пропадёт из списков и статистики (в журнале останется отметка).\nПричина (необязательно):`, "тестовая запись");
+      if (reason === null) return;
+      const st = $(".os-status", f);
+      try {
+        st.textContent = "Удаляю…";
+        applyState(await api("POST", `/diag/cases/${c.id}/delete`, { reason }));
+        renderAll();
+        closeDialog();
+      } catch (err) {
+        st.classList.add("is-error");
+        st.textContent = err.message;
+      }
     });
     f.addEventListener("submit", async (e) => {
       e.preventDefault();
