@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
-  <link rel="stylesheet" href="./styles.css?v=20261123-diag1" />
-  <script src="../shared/auth.js?v=20261123-diag1"></script>
-  <script src="./app.js?v=20261123-diag2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261123-access1" />
+  <script src="../shared/auth.js?v=20261123-access1"></script>
+  <script src="./app.js?v=20261123-access1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -64,7 +64,7 @@
               <option value="undiagnosed">Только у мастеров</option>
             </select>
             <label class="os-check"><input type="checkbox" id="dg-simple" /> показать простые категории</label>
-            <button type="button" class="os-btn" id="dg-add-manual">+ Другая квитанция</button>
+            <button type="button" class="os-btn" id="dg-add-manual" data-write>+ Другая квитанция</button>
           </div>
         </article>
         <div class="cl-list" id="dg-cands"></div>

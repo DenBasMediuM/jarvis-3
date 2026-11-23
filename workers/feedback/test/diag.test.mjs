@@ -3,8 +3,8 @@ import test from "node:test";
 import { DiagInputError, diagRights, normalizeCase, normalizeDiagPlan, normalizePrices, statusLine, validateCase } from "../src/diag_lib.js";
 
 test("rights", () => {
-  assert.deepEqual(diagRights(["processes.diag"]), { work: true, lead: false });
-  assert.deepEqual(diagRights(["processes.diag_lead"]), { work: true, lead: true });
+  assert.deepEqual(diagRights(["processes.diag"]), { work: true, lead: false, view: true });
+  assert.deepEqual(diagRights(["processes.diag_lead"]), { work: false, lead: true, view: true });
 });
 
 test("case validation by status", () => {

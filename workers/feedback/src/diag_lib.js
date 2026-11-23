@@ -54,9 +54,12 @@ function sLong(v, max = 2000) {
 }
 
 export function diagRights(access) {
+  // work — действия менеджера (только при явном доступе «работа менеджера»);
+  // lead — план/удаление; view — смотреть раздел (любой из двух доступов)
   const list = Array.isArray(access) ? access : [];
+  const work = list.includes(DG_ACCESS.work);
   const lead = list.includes(DG_ACCESS.lead);
-  return { work: lead || list.includes(DG_ACCESS.work), lead };
+  return { work, lead, view: work || lead };
 }
 
 function money(v) {

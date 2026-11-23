@@ -110,6 +110,16 @@ async function api(method, path, body) {
   }
   return data;
 }
+function applyReadonly() {
+  const ro = !RIGHTS.work;
+  document.body.classList.toggle("is-readonly", ro);
+  const h = document.querySelector(".mod-sub");
+  if (h && ro && !h.querySelector(".ro-note")) h.insertAdjacentHTML("beforeend", '<span class="ro-note">режим просмотра</span>');
+  // «Сегодня» — рабочая вкладка менеджера: в режиме просмотра не показываем
+  const today = document.querySelector('.mod-tab[data-dgtab="today"]');
+  if (today) today.hidden = ro;
+}
+
 function applyState(data) {
   STATE = {
     cases: data.cases || [],
@@ -120,6 +130,7 @@ function applyState(data) {
     now: data.now,
   };
   if (data.rights) RIGHTS = data.rights;
+  applyReadonly();
 }
 async function loadAll() {
   const banner = $("#dg-banner");
@@ -246,7 +257,7 @@ function renderCandidates() {
           }</span>
         </div>
         <div class="os-tags">${(c.reasons || []).map((r) => `<span class="os-tag">${esc(r)}</span>`).join("")}</div>
-        <div class="cl-cand-actions">
+        <div class="cl-cand-actions" data-write>
           <button class="os-btn is-primary is-small" data-take="${esc(c.ticket)}">Взять в работу</button>
           <span class="os-muted" style="font-size:.8rem">подсказка цены: ${money(STATE.prices?.[c.category])}</span>
         </div>
@@ -281,7 +292,7 @@ function casesTable(list, { quick = false } = {}) {
         <td class="os-wrap">${crmCell(c)}</td>
         ${
           quick
-            ? `<td><div class="dg-quick">${
+            ? `<td><div class="dg-quick" data-write>${
                 c.status === "consult" ? `<button class="os-btn is-small" data-quick="${c.id}" data-st="offered">Предложил клиенту</button>` : ""
               }<button class="os-btn is-small is-primary" data-quick="${c.id}" data-st="agreed">Согласовано</button><button class="os-btn is-small" data-quick="${c.id}" data-st="declined">Отказ</button></div></td>`
             : `<td>${esc(c.created_by || "")}</td>`
@@ -513,7 +524,7 @@ function caseFormHtml(c, seed) {
       <label>Комментарий<textarea name="comment">${v("comment")}</textarea></label>
       <p class="os-muted" style="margin:0">После согласования оставьте комментарий в квитанции Gincore («погоджено платну діагностику … грн») — так мастер не начнёт её бесплатно.</p>
       <div class="os-form-actions">
-        <button class="os-btn is-primary" type="submit">${c ? "Сохранить" : "Создать запись"}</button>
+        <button class="os-btn is-primary" type="submit" data-write>${c ? "Сохранить" : "Создать запись"}</button>
         ${c?.id && RIGHTS.lead ? '<button class="os-btn is-danger" type="button" id="dg-delete">Удалить запись</button>' : ""}
         <span class="os-status"></span>
       </div>
@@ -563,7 +574,7 @@ function quick(c, st) {
 const LS_TAB = "jarvis.diag.tab";
 function setTab(tab) {
   const btn = $(`.mod-tab[data-dgtab="${tab}"]`);
-  if (!btn || btn.hidden) tab = "today";
+  if (!btn || btn.hidden) tab = RIGHTS.work ? "today" : "stats";
   activeTab = tab;
   $$(".mod-tab[data-dgtab]").forEach((b) => b.classList.toggle("is-active", b.dataset.dgtab === tab));
   $$(".os-panel").forEach((p) => (p.hidden = p.id !== `dg-panel-${tab}`));
@@ -592,7 +603,7 @@ function bindEvents() {
   $("#dg-cases-search").addEventListener("input", renderCases);
   $("#dg-cases-status").addEventListener("change", renderCases);
   $("#dg-period").addEventListener("change", renderStats);
-  $("#dg-add-manual").addEventListener("click", () => STATE && openCaseForm(null, { source: "other" }));
+  $("#dg-add-manual").addEventListener("click", () => STATE && RIGHTS.work && openCaseForm(null, { source: "other" }));
   $("#dg-plan-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
@@ -612,6 +623,7 @@ function bindEvents() {
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-take],[data-open],[data-quick]");
     if (!t || !STATE) return;
+    if (!RIGHTS.work && (t.dataset.take || t.dataset.quick)) return; // режим просмотра
     if (t.dataset.take) {
       const c = candByTicket(t.dataset.take);
       if (c) openCaseForm(null, { ticket: c.ticket, device: c.device, category: c.category, source: c.source, master: c.engineer || "", status: "consult" });
@@ -624,9 +636,10 @@ async function init() {
   const s = auth()?.session?.();
   if (!s) return;
   RIGHTS = {
-    work: auth().hasAccess(s.access, "processes.diag") || auth().hasAccess(s.access, "processes.diag_lead"),
-    lead: auth().hasAccess(s.access, "processes.diag_lead"),
+    work: (s.access || []).includes("processes.diag"),
+    lead: (s.access || []).includes("processes.diag_lead"),
   };
+  applyReadonly();
   bindEvents();
   await loadAll();
   $(`.mod-tab[data-dgtab="stats"]`).hidden = !RIGHTS.lead;
@@ -636,7 +649,7 @@ async function init() {
   } catch {
     /* ignore */
   }
-  setTab(saved || "today");
+  setTab(saved || (RIGHTS.work ? "today" : "stats"));
   setInterval(async () => {
     if (document.hidden || dlg().open || activeTab === "settings") return;
     await loadAll();

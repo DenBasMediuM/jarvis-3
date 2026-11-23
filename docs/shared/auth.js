@@ -3,7 +3,7 @@
   const SESSION_KEY = "jarvis.vitrine.session";
   // Cloudflare Worker модуля «Улучшения» (серверная проверка пароля + заявки)
   const FEEDBACK_URL = "https://jarvis-feedback.isaev-denis-igorevih.workers.dev";
-  const FEEDBACK_V = "20261123-diag1";
+  const FEEDBACK_V = "20261123-diag2";
   // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
   const scriptBase = (() => {
     try {
@@ -266,7 +266,11 @@
       btn.hidden = !ok;
       if (!ok && btn.classList.contains("is-active")) btn.classList.remove("is-active");
     });
-    const visible = [...document.querySelectorAll(".mod-tab[data-tab]:not([hidden])")];
+    // Не «кликать» вкладки отдельных страниц (отзывы, аутсорс, клиенты, диагностика) — клик по ним уводит со страницы
+    const separate = new Set(["reviews", "outsource", "clients", "diag"]);
+    const visible = [...document.querySelectorAll(".mod-tab[data-tab]:not([hidden])")].filter(
+      (b) => !separate.has(b.getAttribute("data-tab")),
+    );
     if (visible.length && !visible.some((b) => b.classList.contains("is-active"))) {
       visible[0].click();
     }

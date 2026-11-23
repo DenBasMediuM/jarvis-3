@@ -215,7 +215,10 @@ export async function handleClients(ctx) {
     (u) => String(u.login || "").toLowerCase() === String(tokenUser.login || "").toLowerCase(),
   );
   const rights = clientsRights(record?.access);
-  if (!rights.work) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Постоянные клиенты»");
+  if (!rights.view) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Постоянные клиенты»");
+  const needWork = () => {
+    if (!rights.work) throw new HttpError(403, "read_only", "Режим просмотра: действия менеджера доступны с доступом «работа менеджера»");
+  };
   const login = String(record?.login || tokenUser.login);
   const ok = async (extra = {}) => ({ ok: true, rights, login, ...extra, ...(await readState(env)) });
   let m;
@@ -223,6 +226,7 @@ export async function handleClients(ctx) {
   if (method === "GET" && path === "/clients/state") return ok();
 
   if (method === "POST" && path === "/clients/clients") {
+    needWork();
     const body = await readJson(request);
     const cat = await catalog(env);
     const c = wrapInput(HttpError, () => normalizeClient(body, { catalog: cat }));
@@ -235,6 +239,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "PATCH" && (m = path.match(/^\/clients\/clients\/(\d+)$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await getClient(env, id, HttpError);
     const body = await readJson(request);
@@ -257,6 +262,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "POST" && (m = path.match(/^\/clients\/clients\/(\d+)\/stage$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await getClient(env, id, HttpError);
     const stBody = await readJson(request);
@@ -279,6 +285,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "POST" && (m = path.match(/^\/clients\/clients\/(\d+)\/touch$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await getClient(env, id, HttpError);
     const body = await readJson(request);
@@ -298,6 +305,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "POST" && path === "/clients/contracts") {
+    needWork();
     const body = await readJson(request);
     const c = wrapInput(HttpError, () => normalizeContract(body));
     const client = await getClient(env, c.client_id, HttpError);
@@ -320,6 +328,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "PATCH" && (m = path.match(/^\/clients\/contracts\/(\d+)$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await env.DB.prepare("SELECT * FROM clients_contracts WHERE id = ?").bind(id).first();
     if (!before) throw new HttpError(404, "not_found", "Договор не найден");
@@ -354,6 +363,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "POST" && path === "/clients/candidates/take") {
+    needWork();
     const body = await readJson(request);
     const phone = normPhone(body.phone);
     if (phone.length !== 10) throw new HttpError(400, "bad_phone", "Нет телефона кандидата");
@@ -377,6 +387,7 @@ export async function handleClients(ctx) {
   }
 
   if (method === "POST" && path === "/clients/candidates/decision") {
+    needWork();
     const body = await readJson(request);
     const d = wrapInput(HttpError, () => normalizeDecision(body));
     await env.DB.prepare(

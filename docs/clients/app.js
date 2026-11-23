@@ -158,6 +158,13 @@ async function api(method, path, body) {
   return data;
 }
 
+function applyReadonly() {
+  const ro = !RIGHTS.work;
+  document.body.classList.toggle("is-readonly", ro);
+  const h = document.querySelector(".mod-sub");
+  if (h && ro && !h.querySelector(".ro-note")) h.insertAdjacentHTML("beforeend", '<span class="ro-note">режим просмотра</span>');
+}
+
 function applyState(data) {
   STATE = {
     clients: data.clients || [],
@@ -172,6 +179,7 @@ function applyState(data) {
     now: data.now,
   };
   if (data.rights) RIGHTS = data.rights;
+  applyReadonly();
   if (data.login) LOGIN = data.login;
 }
 
@@ -467,7 +475,7 @@ function renderCandidates() {
           .map((t) => `${t.url ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">№${esc(t.ticket)}</a>` : `№${esc(t.ticket)}`} ${fmtDate(t.date)} · ${esc(t.device || "")} · ${esc(t.status || "")}`)
           .map((x) => `<span>${x}</span>`)
           .join("")}</div>
-        <div class="cl-cand-actions">
+        <div class="cl-cand-actions" data-write>
           <button class="os-btn is-primary is-small" data-take="${esc(c.phone)}">Взять в работу</button>
           <button class="os-btn is-small" data-dismiss="${esc(c.phone)}">Не постоянный</button>
           <button class="os-btn is-small" data-snooze="${esc(c.phone)}">Отложить</button>
@@ -1084,7 +1092,7 @@ function contractFormHtml(client, ct) {
       </div>
       <div id="cl-gen-box"></div>
       <div class="os-form-actions">
-        <button class="os-btn is-primary" type="submit">${ct ? "Сохранить" : "Создать договор"}</button>
+        <button class="os-btn is-primary" type="submit" data-write>${ct ? "Сохранить" : "Создать договор"}</button>
         <button class="os-btn" type="button" data-open="${client.id}">Назад</button>
         <span class="os-status"></span>
       </div>
@@ -1205,12 +1213,12 @@ function openClient(id) {
     <div class="os-alert ${c.next_step_at && c.next_step_at < todayKey() ? "is-bad" : ""}" style="margin:8px 0">Следующий шаг: <b>${esc(c.next_step || "не задан")}</b>${
       c.next_step_at ? ` · ${fmtDate(c.next_step_at)}` : ""
     }</div>
-    <div class="os-form-actions">
+    <div class="os-form-actions" data-write>
       <button class="os-btn is-primary" data-touch="${c.id}">Отметить касание</button>
       <button class="os-btn" data-edit="${c.id}">Редактировать</button>
       <button class="os-btn" data-new-contract="${c.id}">Новый договор</button>
     </div>
-    <div class="os-form-actions" style="margin-top:6px"><span class="os-muted">Перевести на стадию:</span> ${stageBtns}</div>
+    <div class="os-form-actions" style="margin-top:6px" data-write><span class="os-muted">Перевести на стадию:</span> ${stageBtns}</div>
     <h3>CRM: заказы и деньги</h3>${crmHtml}
     <h3>Условия и их соблюдение</h3>${condHtml}
     <h3>Договоры</h3>${ctHtml}
@@ -1406,8 +1414,8 @@ function renderAll() {
 
 function bindEvents() {
   $$(".mod-tab[data-cltab]").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.cltab)));
-  $("#cl-add").addEventListener("click", () => STATE && openClientForm(null));
-  $("#cl-add-2").addEventListener("click", () => STATE && openClientForm(null));
+  $("#cl-add").addEventListener("click", () => STATE && RIGHTS.work && openClientForm(null));
+  $("#cl-add-2").addEventListener("click", () => STATE && RIGHTS.work && openClientForm(null));
   $("#cl-search").addEventListener("input", renderClients);
   $("#cl-stage-filter").addEventListener("change", renderClients);
   $("#cl-cand-search").addEventListener("input", renderCandidates);
@@ -1431,6 +1439,7 @@ function bindEvents() {
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-open],[data-edit],[data-touch],[data-new-contract],[data-contract],[data-take],[data-dismiss],[data-snooze],[data-goto]");
     if (!t || !STATE) return;
+    if (!RIGHTS.work && (t.closest("[data-write]") || t.dataset.edit || t.dataset.touch || t.dataset.newContract || t.dataset.take || t.dataset.dismiss || t.dataset.snooze)) return;
     if (t.dataset.open) openClient(t.dataset.open);
     else if (t.dataset.edit) openClientForm(clientById(t.dataset.edit));
     else if (t.dataset.touch) openTouchForm(clientById(t.dataset.touch));
@@ -1453,9 +1462,10 @@ async function init() {
   if (!s) return;
   LOGIN = s.login;
   RIGHTS = {
-    work: auth().hasAccess(s.access, "processes.clients") || auth().hasAccess(s.access, "processes.clients_lead"),
-    lead: auth().hasAccess(s.access, "processes.clients_lead"),
+    work: (s.access || []).includes("processes.clients"),
+    lead: (s.access || []).includes("processes.clients_lead"),
   };
+  applyReadonly();
   bindEvents();
   await loadAll();
   $(`.mod-tab[data-cltab="summary"]`).hidden = !RIGHTS.lead;

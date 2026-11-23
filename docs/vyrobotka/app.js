@@ -1555,21 +1555,49 @@ async function boot() {
   document.querySelectorAll(".mod-tab").forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.getAttribute("data-tab")));
   });
-  let tab = "upsell";
+  // Стартовая вкладка — только из доступных пользователю. Разделы на отдельных страницах
+  // (отзывы, аутсорс, клиенты, диагностика) открываются только по клику — иначе «Процессы»
+  // сами перебрасывали на последнюю открытую страницу.
+  const auth = window.JarvisVitrineAuth;
+  const access = auth?.session?.()?.access || [];
+  const NEED = {
+    upsell: "processes.upsell",
+    debt: "processes.debt",
+    branch_kpi: "processes.branch_kpi",
+    reviews_stats: "processes.reviews_stats",
+    buffer_quality: "processes.buffer_quality",
+    reviews: "processes.reviews",
+    outsource: "processes.outsource",
+    clients: "processes.clients",
+    diag: "processes.diag",
+  };
+  const can = (t) => !!auth?.hasAccess?.(access, NEED[t]);
+  const IN_PAGE = ["upsell", "debt", "branch_kpi", "reviews_stats", "buffer_quality"];
+  const SEPARATE = ["reviews", "outsource", "clients", "diag"];
+  let saved = "";
   try {
-    tab = localStorage.getItem("jarvis.pages.vyrobotka.tab") || "upsell";
+    saved = localStorage.getItem("jarvis.pages.vyrobotka.tab") || "";
   } catch {
-    tab = "upsell";
+    saved = "";
   }
-  const allowed = new Set([
-    "upsell",
-    "debt",
-    "branch_kpi",
-    "reviews",
-    "reviews_stats",
-    "buffer_quality",
-  ]);
-  setTab(allowed.has(tab) ? tab : "upsell");
+  const inPage = IN_PAGE.filter(can);
+  const separate = SEPARATE.filter(can);
+  if (inPage.length) {
+    setTab(inPage.includes(saved) ? saved : inPage[0]);
+  } else if (separate.length === 1) {
+    location.replace(`../${{ reviews: "reviews", outsource: "outsource", clients: "clients", diag: "diag" }[separate[0]]}/`);
+    return;
+  } else {
+    // только отдельные разделы — показываем вкладки и подсказку, никуда не перебрасываем
+    document.querySelectorAll("main .panel").forEach((panel) => (panel.hidden = true));
+    const main = document.querySelector("main");
+    if (main) {
+      main.insertAdjacentHTML(
+        "afterbegin",
+        '<article class="card" id="processes-pick"><h3>Выберите раздел</h3><p class="card-sub">Ваши разделы — во вкладках выше.</p></article>',
+      );
+    }
+  }
 
   const meta = $("#export-meta");
   try {

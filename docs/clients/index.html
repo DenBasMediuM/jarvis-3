@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
-  <link rel="stylesheet" href="./styles.css?v=20261121-clients1" />
-  <script src="../shared/auth.js?v=20261123-diag1"></script>
-  <script src="./app.js?v=20261121-clients2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20261123-access1" />
+  <script src="../shared/auth.js?v=20261123-access1"></script>
+  <script src="./app.js?v=20261123-access1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -69,7 +69,7 @@
 
       <section class="os-panel stack" id="cl-panel-clients" hidden>
         <div class="os-toolbar">
-          <button type="button" class="os-btn is-primary" id="cl-add">+ Новый клиент</button>
+          <button type="button" class="os-btn is-primary" id="cl-add" data-write>+ Новый клиент</button>
           <input type="search" class="os-input os-search" id="cl-search" placeholder="Поиск: имя, телефон, техника, район…" />
           <select class="os-input" id="cl-stage-filter">
             <option value="work">Постоянные и в работе</option>
@@ -97,7 +97,7 @@
 
       <section class="os-panel stack" id="cl-panel-funnel" hidden>
         <div class="os-toolbar">
-          <button type="button" class="os-btn is-primary" id="cl-add-2">+ Новый клиент</button>
+          <button type="button" class="os-btn is-primary" id="cl-add-2" data-write>+ Новый клиент</button>
           <label class="os-check"><input type="checkbox" id="cl-show-closed" /> показать «Пауза» и «Отказ»</label>
         </div>
         <div class="os-board" id="cl-board"></div>

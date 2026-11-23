@@ -114,7 +114,10 @@ export async function handleDiag(ctx) {
     (u) => String(u.login || "").toLowerCase() === String(tokenUser.login || "").toLowerCase(),
   );
   const rights = diagRights(record?.access);
-  if (!rights.work) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Платная диагностика»");
+  if (!rights.view) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Платная диагностика»");
+  const needWork = () => {
+    if (!rights.work) throw new HttpError(403, "read_only", "Режим просмотра: действия менеджера доступны с доступом «работа менеджера»");
+  };
   const login = String(record?.login || tokenUser.login);
   const ok = async (extra = {}) => ({ ok: true, rights, login, ...extra, ...(await readState(env)) });
   let m;
@@ -122,6 +125,7 @@ export async function handleDiag(ctx) {
   if (method === "GET" && path === "/diag/state") return ok();
 
   if (method === "POST" && path === "/diag/cases") {
+    needWork();
     const body = await readJson(request);
     const c = wrapInput(HttpError, () => validateCase(normalizeCase(body)));
     const dup = await env.DB.prepare("SELECT id, status FROM diag_cases WHERE ticket = ? ORDER BY id DESC LIMIT 1").bind(c.ticket).first();
@@ -142,6 +146,7 @@ export async function handleDiag(ctx) {
   }
 
   if (method === "PATCH" && (m = path.match(/^\/diag\/cases\/(\d+)$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await env.DB.prepare("SELECT * FROM diag_cases WHERE id = ?").bind(id).first();
     if (!before) throw new HttpError(404, "not_found", "Запись не найдена");

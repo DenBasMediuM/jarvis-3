@@ -177,3 +177,7 @@
 .cl-subtabs .os-btn.is-active { background: #e7f3ee; border-color: rgba(15, 110, 86, 0.5); color: var(--accent); }
 .cl-contacts-row { display: grid; grid-template-columns: 1.2fr 0.9fr 1fr 1fr 28px; gap: 6px; }
 @media (max-width: 720px) { .cl-contacts-row { grid-template-columns: 1fr 1fr; } }
+
+/* режим просмотра (доступ руководителя без «работы менеджера») */
+body.is-readonly [data-write] { display: none !important; }
+.ro-note { font-size: 0.82rem; color: #7a3612; background: rgba(196, 92, 38, 0.08); border: 1px solid rgba(196, 92, 38, 0.3); border-radius: 999px; padding: 2px 10px; margin-left: 8px; }

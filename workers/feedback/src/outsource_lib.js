@@ -65,9 +65,12 @@ export class OutsourceInputError extends Error {
 
 /** Что пользователь может в разделе: {work, lead}. */
 export function outsourceRights(access) {
+  // work — действия менеджера (только при явном доступе «работа менеджера»);
+  // lead — план/удаление; view — смотреть раздел (любой из двух доступов)
   const list = Array.isArray(access) ? access : [];
+  const work = list.includes(OUT_ACCESS.work);
   const lead = list.includes(OUT_ACCESS.lead);
-  return { work: lead || list.includes(OUT_ACCESS.work), lead };
+  return { work, lead, view: work || lead };
 }
 
 /** Поля кандидата из формы. partial=true — только переданные поля (правка). */

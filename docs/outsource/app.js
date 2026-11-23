@@ -127,6 +127,13 @@ async function api(method, path, body) {
   return data;
 }
 
+function applyReadonly() {
+  const ro = !RIGHTS.work;
+  document.body.classList.toggle("is-readonly", ro);
+  const h = document.querySelector(".mod-sub");
+  if (h && ro && !h.querySelector(".ro-note")) h.insertAdjacentHTML("beforeend", '<span class="ro-note">режим просмотра</span>');
+}
+
 function applyState(data) {
   STATE = {
     candidates: data.candidates || [],
@@ -136,6 +143,7 @@ function applyState(data) {
     now: data.now,
   };
   if (data.rights) RIGHTS = data.rights;
+  applyReadonly();
   if (data.login) LOGIN = data.login;
 }
 
@@ -903,7 +911,7 @@ function openCandidate(id) {
           const info = ticketInfo(t.ticket);
           const res = t.result_decision
             ? `${t.result_quality}/5 · ${t.result_on_time ? "в срок" : "не в срок"} · ${esc(DECISIONS[t.result_decision])}`
-            : `<button type="button" class="os-btn is-small ${isOverdue(t) ? "is-danger" : ""}" data-result="${t.id}">Оценить${isOverdue(t) ? " (просрочен)" : ""}</button>`;
+            : `<button type="button" class="os-btn is-small ${isOverdue(t) ? "is-danger" : ""}" data-write data-result="${t.id}">Оценить${isOverdue(t) ? " (просрочен)" : ""}</button>`;
           return `<tr><td>${info?.url ? `<a href="${esc(info.url)}" target="_blank" rel="noopener">${esc(t.ticket)}</a>` : esc(t.ticket)}</td>
             <td class="os-wrap">${esc(t.device)} · ${esc(t.issue)}${t.price ? ` · ${money(t.price)}` : ""}</td>
             <td>${t.source === "donor" ? "донор" : "клиентский"}</td><td>${fmtDate(t.handed_at)}</td>
@@ -927,16 +935,16 @@ function openCandidate(id) {
       c.notes ? `<br>Заметки: ${esc(c.notes)}` : ""
     }</p>
     <div class="os-form-actions">
-      <button type="button" class="os-btn is-primary" data-trial-for="${c.id}" ${c.stage === "lost" ? "disabled" : ""}>Передать устройство</button>
-      <button type="button" class="os-btn" data-edit="${c.id}">Редактировать</button>
-      <select class="os-input" id="os-stage-select"><option value="">Перевести на стадию…</option>${nextStages
+      <button type="button" class="os-btn is-primary" data-write data-trial-for="${c.id}" ${c.stage === "lost" ? "disabled" : ""}>Передать устройство</button>
+      <button type="button" class="os-btn" data-write data-edit="${c.id}">Редактировать</button>
+      <select class="os-input" id="os-stage-select" data-write><option value="">Перевести на стадию…</option>${nextStages
         .map((s) => `<option value="${s}">${STAGES[s]}</option>`)
         .join("")}</select>
     </div>
     <h3>CRM: устройства и деньги</h3>${crmHtml}
     <h3>Передачи устройств</h3>${trialsHtml}
-    <h3>Отметить действие</h3>
-    <form class="os-form os-form-inline" id="os-note-form" style="grid-template-columns:1fr auto">
+    <h3 data-write>Отметить действие</h3>
+    <form class="os-form os-form-inline" id="os-note-form" data-write style="grid-template-columns:1fr auto">
       <input name="text" class="os-input" placeholder="Позвонил, договорились о пробнике на пятницу…" />
       <button class="os-btn" type="submit">Добавить в журнал</button>
       <span class="os-status"></span>
@@ -990,8 +998,8 @@ function renderAll() {
 
 function bindEvents() {
   $$(".mod-tab[data-ostab]").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.ostab)));
-  $("#os-add-cand").addEventListener("click", () => STATE && openCandidateForm(null));
-  $("#os-add-trial").addEventListener("click", () => openTrialForm(null));
+  $("#os-add-cand").addEventListener("click", () => STATE && RIGHTS.work && openCandidateForm(null));
+  $("#os-add-trial").addEventListener("click", () => RIGHTS.work && openTrialForm(null));
   $("#os-search").addEventListener("input", renderBoard);
   $("#os-show-closed").addEventListener("change", renderBoard);
   $("#os-act-period").addEventListener("change", renderActivity);
@@ -1014,6 +1022,7 @@ function bindEvents() {
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-open-cand],[data-edit],[data-trial-for],[data-result],[data-goto]");
     if (!t) return;
+    if (!RIGHTS.work && t.closest("[data-write]")) return; // режим просмотра
     if (t.dataset.openCand) openCandidate(t.dataset.openCand);
     else if (t.dataset.edit) openCandidateForm(candById(t.dataset.edit));
     else if (t.dataset.trialFor) openTrialForm(t.dataset.trialFor);
@@ -1029,9 +1038,10 @@ async function init() {
   if (!s) return;
   LOGIN = s.login;
   RIGHTS = {
-    work: auth().hasAccess(s.access, "processes.outsource") || auth().hasAccess(s.access, "processes.outsource_lead"),
-    lead: auth().hasAccess(s.access, "processes.outsource_lead"),
+    work: (s.access || []).includes("processes.outsource"),
+    lead: (s.access || []).includes("processes.outsource_lead"),
   };
+  applyReadonly();
   bindEvents();
   await loadAll();
   $(`.mod-tab[data-ostab="summary"]`).hidden = !RIGHTS.lead;

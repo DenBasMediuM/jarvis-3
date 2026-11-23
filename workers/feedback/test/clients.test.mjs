@@ -17,9 +17,9 @@ import {
 } from "../src/clients_lib.js";
 
 test("rights", () => {
-  assert.deepEqual(clientsRights(["processes.clients"]), { work: true, lead: false });
-  assert.deepEqual(clientsRights(["processes.clients_lead"]), { work: true, lead: true });
-  assert.deepEqual(clientsRights([]), { work: false, lead: false });
+  assert.deepEqual(clientsRights(["processes.clients"]), { work: true, lead: false, view: true });
+  assert.deepEqual(clientsRights(["processes.clients_lead"]), { work: false, lead: true, view: true });
+  assert.deepEqual(clientsRights([]), { work: false, lead: false, view: false });
 });
 
 test("phones normalized and required", () => {

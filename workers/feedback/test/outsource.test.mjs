@@ -16,9 +16,9 @@ import {
 import { handleOutsource } from "../src/outsource.js";
 
 test("права: lead включает work", () => {
-  assert.deepEqual(outsourceRights(["processes.outsource"]), { work: true, lead: false });
-  assert.deepEqual(outsourceRights(["processes.outsource_lead"]), { work: true, lead: true });
-  assert.deepEqual(outsourceRights(["quality"]), { work: false, lead: false });
+  assert.deepEqual(outsourceRights(["processes.outsource"]), { work: true, lead: false, view: true });
+  assert.deepEqual(outsourceRights(["processes.outsource_lead"]), { work: false, lead: true, view: true });
+  assert.deepEqual(outsourceRights(["quality"]), { work: false, lead: false, view: false });
 });
 
 test("кандидат: нужен контакт или объявление, ссылка дополняется схемой", () => {

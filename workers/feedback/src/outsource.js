@@ -101,7 +101,10 @@ export async function handleOutsource(ctx) {
     (u) => String(u.login || "").toLowerCase() === String(tokenUser.login || "").toLowerCase(),
   );
   const rights = outsourceRights(record?.access);
-  if (!rights.work) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Аутсорс мастера»");
+  if (!rights.view) throw new HttpError(403, "forbidden", "Нет доступа к разделу «Аутсорс мастера»");
+  const needWork = () => {
+    if (!rights.work) throw new HttpError(403, "read_only", "Режим просмотра: действия менеджера доступны с доступом «работа менеджера»");
+  };
   const login = String(record?.login || tokenUser.login);
   let m;
 
@@ -110,6 +113,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "POST" && path === "/outsource/candidates") {
+    needWork();
     const body = await readJson(request);
     const c = wrapInput(HttpError, () => normalizeCandidate(body));
     const at = nowIso();
@@ -126,6 +130,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "PATCH" && (m = path.match(/^\/outsource\/candidates\/(\d+)$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await getCandidate(env, id, HttpError);
     const body = await readJson(request);
@@ -145,6 +150,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "POST" && (m = path.match(/^\/outsource\/candidates\/(\d+)\/stage$/))) {
+    needWork();
     const id = Number(m[1]);
     const before = await getCandidate(env, id, HttpError);
     const body = await readJson(request);
@@ -165,6 +171,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "POST" && (m = path.match(/^\/outsource\/candidates\/(\d+)\/note$/))) {
+    needWork();
     const id = Number(m[1]);
     await getCandidate(env, id, HttpError);
     const body = await readJson(request);
@@ -176,6 +183,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "POST" && path === "/outsource/trials") {
+    needWork();
     const body = await readJson(request);
     const t = wrapInput(HttpError, () => normalizeTrial(body));
     const cand = await getCandidate(env, t.candidate_id, HttpError);
@@ -218,6 +226,7 @@ export async function handleOutsource(ctx) {
   }
 
   if (method === "POST" && (m = path.match(/^\/outsource\/trials\/(\d+)\/result$/))) {
+    needWork();
     const id = Number(m[1]);
     const trial = await env.DB.prepare("SELECT * FROM outsource_trials WHERE id = ?").bind(id).first();
     if (!trial) throw new HttpError(404, "not_found", "Передача не найдена");

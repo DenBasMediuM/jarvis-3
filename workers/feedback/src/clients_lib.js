@@ -122,9 +122,12 @@ export class ClientsInputError extends Error {
 }
 
 export function clientsRights(access) {
+  // work — действия менеджера (только при явном доступе «работа менеджера»);
+  // lead — план/удаление; view — смотреть раздел (любой из двух доступов)
   const list = Array.isArray(access) ? access : [];
+  const work = list.includes(CL_ACCESS.work);
   const lead = list.includes(CL_ACCESS.lead);
-  return { work: lead || list.includes(CL_ACCESS.work), lead };
+  return { work, lead, view: work || lead };
 }
 
 function normContacts(raw) {
