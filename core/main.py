@@ -33,6 +33,7 @@ from modules.gincore.quality_tg import format_quality_analysis_tg_blocks
 from modules.gincore.branch_kpi import BranchKpiService
 from modules.buffer_quality import BufferQualityService
 from modules.clients import ClientsService
+from modules.diag import DiagService
 from modules.outsource import OutsourceService
 from modules.masters_kpi.service import MastersKpiService
 from modules.vyrobotka.service import VyrobotkaService
@@ -57,6 +58,7 @@ branch_kpi_service: BranchKpiService | None = None
 buffer_quality_service: BufferQualityService | None = None
 outsource_service: OutsourceService | None = None
 clients_service: ClientsService | None = None
+diag_service: DiagService | None = None
 masters_kpi_service: MastersKpiService | None = None
 reviews_service: ReviewsService | None = None
 
@@ -165,7 +167,7 @@ async def build_llm() -> LLMService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global modules, gincore_module, quality_service, vyrobotka_service, branch_kpi_service
-    global buffer_quality_service, masters_kpi_service, reviews_service, outsource_service, clients_service
+    global buffer_quality_service, masters_kpi_service, reviews_service, outsource_service, clients_service, diag_service
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await db.connect()
     modules = load_modules()
@@ -223,6 +225,12 @@ async def lifespan(_: FastAPI):
     )
     clients_service = ClientsService(
         db,
+        gincore_client_factory=_outsource_gincore,
+        feedback_client_factory=_feedback_client,
+    )
+    diag_service = DiagService(
+        db,
+        quality_service=quality_service,
         gincore_client_factory=_outsource_gincore,
         feedback_client_factory=_feedback_client,
     )
@@ -705,6 +713,30 @@ async def buffer_quality_export_pages() -> dict[str, Any]:
         return await buffer_quality_service.export_pages_snapshot()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, str(exc)) from exc
+
+
+@app.get("/api/diag/stats")
+async def diag_stats() -> dict[str, Any]:
+    if not diag_service:
+        raise HTTPException(503, "Сервис платной диагностики не готов")
+    return await diag_service.get_stats()
+
+
+@app.get("/api/diag/sync")
+async def diag_sync_status() -> dict[str, Any]:
+    if not diag_service:
+        raise HTTPException(503, "Сервис платной диагностики не готов")
+    return {"ok": True, "sync": await diag_service.get_sync_state()}
+
+
+@app.post("/api/diag/sync")
+async def diag_sync_start() -> dict[str, Any]:
+    if not diag_service:
+        raise HTTPException(503, "Сервис платной диагностики не готов")
+    try:
+        return await diag_service.sync()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/api/clients/stats")
@@ -1507,6 +1539,7 @@ async def updates_status() -> dict[str, Any]:
     clients_sync_state = (
         await clients_service.get_sync_state() if clients_service else {"status": "idle"}
     )
+    diag_sync_state = await diag_service.get_sync_state() if diag_service else {"status": "idle"}
     modules = [
         {
             "id": "quality",
@@ -1587,6 +1620,21 @@ async def updates_status() -> dict[str, Any]:
                 {"id": "branch-kpi-export", "label": "Экспорт в Pages", "kind": "muted"},
             ],
             "pages": _read_pages_export_meta("docs/branch-kpi/data.json"),
+        },
+        {
+            "id": "processes-diag",
+            "block": "Процессы",
+            "title": "Платная диагностика",
+            "description": (
+                "Кандидаты на платную диагностику (буфер и ещё не продиагностированные — из кэша Качества) "
+                "и статусы квитанций из записей менеджера. Запускать после «Качества» и «Постоянных клиентов»."
+            ),
+            "status": diag_sync_state.get("status") or "idle",
+            "message": diag_sync_state.get("message"),
+            "started_at": diag_sync_state.get("started_at"),
+            "finished_at": diag_sync_state.get("finished_at"),
+            "progress": {"done": int(diag_sync_state.get("done") or 0), "total": int(diag_sync_state.get("total") or 0)},
+            "actions": [{"id": "diag-sync", "label": "Обновить кандидатов", "kind": "primary"}],
         },
         {
             "id": "processes-clients",

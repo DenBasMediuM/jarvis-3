@@ -3,7 +3,7 @@
   const SESSION_KEY = "jarvis.vitrine.session";
   // Cloudflare Worker модуля «Улучшения» (серверная проверка пароля + заявки)
   const FEEDBACK_URL = "https://jarvis-feedback.isaev-denis-igorevih.workers.dev";
-  const FEEDBACK_V = "20261121-clients1";
+  const FEEDBACK_V = "20261123-diag1";
   // Зафиксировать базу при загрузке скрипта: currentScript пуст в DOMContentLoaded.
   const scriptBase = (() => {
     try {
@@ -47,6 +47,7 @@
     // руководитель аутсорса видит и рабочие вкладки раздела
     if (need === "processes.outsource" && list.includes("processes.outsource_lead")) return true;
     if (need === "processes.clients" && list.includes("processes.clients_lead")) return true;
+    if (need === "processes.diag" && list.includes("processes.diag_lead")) return true;
     // родительский блок, если есть любой подблок
     if (need === "processes") {
       return list.some((a) => a === "processes" || String(a).startsWith("processes."));
@@ -69,6 +70,7 @@
     }
     if (id === "processes.outsource") return hasAccess(accessList, "processes.outsource");
     if (id === "processes.clients") return hasAccess(accessList, "processes.clients");
+    if (id === "processes.diag") return hasAccess(accessList, "processes.diag");
     if (id === "finance") return hasAccess(accessList, "finance");
     return false;
   }
@@ -255,6 +257,7 @@
       buffer_quality: "processes.buffer_quality",
       outsource: "processes.outsource",
       clients: "processes.clients",
+      diag: "processes.diag",
     };
     document.querySelectorAll(".mod-tab[data-tab]").forEach((btn) => {
       const tab = btn.getAttribute("data-tab");

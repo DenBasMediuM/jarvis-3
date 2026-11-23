@@ -33,6 +33,7 @@
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="buffer_quality">Качество буфера</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="outsource">Аутсорс мастера</button>
             <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="clients">Постоянные клиенты</button>
+            <button type="button" class="nav-sub-btn" data-view="processes" data-processes-tab="diag">Платная диагностика</button>
           </div>
         </div>
         <button class="nav-btn" data-view="finance">Финансы</button>
@@ -281,6 +282,12 @@
               <a class="cj-import-btn is-muted" href="https://denbasmedium.github.io/jarvis-3/outsource/" target="_blank" rel="noopener">Открыть на витрине</a>
               <span id="outsource-sync-status" class="quality-sync-status">—</span>
             </div>
+            <div class="quality-toolbar" id="diag-toolbar" hidden>
+              <span class="quality-toolbar-label">Платная диагностика</span>
+              <button type="button" id="diag-sync-btn" class="cj-import-open" title="Кандидаты из кэша Качества и статусы квитанций (в облако)">Обновить кандидатов</button>
+              <a class="cj-import-btn is-muted" href="https://denbasmedium.github.io/jarvis-3/diag/" target="_blank" rel="noopener">Открыть на витрине</a>
+              <span id="diag-sync-status" class="quality-sync-status">—</span>
+            </div>
             <div class="quality-toolbar" id="clients-toolbar" hidden>
               <span class="quality-toolbar-label">Постоянные клиенты</span>
               <button type="button" id="clients-sync-btn" class="cj-import-open" title="История ремонтов за 12 мес. по телефонам → метрики клиентов и кандидаты (в облако)">Обновить из CRM</button>
@@ -297,6 +304,7 @@
           <button type="button" class="quality-tab" data-processes-tab="buffer_quality" role="tab" aria-selected="false">Качество буфера</button>
           <button type="button" class="quality-tab" data-processes-tab="outsource" role="tab" aria-selected="false">Аутсорс мастера</button>
           <button type="button" class="quality-tab" data-processes-tab="clients" role="tab" aria-selected="false">Постоянные клиенты</button>
+          <button type="button" class="quality-tab" data-processes-tab="diag" role="tab" aria-selected="false">Платная диагностика</button>
         </nav>
         <div id="vyrobotka-sections" class="vyrobotka-sections">
           <div id="vyrobotka-empty" class="vyrobotka-empty" hidden>
@@ -673,6 +681,29 @@
             </div>
           </article>
 
+          <article id="diag-body" class="vyrobotka-section" hidden>
+            <header class="vyrobotka-section-head">
+              <h2>Платная диагностика</h2>
+              <p id="diag-meta">Менеджер каждый день находит в буфере или среди непродиагностированных хотя бы одно сложное устройство и согласует с клиентом платную диагностику.</p>
+            </header>
+            <div class="vyrobotka-kpis" id="diag-kpis"></div>
+            <div class="vyrobotka-side-head"><h3>Записи менеджера (последние 40)</h3></div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table">
+                <thead><tr><th>Дата</th><th>№</th><th>Устройство</th><th>Мастер (консультация)</th><th>Итог</th><th>Цена</th><th>В CRM</th><th>Кто</th></tr></thead>
+                <tbody id="diag-tbody"><tr><td colspan="8" class="quality-empty">Нет данных.</td></tr></tbody>
+              </table>
+            </div>
+            <div class="vyrobotka-side-head" style="margin-top:16px"><h3>Кандидаты (топ-15)</h3>
+              <p class="vyrobotka-chart-sub" style="margin:0">Буфер и ещё не продиагностированные устройства, сложные категории — выше.</p></div>
+            <div class="vyrobotka-table-wrap">
+              <table class="quality-table vyrobotka-table">
+                <thead><tr><th>№</th><th>Устройство</th><th>Категория</th><th>Мастер</th><th>Дней</th><th>Оценка</th></tr></thead>
+                <tbody id="diag-cand-tbody"><tr><td colspan="6" class="quality-empty">—</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+
           <article id="clients-body" class="vyrobotka-section" hidden>
             <header class="vyrobotka-section-head">
               <h2>Постоянные клиенты</h2>
@@ -882,6 +913,6 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20261121-clients1"></script>
+  <script src="/static/app.js?v=20261123-diag1"></script>
 </body>
 </html>

@@ -88,3 +88,15 @@ cd workers/feedback
 npx wrangler d1 execute jarvis-feedback --remote --file=migrations/0003_clients.sql
 npx wrangler deploy
 ```
+
+## Раздел «Платная диагностика» (`src/diag.js`)
+
+Таблицы `diag_cases`, `diag_log`, `diag_snapshot`; план и цены — в `meta`. Доступ — `processes.diag`
+(менеджер) или `processes.diag_lead` (руководитель, план). Кандидаты и статусы квитанций присылает Jarvis
+через `PUT /admin/diag/snapshot`.
+
+```bash
+cd workers/feedback
+npx wrangler d1 execute jarvis-feedback --remote --file=migrations/0004_diag.sql
+npx wrangler deploy
+```

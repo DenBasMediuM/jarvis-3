@@ -112,6 +112,14 @@ class FeedbackClient:
             raise FeedbackError(f"Worker {res.status_code}: {msg}")
         return data
 
+    async def get_diag_state(self) -> dict[str, Any]:
+        """Раздел «Платная диагностика»: записи менеджера (квитанции, статусы), план."""
+        return await self._request("GET", "/admin/diag/state")
+
+    async def put_diag_snapshot(self, snapshot: dict[str, Any]) -> dict[str, Any]:
+        """Кандидаты и статусы квитанций из CRM — в облако."""
+        return await self._request("PUT", "/admin/diag/snapshot", json=snapshot)
+
     async def get_clients_state(self) -> dict[str, Any]:
         """Раздел «Постоянные клиенты»: клиенты (телефоны, условия), решения по кандидатам, настройки."""
         return await self._request("GET", "/admin/clients/state")

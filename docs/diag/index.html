@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Платная диагностика · Jarvis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
+  <link rel="stylesheet" href="./styles.css?v=20261123-diag1" />
+  <script src="../shared/auth.js?v=20261123-diag1"></script>
+  <script src="./app.js?v=20261123-diag1" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const auth = window.JarvisVitrineAuth;
+      if (!auth?.requireAuth("processes.diag")) return;
+      auth.applyShellNav("processes.diag");
+    });
+  </script>
+</head>
+<body>
+  <div class="shell">
+    <nav class="shell-nav" aria-label="Витрина">
+      <a class="shell-brand" href="../">
+        <span class="shell-mark">J</span>
+        <span class="shell-brand-text">
+          <span class="shell-brand-name">Jarvis</span>
+          <span class="shell-brand-sub">витрина</span>
+        </span>
+      </a>
+      <div class="shell-mods"></div>
+    </nav>
+
+    <header class="mod-top">
+      <div>
+        <h1>Платная диагностика</h1>
+        <p class="mod-sub">Каждый день — хотя бы одно сложное устройство с согласованной платной диагностикой</p>
+      </div>
+      <div class="mod-meta" id="dg-meta">Загрузка…</div>
+    </header>
+
+    <div class="os-banner" id="dg-banner" hidden></div>
+
+    <nav class="mod-tabs" role="tablist">
+      <button type="button" class="mod-tab" data-dgtab="today">Сегодня</button>
+      <button type="button" class="mod-tab" data-dgtab="cases">Записи</button>
+      <button type="button" class="mod-tab" data-dgtab="stats" hidden>Статистика</button>
+      <button type="button" class="mod-tab" data-dgtab="settings">Настройки</button>
+    </nav>
+
+    <main class="stack">
+      <section class="os-panel stack" id="dg-panel-today" hidden>
+        <div class="dg-goal" id="dg-goal"></div>
+        <div id="dg-open"></div>
+        <article class="card">
+          <h3>Кандидаты: буфер и ещё не продиагностированные</h3>
+          <p class="card-sub" id="dg-cand-sub">Выберите сложное устройство, проконсультируйтесь с ведущим или профильным мастером и согласуйте с клиентом платную диагностику.</p>
+          <div class="os-toolbar" style="margin-top:8px">
+            <input type="search" class="os-input os-search" id="dg-search" placeholder="Поиск: №, устройство, мастер…" />
+            <select class="os-input" id="dg-src">
+              <option value="">Буфер и непродиагностированные</option>
+              <option value="buffer">Только буфер</option>
+              <option value="undiagnosed">Только у мастеров</option>
+            </select>
+            <label class="os-check"><input type="checkbox" id="dg-simple" /> показать простые категории</label>
+            <button type="button" class="os-btn" id="dg-add-manual">+ Другая квитанция</button>
+          </div>
+        </article>
+        <div class="cl-list" id="dg-cands"></div>
+      </section>
+
+      <section class="os-panel stack" id="dg-panel-cases" hidden>
+        <div class="os-toolbar">
+          <input type="search" class="os-input os-search" id="dg-cases-search" placeholder="Поиск: №, устройство, мастер…" />
+          <select class="os-input" id="dg-cases-status">
+            <option value="">Все статусы</option>
+            <option value="consult">Консультация</option>
+            <option value="offered">Предложено</option>
+            <option value="agreed">Согласовано</option>
+            <option value="declined">Отказ клиента</option>
+            <option value="not_needed">Не нужна</option>
+          </select>
+        </div>
+        <article class="card"><div id="dg-cases"></div></article>
+      </section>
+
+      <section class="os-panel stack" id="dg-panel-stats" hidden>
+        <div class="os-toolbar">
+          <select class="os-input" id="dg-period">
+            <option value="week">Эта неделя</option>
+            <option value="prev">Прошлая неделя</option>
+            <option value="month">Этот месяц</option>
+            <option value="prevmonth">Прошлый месяц</option>
+            <option value="30">30 дней</option>
+          </select>
+        </div>
+        <div class="kpis" id="dg-kpis"></div>
+        <article class="card"><h3>Согласовано по дням (30 дней)</h3><div id="dg-days"></div></article>
+        <div class="os-grid-2">
+          <article class="card"><h3>По мастерам (консультации)</h3><div id="dg-by-master"></div></article>
+          <article class="card"><h3>По категориям техники</h3><div id="dg-by-cat"></div></article>
+        </div>
+        <div class="os-grid-2">
+          <article class="card"><h3>Почему клиенты отказываются</h3><div id="dg-declines"></div></article>
+          <article class="card"><h3>Дневной план менеджера</h3><form id="dg-plan-form" class="os-form os-form-inline"></form></article>
+        </div>
+        <article class="card"><h3>Журнал</h3><div id="dg-log"></div></article>
+      </section>
+
+      <section class="os-panel stack" id="dg-panel-settings" hidden>
+        <article class="card">
+          <h3>Подсказки цены по категориям</h3>
+          <p class="card-sub">Подставляются в форму при согласовании; окончательную цену называет мастер на консультации.</p>
+          <form id="dg-prices-form" class="os-form"></form>
+        </article>
+        <article class="card">
+          <h3>Доля «без ремонта» по категориям (12 месяцев)</h3>
+          <p class="card-sub">Чем больше устройств категории уходит без ремонта, тем чаще бесплатная диагностика — впустую. Это главные кандидаты на платную.</p>
+          <div id="dg-cat-stats"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="os-dialog" id="dg-dialog">
+    <form method="dialog" class="os-dialog-close-form"><button class="os-x" aria-label="Закрыть">×</button></form>
+    <div id="dg-dialog-body"></div>
+  </dialog>
+</body>
+</html>

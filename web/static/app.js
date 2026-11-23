@@ -81,6 +81,7 @@ function setProcessesTab(tab) {
     tab === "buffer_quality" ||
     tab === "outsource" ||
     tab === "clients" ||
+    tab === "diag" ||
     tab === "upsell"
       ? tab
       : "upsell";
@@ -115,7 +116,12 @@ function setProcessesTab(tab) {
   const isBuffer = id === "buffer_quality";
   const isOutsource = id === "outsource";
   const isClients = id === "clients";
-  const isStandalone = isBranchKpi || isReviews || isBuffer || isOutsource || isClients;
+  const isDiag = id === "diag";
+  const isStandalone = isBranchKpi || isReviews || isBuffer || isOutsource || isClients || isDiag;
+  const diagToolbar = $("#diag-toolbar");
+  const diagBody = $("#diag-body");
+  if (diagToolbar) diagToolbar.hidden = !isDiag;
+  if (diagBody) diagBody.hidden = !isDiag;
   const clientsToolbar = $("#clients-toolbar");
   const clientsBody = $("#clients-body");
   if (clientsToolbar) clientsToolbar.hidden = !isClients;
@@ -144,6 +150,13 @@ function setProcessesTab(tab) {
     if (debt) debt.hidden = true;
     if (empty) empty.hidden = true;
     loadReviewsStats();
+    return;
+  }
+  if (isDiag) {
+    if (upsell) upsell.hidden = true;
+    if (debt) debt.hidden = true;
+    if (empty) empty.hidden = true;
+    loadDiagStats();
     return;
   }
   if (isClients) {
@@ -199,6 +212,7 @@ function initProcessesTabs() {
     saved !== "buffer_quality" &&
     saved !== "outsource" &&
     saved !== "clients" &&
+    saved !== "diag" &&
     saved !== "upsell"
   ) {
     saved = "upsell";
@@ -6775,6 +6789,8 @@ async function runUpdatesAction(actionId) {
       res = await fetch("/api/buffer-quality/sync", { method: "POST" });
     } else if (actionId === "buffer-quality-export") {
       res = await fetch("/api/buffer-quality/export-pages", { method: "POST" });
+    } else if (actionId === "diag-sync") {
+      res = await fetch("/api/diag/sync", { method: "POST" });
     } else if (actionId === "clients-sync") {
       res = await fetch("/api/clients/sync", { method: "POST" });
     } else if (actionId === "outsource-sync") {
@@ -6807,7 +6823,8 @@ async function runUpdatesAction(actionId) {
       actionId === "debt-verify-all" ||
       actionId === "branch-kpi-sync" ||
       actionId === "outsource-sync" ||
-      actionId === "clients-sync";
+      actionId === "clients-sync" ||
+      actionId === "diag-sync";
     if (needsPoll) startUpdatesPoll();
     await loadUpdatesStatus({ quiet: true });
   } catch (err) {
@@ -7993,6 +8010,141 @@ $("#clients-sync-btn")?.addEventListener("click", async () => {
     if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
     if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
     await loadClientsStats({ quiet: true });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+});
+
+
+// ---------- Процессы → Платная диагностика ----------
+const DIAG_STATUSES = {
+  consult: "Консультация",
+  offered: "Предложено",
+  agreed: "Согласовано",
+  declined: "Отказ клиента",
+  not_needed: "Не нужна",
+};
+let diagPoll = null;
+
+function diagDay(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function renderDiagStats(data) {
+  const sync = data?.sync || {};
+  const live = data?.live || {};
+  const cases = live.ok ? live.cases || [] : [];
+  const tickets = data?.tickets || {};
+  const statusEl = $("#diag-sync-status");
+  if (statusEl) {
+    statusEl.textContent =
+      sync.status === "running" ? `${sync.message || "Идёт…"}` : sync.status === "error" ? `Ошибка: ${sync.message || "—"}` : sync.message || "—";
+  }
+  const meta = $("#diag-meta");
+  if (meta) {
+    meta.textContent = [
+      data?.generated_at ? `снимок ${fmtUpdatesWhen(data.generated_at)}` : "снимка ещё нет",
+      live.ok ? `облако: ${cases.length} записей` : `облако недоступно: ${live.error || "—"}`,
+    ].join(" · ");
+  }
+  const today = diagDay(new Date());
+  const monthKey = today.slice(0, 7);
+  const ws = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return diagDay(d);
+  })();
+  const agreedAt = (c) => (c.status === "agreed" ? diagDay(c.status_at || c.updated_at) : null);
+  const agreedToday = cases.filter((c) => agreedAt(c) === today).length;
+  const agreedWeek = cases.filter((c) => (agreedAt(c) || "") >= ws).length;
+  const monthAgreed = cases.filter((c) => (agreedAt(c) || "").startsWith(monthKey));
+  const monthSum = monthAgreed.reduce((s, c) => s + (Number(c.price) || 0), 0);
+  const paidSum = monthAgreed.reduce((s, c) => {
+    const t = tickets[String(c.ticket)];
+    return s + (t?.closed && (t.paid || 0) > 0 ? Math.min(Number(c.price) || 0, t.paid) : 0);
+  }, 0);
+  const offered = cases.filter((c) => ["offered", "agreed", "declined"].includes(c.status));
+  const conv = offered.length ? Math.round((cases.filter((c) => c.status === "agreed").length / offered.length) * 100) : null;
+  const plan = live.plan || {};
+  const kpi = (label, value, sub) => `<div class="vyrobotka-kpi">
+      <span class="vyrobotka-kpi-label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+      <span class="vyrobotka-kpi-sub">${escapeHtml(sub)}</span>
+    </div>`;
+  const kpis = $("#diag-kpis");
+  if (kpis) {
+    kpis.innerHTML = [
+      kpi("Согласовано сегодня", `${agreedToday} / ${plan.daily_agreed ?? 1}`, "факт / план на день"),
+      kpi("За неделю", agreedWeek, "согласовано платных диагностик"),
+      kpi("Месяц: согласовано", `${fmtMoney(monthSum)} грн`, `${monthAgreed.length} диагностик`),
+      kpi("Месяц: оплачено по CRM", `${fmtMoney(Math.round(paidSum))} грн`, "по закрытым квитанциям"),
+      kpi("Конверсия", conv == null ? "—" : `${conv}%`, "согласовано ÷ предложено"),
+      kpi("Кандидатов", (data?.pool?.buffer ?? 0) + (data?.pool?.undiagnosed ?? 0), `в буфере ${data?.pool?.buffer ?? 0}`),
+    ].join("");
+  }
+  const tbody = $("#diag-tbody");
+  if (tbody) {
+    tbody.innerHTML = cases.length
+      ? cases
+          .slice(0, 40)
+          .map((c) => {
+            const t = tickets[String(c.ticket)];
+            return `<tr>
+              <td>${escapeHtml(diagDay(c.status_at || c.created_at))}</td>
+              <td>${escapeHtml(c.ticket)}</td>
+              <td>${escapeHtml(c.device || "—")}</td>
+              <td>${escapeHtml(c.master || "—")}</td>
+              <td>${escapeHtml(DIAG_STATUSES[c.status] || c.status)}${c.status === "declined" && c.decline_reason ? ` <small>· ${escapeHtml(c.decline_reason)}</small>` : ""}</td>
+              <td>${c.price ? `${fmtMoney(c.price)} грн` : "—"}</td>
+              <td>${t ? `${escapeHtml(t.status || "—")}${t.closed ? ` · оплачено ${fmtMoney(Math.round(t.paid || 0))}` : ""}` : "—"}</td>
+              <td>${escapeHtml(c.created_by || "")}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="8" class="quality-empty">${live.ok ? "Записей пока нет — менеджер работает на витрине." : "Облако недоступно."}</td></tr>`;
+  }
+  const ctb = $("#diag-cand-tbody");
+  if (ctb) {
+    const list = data?.candidates_top || [];
+    const labels = data?.category_labels || {};
+    ctb.innerHTML = list.length
+      ? list
+          .map(
+            (c) => `<tr><td>${escapeHtml(c.ticket)}</td><td>${escapeHtml(c.device || "")}</td><td>${escapeHtml(labels[c.category] || c.category)}</td>
+              <td>${c.source === "buffer" ? "буфер" : escapeHtml(c.engineer || "—")}</td><td>${c.days ?? "—"}</td><td>${c.score}</td></tr>`,
+          )
+          .join("")
+      : '<tr><td colspan="6" class="quality-empty">Нет кандидатов — «Обновить кандидатов» (после «Качества»).</td></tr>';
+  }
+  if (sync.status === "running") {
+    if (!diagPoll) diagPoll = setInterval(() => loadDiagStats({ quiet: true }), 4000);
+  } else if (diagPoll) {
+    clearInterval(diagPoll);
+    diagPoll = null;
+  }
+}
+
+async function loadDiagStats({ quiet = false } = {}) {
+  const statusEl = $("#diag-sync-status");
+  try {
+    const res = await fetch("/api/diag/stats");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    renderDiagStats(data);
+  } catch (err) {
+    if (!quiet && statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
+  }
+}
+
+$("#diag-sync-btn")?.addEventListener("click", async () => {
+  const statusEl = $("#diag-sync-status");
+  try {
+    const res = await fetch("/api/diag/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+    if (statusEl) statusEl.textContent = data.sync?.message || "Запущено";
+    await loadDiagStats({ quiet: true });
   } catch (err) {
     if (statusEl) statusEl.textContent = `Ошибка: ${err.message || err}`;
   }

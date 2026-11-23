@@ -559,6 +559,10 @@ function setTab(tab) {
     location.href = "../clients/";
     return;
   }
+  if (tab === "diag") {
+    location.href = "../diag/";
+    return;
+  }
   document.querySelectorAll(".mod-tab").forEach((btn) => {
     const on = btn.getAttribute("data-tab") === tab;
     btn.classList.toggle("is-active", on);

@@ -18,6 +18,7 @@ import {
   verifyUserProof,
 } from "./lib.js";
 import { handleClients } from "./clients.js";
+import { handleDiag } from "./diag.js";
 import { handleOutsource } from "./outsource.js";
 
 class HttpError extends Error {
@@ -437,6 +438,10 @@ async function handle(request, env) {
     HttpError,
   });
   if (clients !== undefined) return clients;
+
+  // ---------- Платная диагностика ----------
+  const diag = await handleDiag({ request, env, path, method, requireUser, requireAdmin, loadUsers, readJson, HttpError });
+  if (diag !== undefined) return diag;
 
   // ---------- админ (Jarvis) ----------
   if (path.startsWith("/admin/")) {
