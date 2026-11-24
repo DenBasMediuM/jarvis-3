@@ -468,11 +468,32 @@ function renderCandidates() {
     `${crm?.generated_at ? `Снимок CRM: ${fmtDateTime(crm.generated_at)}.` : "Снимка CRM ещё нет — его делает Jarvis при утренней пересборке."}`;
   const q = $("#cl-cand-search").value.trim().toLowerCase();
   const onlyB2b = $("#cl-cand-b2b").checked;
-  const list = openCandidates().filter(
+  const num = (id) => {
+    const v = $(id).value.trim();
+    return v === "" ? null : Number(v);
+  };
+  const [omin, omax, gmin, gmax] = ["#cl-cand-omin", "#cl-cand-omax", "#cl-cand-gmin", "#cl-cand-gmax"].map(num);
+  const all = openCandidates();
+  const list = all.filter(
     (c) =>
       (!onlyB2b || c.b2b) &&
+      (omin === null || (c.orders || 0) >= omin) &&
+      (omax === null || (c.orders || 0) <= omax) &&
+      (gmin === null || (c.gross || 0) >= gmin) &&
+      (gmax === null || (c.gross || 0) <= gmax) &&
       (!q || `${c.name} ${c.phone} ${(c.devices || []).join(" ")}`.toLowerCase().includes(q) || (normPhone(q).length >= 5 && c.phone.includes(normPhone(q)))),
   );
+  const sort = $("#cl-cand-sort").value;
+  const by = {
+    score: (a, b) => (b.score || 0) - (a.score || 0),
+    orders_desc: (a, b) => (b.orders || 0) - (a.orders || 0) || (b.gross || 0) - (a.gross || 0),
+    orders_asc: (a, b) => (a.orders || 0) - (b.orders || 0) || (a.gross || 0) - (b.gross || 0),
+    gross_desc: (a, b) => (b.gross || 0) - (a.gross || 0),
+    gross_asc: (a, b) => (a.gross || 0) - (b.gross || 0),
+    last_desc: (a, b) => String(b.last_at || "").localeCompare(String(a.last_at || "")),
+  }[sort] || ((a, b) => (b.score || 0) - (a.score || 0));
+  list.sort(by);
+  $("#cl-cand-shown").textContent = all.length ? (list.length === all.length ? `всего ${all.length}` : `показано ${list.length} из ${all.length}`) : "";
   box.innerHTML = list.length
     ? list
         .map(
@@ -480,7 +501,7 @@ function renderCandidates() {
         <div class="cl-cand-head">
           <span><span class="cl-cand-name">${esc(c.name || "Без имени")}</span> · <span class="os-muted">${esc(fmtPhone(c.phone))}</span>
             ${c.b2b ? '<span class="os-tag is-ok">похоже на компанию</span>' : ""}</span>
-          <span class="os-muted">оценка ${c.score}</span>
+          <span class="cl-cand-stats"><span>заказов <b>${c.orders ?? "—"}</b></span><span>сумма <b>${money(c.gross || 0)}</b></span>${c.last_at ? `<span class="os-muted">последний ${fmtDate(c.last_at)}</span>` : ""}<span class="os-muted">оценка ${c.score}</span></span>
         </div>
         <div class="os-tags">${(c.reasons || []).map((r) => `<span class="os-tag">${esc(r)}</span>`).join("")}</div>
         ${c.devices?.length ? `<div class="os-card-meta">Техника: ${esc(c.devices.join(", "))}</div>` : ""}
@@ -1560,6 +1581,14 @@ function bindEvents() {
   $("#cl-stage-filter").addEventListener("change", renderClients);
   $("#cl-cand-search").addEventListener("input", renderCandidates);
   $("#cl-cand-b2b").addEventListener("change", renderCandidates);
+  $("#cl-cand-sort").addEventListener("change", renderCandidates);
+  for (const id of ["#cl-cand-omin", "#cl-cand-omax", "#cl-cand-gmin", "#cl-cand-gmax"]) $(id).addEventListener("input", renderCandidates);
+  $("#cl-cand-reset").addEventListener("click", () => {
+    for (const id of ["#cl-cand-search", "#cl-cand-omin", "#cl-cand-omax", "#cl-cand-gmin", "#cl-cand-gmax"]) $(id).value = "";
+    $("#cl-cand-sort").value = "score";
+    $("#cl-cand-b2b").checked = false;
+    renderCandidates();
+  });
   $("#cl-show-closed").addEventListener("change", renderBoard);
   $("#cl-act-period").addEventListener("change", renderActivity);
   $("#cl-plan-form").addEventListener("submit", async (e) => {

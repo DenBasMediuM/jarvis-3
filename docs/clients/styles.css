@@ -181,3 +181,8 @@
 /* режим просмотра (доступ руководителя без «работы менеджера») */
 body.is-readonly [data-write] { display: none !important; }
 .ro-note { font-size: 0.82rem; color: #7a3612; background: rgba(196, 92, 38, 0.08); border: 1px solid rgba(196, 92, 38, 0.3); border-radius: 999px; padding: 2px 10px; margin-left: 8px; }
+
+.os-toolbar .os-input.cl-num { width: 90px; min-width: 0; flex: none; padding: 4px 8px; }
+.os-toolbar select#cl-cand-sort { width: auto; flex: none; }
+.cl-cand-stats { display: inline-flex; gap: 12px; align-items: baseline; }
+.cl-cand-stats b { font-variant-numeric: tabular-nums; }

@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../shared/styles.css?v=20261028-buffer-quality-vitrine1" />
-  <link rel="stylesheet" href="./styles.css?v=20261123-access1" />
+  <link rel="stylesheet" href="../shared/styles.css?v=20261124-cand1" />
+  <link rel="stylesheet" href="./styles.css?v=20261124-cand1" />
   <script src="../shared/auth.js?v=20261123-access1"></script>
-  <script src="./app.js?v=20261124-contract2" defer></script>
+  <script src="./app.js?v=20261124-cand1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const auth = window.JarvisVitrineAuth;
@@ -88,7 +88,19 @@
           <p class="card-sub" id="cl-cand-sub">Клиенты, которые часто обращаются в последнее время и ещё не заведены в раздел. Разберите каждого: «Взять в работу», «Не постоянный» или «Отложить».</p>
           <div class="os-toolbar" style="margin-top:8px">
             <input type="search" class="os-input os-search" id="cl-cand-search" placeholder="Поиск: имя, телефон, техника…" />
+            <select class="os-input" id="cl-cand-sort" title="Сортировка" style="width:auto">
+              <option value="score">По оценке</option>
+              <option value="orders_desc">Заказов: больше → меньше</option>
+              <option value="orders_asc">Заказов: меньше → больше</option>
+              <option value="gross_desc">Сумма: больше → меньше</option>
+              <option value="gross_asc">Сумма: меньше → больше</option>
+              <option value="last_desc">Последний заказ: свежие</option>
+            </select>
+            <label class="os-check">Заказов от <input type="number" min="0" class="os-input cl-num" id="cl-cand-omin" /> до <input type="number" min="0" class="os-input cl-num" id="cl-cand-omax" /></label>
+            <label class="os-check">Сумма, грн от <input type="number" min="0" step="100" class="os-input cl-num" id="cl-cand-gmin" /> до <input type="number" min="0" step="100" class="os-input cl-num" id="cl-cand-gmax" /></label>
             <label class="os-check"><input type="checkbox" id="cl-cand-b2b" /> только похожие на компании</label>
+            <button type="button" class="os-link" id="cl-cand-reset">сбросить</button>
+            <span class="os-muted" id="cl-cand-shown"></span>
             <button type="button" class="os-link" data-goto="settings">пороги поиска</button>
           </div>
         </article>
