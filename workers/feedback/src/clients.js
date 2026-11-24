@@ -26,6 +26,7 @@ import {
   ClientsInputError,
   DEFAULT_CONDITIONS,
   DEFAULT_SETTINGS,
+  DEFAULT_SUBJECT,
   DEFAULT_TEMPLATES,
   TEMPLATE_KINDS,
   clientsRights,
@@ -141,6 +142,7 @@ async function readState(env, { full = true } = {}) {
   };
   if (full) {
     out.templates = await latestTemplates(env);
+    out.defaults = { templates: DEFAULT_TEMPLATES, subject: DEFAULT_SUBJECT };
     out.crm = snap?.value ? { ...parseJson(snap.value, {}), received_at: snap.updated_at } : null;
   }
   return out;
@@ -311,10 +313,10 @@ export async function handleClients(ctx) {
     const client = await getClient(env, c.client_id, HttpError);
     const at = nowIso();
     const res = await env.DB.prepare(
-      `INSERT INTO clients_contracts (client_id, number, kind, status, signed_at, valid_from, valid_to, file_url, body, notes, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO clients_contracts (client_id, number, kind, status, signed_at, valid_from, valid_to, file_url, body, notes, subject, price, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-      .bind(c.client_id, c.number, c.kind, c.status, c.signed_at, c.valid_from, c.valid_to, c.file_url, c.body, c.notes, login, at, at)
+      .bind(c.client_id, c.number, c.kind, c.status, c.signed_at, c.valid_from, c.valid_to, c.file_url, c.body, c.notes, c.subject, c.price, login, at, at)
       .run();
     const id = res.meta?.last_row_id;
     await logAction(env, {

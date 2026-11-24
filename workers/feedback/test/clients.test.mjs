@@ -14,6 +14,7 @@ import {
   normalizeStage,
   normalizeTouch,
   renderContract,
+  uahWords,
 } from "../src/clients_lib.js";
 
 test("rights", () => {
@@ -86,7 +87,7 @@ test("contract render fills fields and conditions", () => {
     contract: { number: "К-7", signed_at: "2026-11-21", valid_to: "2027-11-20" },
     requisites: { name: "ФОП Ісаєв Д.І.", city: "Одеса" },
   });
-  assert.match(txt, /ДОГОВІР № К-7/);
+  assert.match(txt, /Договір № К-7/);
   assert.match(txt, /«21» листопада 2026 р\./);
   assert.match(txt, /не більше 5 робочих днів/);
   assert.match(txt, /Знижка на вартість робіт — 10%/);
@@ -96,4 +97,10 @@ test("contract render fills fields and conditions", () => {
   const p = renderContract(DEFAULT_TEMPLATES.person, { client: { name: "Іван", phones: [] }, contract: {}, requisites: {} });
   assert.match(p, /Індивідуальні умови не встановлені/);
   assert.doesNotMatch(p, /\{\{/);
+});
+
+test("amount in words", () => {
+  assert.equal(uahWords(32100), "тридцять дві тисячі сто гривень 00 копійок");
+  assert.equal(uahWords(21), "двадцять одна гривня 00 копійок");
+  assert.equal(uahWords(1234.5), "одна тисяча двісті тридцять чотири гривні 50 копійок");
 });

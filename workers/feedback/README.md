@@ -100,3 +100,10 @@ cd workers/feedback
 npx wrangler d1 execute jarvis-feedback --remote --file=migrations/0004_diag.sql
 npx wrangler deploy
 ```
+
+Реквизиты сервиса для договоров в коде не хранятся (репозиторий публичный). Их задают в «Настройках»
+раздела или один раз заливают из локального файла (каталог `data/` не попадает в git):
+
+```bash
+npx wrangler d1 execute jarvis-feedback --remote --file=../../data/clients_requisites.sql
+```

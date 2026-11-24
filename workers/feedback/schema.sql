@@ -143,6 +143,8 @@ CREATE TABLE IF NOT EXISTS clients_contracts (
   file_url TEXT,
   body TEXT,
   notes TEXT,
+  subject TEXT,
+  price REAL,
   created_by TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL

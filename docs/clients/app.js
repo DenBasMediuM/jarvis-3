@@ -39,30 +39,42 @@ const ACTIONS = {
 const STUCK_DAYS = 10; // воронка без движения
 const DROP = -0.3; // падение вала за 90 дней
 const TEMPLATE_KINDS = { legal: "Юрособа / ФОП", person: "Фізична особа" };
+const DEFAULT_SUBJECT = "50310000-1 — Технічне обслуговування і ремонт офісної техніки";
 const TEMPLATE_FIELDS = {
   "номер_договору": "номер договора",
   "дата_договору": "дата договора",
-  "місто": "город",
-  "строк_дії_до": "действует до",
-  "виконавець_назва": "наша организация",
-  "виконавець_код": "наш ЄДРПОУ/ІПН",
+  "місто": "город (настройки)",
+  "строк_дії_до": "договор действует до",
+  "предмет_дк": "предмет по коду ДК 021 (в договоре)",
+  "ціна_договору": "цена договора, грн",
+  "ціна_прописом": "цена договора прописью",
+  "строк_оплати": "срок оплаты, раб. дней (условие «Отсрочка», иначе 10)",
+  "виконавець_назва": "мы — коротко (ФОП Прізвище І.Б.)",
+  "виконавець_повна_назва": "мы — полностью",
+  "виконавець_підписант": "кто подписывает от нас (в особі …)",
+  "виконавець_підстава": "на основании чего действуем",
+  "виконавець_код": "наш ІПН/ЄДРПОУ",
   "виконавець_адреса": "наш адрес",
   "виконавець_iban": "наш IBAN",
   "виконавець_банк": "наш банк",
+  "виконавець_мфо": "МФО нашего банка",
+  "виконавець_єдрпоу_банку": "ЄДРПОУ нашего банка",
   "виконавець_телефон": "наш телефон",
   "виконавець_email": "наш email",
-  "виконавець_підписант": "подписант от нас",
-  "клієнт_назва": "клиент",
-  "клієнт_код": "ЄДРПОУ/ІПН клиента",
+  "клієнт_назва": "клиент (полное название / ПІБ)",
+  "клієнт_підписант": "подписант клиента (в особі …)",
+  "клієнт_підстава": "клиент действует на основании (Статуту…)",
+  "клієнт_код": "ЄДРПОУ / ІПН клиента",
   "клієнт_адреса": "адрес клиента",
+  "клієнт_iban": "счёт клиента",
+  "клієнт_банк": "банк клиента",
+  "клієнт_мфо": "МФО банка клиента",
   "клієнт_телефон": "телефоны клиента",
   "клієнт_email": "email клиента",
-  "клієнт_iban": "IBAN клиента",
-  "клієнт_підписант": "подписант клиента",
-  "строк_діагностики": "срок диагностики",
-  "строк_ремонту": "срок ремонта",
-  "гарантія": "гарантия, мес.",
-  "індивідуальні_умови": "индивидуальные условия",
+  "строк_діагностики": "срок диагностики (из условий, иначе 3)",
+  "строк_ремонту": "срок ремонта (из условий, иначе 14)",
+  "гарантія": "гарантия, мес. (из условий, иначе 3)",
+  "індивідуальні_умови": "список индивидуальных условий клиента",
 };
 
 let STATE = null;
@@ -175,6 +187,7 @@ function applyState(data) {
     settings: data.settings || {},
     plan: data.plan || {},
     templates: data.templates || {},
+    defaults: data.defaults || null,
     crm: data.crm || null,
     now: data.now,
   };
@@ -773,6 +786,7 @@ async function submitForm(form, fn) {
     const data = await fn(Object.fromEntries(new FormData(form).entries()));
     if (data) applyState(data);
     renderAll();
+    if (status && status.isConnected) status.textContent = "Сохранено ✓";
     return data;
   } catch (err) {
     if (status) {
@@ -873,9 +887,14 @@ function clientFormHtml(c) {
         <label>Подписант<input name="lg_signer" value="${esc(lg.signer || "")}" placeholder="директора Петренка П.П." /></label>
       </div>
       <div class="os-row">
+        <label>Действует на основании<input name="lg_basis" value="${esc(lg.basis || "")}" placeholder="Статуту / виписки з ЄДР …" /></label>
         <label>Адрес<input name="lg_address" value="${esc(lg.address || "")}" /></label>
-        <label>IBAN<input name="lg_iban" value="${esc(lg.iban || "")}" /></label>
         <label>Email<input name="lg_email" value="${esc(lg.email || "")}" /></label>
+      </div>
+      <div class="os-row">
+        <label>Счёт (IBAN / р/р)<input name="lg_iban" value="${esc(lg.iban || "")}" /></label>
+        <label>Банк<input name="lg_bank" value="${esc(lg.bank || "")}" placeholder="напр. Держказначейська служба України м. Київ" /></label>
+        <label>МФО<input name="lg_mfo" value="${esc(lg.mfo || "")}" /></label>
       </div>
       <h3>Условия и договорённости</h3>
       <p class="os-muted" style="margin:0">Отметьте, что договорились, и укажите значение. Список условий правится во вкладке «Настройки».</p>
@@ -916,7 +935,10 @@ function openClientForm(c) {
               code: b.lg_code,
               signer: b.lg_signer,
               address: b.lg_address,
+              basis: b.lg_basis,
               iban: b.lg_iban,
+              bank: b.lg_bank,
+              mfo: b.lg_mfo,
               email: b.lg_email,
             },
             conditions: collectConditions(f),
@@ -1004,6 +1026,71 @@ function fmtDayUk(iso) {
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   return `«${d}» ${UK_MONTHS[m - 1]} ${y} р.`;
 }
+// ---------- суммы прописью (украинский) ----------
+const W_ONES_M = ["", "один", "два", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
+const W_ONES_F = ["", "одна", "дві", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
+const W_TEENS = ["десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять", "п'ятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "дев'ятнадцять"];
+const W_TENS = ["", "", "двадцять", "тридцять", "сорок", "п'ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев'яносто"];
+const W_HUNDREDS = ["", "сто", "двісті", "триста", "чотириста", "п'ятсот", "шістсот", "сімсот", "вісімсот", "дев'ятсот"];
+
+function wPlural(n, one, few, many) {
+  const a = n % 100;
+  const b = n % 10;
+  if (a > 10 && a < 20) return many;
+  if (b === 1) return one;
+  if (b > 1 && b < 5) return few;
+  return many;
+}
+function wTriad(n, fem) {
+  const out = [];
+  const h = Math.floor(n / 100);
+  const t = Math.floor((n % 100) / 10);
+  const o = n % 10;
+  if (h) out.push(W_HUNDREDS[h]);
+  if (t === 1) out.push(W_TEENS[o]);
+  else {
+    if (t) out.push(W_TENS[t]);
+    if (o) out.push((fem ? W_ONES_F : W_ONES_M)[o]);
+  }
+  return out.join(" ");
+}
+/** 32100 → «тридцять дві тисячі сто гривень 00 копійок» */
+function uahWords(amount) {
+  const total = Math.round(Number(amount || 0) * 100);
+  let n = Math.floor(total / 100);
+  const kop = total % 100;
+  const parts = [];
+  const groups = [
+    [1_000_000_000, ["мільярд", "мільярди", "мільярдів"], false],
+    [1_000_000, ["мільйон", "мільйони", "мільйонів"], false],
+    [1000, ["тисяча", "тисячі", "тисяч"], true],
+  ];
+  for (const [div, names, fem] of groups) {
+    const g = Math.floor(n / div);
+    if (g) {
+      parts.push(wTriad(g, fem), wPlural(g, ...names));
+      n %= div;
+    }
+  }
+  const whole = Math.floor(total / 100);
+  if (n) parts.push(wTriad(n, true));
+  if (!whole) parts.push("нуль");
+  parts.push(wPlural(whole, "гривня", "гривні", "гривень"));
+  parts.push(String(kop).padStart(2, "0"), wPlural(kop, "копійка", "копійки", "копійок"));
+  return parts.filter(Boolean).join(" ");
+}
+/** «10» → «10 (десяти)» — родовий відмінок для «протягом … робочих днів» */
+const W_GEN = { 1: "одного", 2: "двох", 3: "трьох", 4: "чотирьох", 5: "п'яти", 6: "шести", 7: "семи", 8: "восьми", 9: "дев'яти", 10: "десяти", 14: "чотирнадцяти", 15: "п'ятнадцяти", 20: "двадцяти", 30: "тридцяти", 45: "сорока п'яти", 60: "шістдесяти" };
+function daysWords(v) {
+  const n = Number(String(v).replace(",", "."));
+  if (!Number.isInteger(n) || n <= 0) return String(v);
+  return W_GEN[n] ? `${n} (${W_GEN[n]})` : String(n);
+}
+function fmtMoneyUk(v) {
+  const n = Number(v || 0);
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
 function renderContractText(template, client, contract) {
   const legal = client?.legal || {};
   const conds = client?.conditions || {};
@@ -1016,20 +1103,31 @@ function renderContractText(template, client, contract) {
     "дата_договору": fmtDayUk(contract?.signed_at || contract?.valid_from) || blank,
     "місто": r.city || blank,
     "строк_дії_до": fmtDayUk(contract?.valid_to) || blank,
+    "предмет_дк": contract?.subject || DEFAULT_SUBJECT,
+    "ціна_договору": Number(contract?.price) > 0 ? fmtMoneyUk(contract.price) : blank,
+    "ціна_прописом": Number(contract?.price) > 0 ? uahWords(contract.price) : blank,
+    "строк_оплати": daysWords(val("pay_delay", "10")),
     "виконавець_назва": r.name || blank,
+    "виконавець_повна_назва": r.full_name || r.name || blank,
+    "виконавець_підстава": r.basis || blank,
     "виконавець_код": r.code || blank,
     "виконавець_адреса": r.address || blank,
     "виконавець_iban": r.iban || blank,
     "виконавець_банк": r.bank || blank,
+    "виконавець_мфо": r.mfo || blank,
+    "виконавець_єдрпоу_банку": r.bank_code || blank,
     "виконавець_телефон": r.phone || blank,
     "виконавець_email": r.email || blank,
     "виконавець_підписант": r.signer || blank,
     "клієнт_назва": legal.full_name || client?.name || blank,
+    "клієнт_підстава": legal.basis || blank,
     "клієнт_код": legal.code || blank,
     "клієнт_адреса": legal.address || blank,
     "клієнт_телефон": (client?.phones || []).map(fmtPhone).join(", ") || blank,
     "клієнт_email": legal.email || blank,
     "клієнт_iban": legal.iban || blank,
+    "клієнт_банк": legal.bank || blank,
+    "клієнт_мфо": legal.mfo || blank,
     "клієнт_підписант": legal.signer || (client?.kind === "person" ? client?.name : "") || blank,
     "строк_діагностики": val("diag_days", "3"),
     "строк_ремонту": val("repair_days", "14"),
@@ -1083,6 +1181,10 @@ function contractFormHtml(client, ct) {
         <label>Дата подписания<input type="date" name="signed_at" value="${v("signed_at") || t}" /></label>
         <label>Действует с<input type="date" name="valid_from" value="${v("valid_from") || t}" /></label>
         <label class="req">Действует до<input type="date" name="valid_to" value="${v("valid_to") || addDays(addDays(t, 365), -1)}" /></label>
+      </div>
+      <div class="os-row">
+        <label>Цена договора, грн (без ПДВ)<input type="number" min="0" step="0.01" name="price" value="${v("price")}" placeholder="напр. 32100" /></label>
+        <label>Предмет (код ДК 021-2015)<input name="subject" value="${esc(ct?.subject || STATE.defaults?.subject || DEFAULT_SUBJECT)}" /></label>
       </div>
       <label>Ссылка на скан (Google Drive и т.п.)<input name="file_url" value="${v("file_url")}" placeholder="https://drive.google.com/…" /></label>
       <label>Заметки<input name="notes" value="${v("notes")}" /></label>
@@ -1262,14 +1364,16 @@ function renderSettings() {
       Разметка: <code># Заголовок</code>, <code>## Раздел</code>, <code>**жирный**</code>. Подстановки (клик — вставить):</p>
     <div class="cl-fields">${Object.entries(TEMPLATE_FIELDS).map(([k, l]) => `<code data-field="${esc(k)}" title="${esc(l)}">{{${esc(k)}}}</code>`).join("")}</div>
     <textarea class="cl-template" name="body">${esc(tpl.body || "")}</textarea>
-    <div class="os-form-actions"><button class="os-btn is-primary" type="submit">Сохранить новую версию</button><button type="button" class="os-btn" id="cl-tpl-preview">Предпросмотр на примере</button><span class="os-status"></span></div>
+    <div class="os-form-actions"><button class="os-btn is-primary" type="submit">Сохранить новую версию</button><button type="button" class="os-btn" id="cl-tpl-preview">Предпросмотр на примере</button><button type="button" class="os-btn" id="cl-tpl-reset" title="Загрузить в редактор стандартный шаблон; сохранится только после «Сохранить новую версию»">Взять стандартный шаблон</button><span class="os-status"></span></div>
     <div id="cl-tpl-preview-box"></div>`;
   // реквизиты
   const r = settings().requisites || {};
   const rf = (k, label, ph = "") => `<label>${label}<input name="${k}" value="${esc(r[k] || "")}" placeholder="${esc(ph)}" /></label>`;
-  $("#cl-req-form").innerHTML = `<div class="os-row">${rf("name", "Название (ФОП / ТОВ)", "ФОП Прізвище І.П.")}${rf("code", "ЄДРПОУ / ІПН")}${rf("signer", "Подписант", "ФОП Прізвище І.П.")}</div>
-    <div class="os-row">${rf("address", "Адрес")}${rf("city", "Город", "Одеса")}${rf("phone", "Телефон")}</div>
-    <div class="os-row">${rf("iban", "IBAN", "UA…")}${rf("bank", "Банк")}${rf("email", "Email")}</div>
+  $("#cl-req-form").innerHTML = `<div class="os-row">${rf("name", "Коротко (подпись)", "ФОП ПРІЗВИЩЕ І.П.")}${rf("full_name", "Полностью (в преамбуле)", "Фізична особа-підприємець …")}</div>
+    <div class="os-row">${rf("signer", "В особі (кто подписывает)", "Прізвище І.П.")}${rf("basis", "Действует на основании", "виписки з ЄДР від … №…")}</div>
+    <div class="os-row">${rf("code", "ІПН / ЄДРПОУ")}${rf("address", "Адрес")}${rf("city", "Город", "Одеса")}</div>
+    <div class="os-row">${rf("iban", "IBAN", "UA…")}${rf("bank", "Банк")}${rf("mfo", "МФО")}${rf("bank_code", "ЄДРПОУ банка")}</div>
+    <div class="os-row">${rf("phone", "Телефон")}${rf("email", "Email")}</div>
     <div class="os-form-actions"><button class="os-btn is-primary" type="submit">Сохранить реквизиты</button><span class="os-status"></span></div>`;
   // пороги
   const th = settings().thresholds || {};
@@ -1334,6 +1438,11 @@ function bindSettings() {
       ta.value = ta.value.slice(0, p) + ins + ta.value.slice(ta.selectionEnd ?? p);
       ta.focus();
       ta.selectionStart = ta.selectionEnd = p + ins.length;
+    } else if (e.target.id === "cl-tpl-reset") {
+      const def = STATE.defaults?.templates?.[tplKind];
+      if (!def) return alert("Стандартный шаблон недоступен — обновите облако (wrangler deploy).");
+      if (!confirm("Заменить текст в редакторе стандартным шаблоном? Сохранится только после «Сохранить новую версию».")) return;
+      $("#cl-tpl-form textarea").value = def;
     } else if (e.target.id === "cl-tpl-preview") {
       const sample = clients().find((c) => c.stage === "active") || {
         name: "Приклад Клієнт",
