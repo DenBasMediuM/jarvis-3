@@ -104,6 +104,10 @@ async function settings(env) {
   return v ? normalizeSettings(v) : DEFAULT_SETTINGS;
 }
 
+// Версии шаблона, сохранённые до выхода нового стандартного договора, считаем устаревшими:
+// показываем стандартный, пока менеджер не сохранит свою правку поверх него.
+const DEFAULT_TEMPLATES_SINCE = "2026-11-24";
+
 async function latestTemplates(env) {
   const out = {};
   for (const kind of Object.keys(TEMPLATE_KINDS)) {
@@ -113,9 +117,9 @@ async function latestTemplates(env) {
       .bind(kind)
       .first();
     const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM clients_templates WHERE kind = ?").bind(kind).first();
-    out[kind] = row
+    out[kind] = row && String(row.created_at || "") >= DEFAULT_TEMPLATES_SINCE
       ? { body: row.body, version: count?.n || 1, updated_by: row.created_by, updated_at: row.created_at, is_default: false }
-      : { body: DEFAULT_TEMPLATES[kind], version: 0, is_default: true };
+      : { body: DEFAULT_TEMPLATES[kind], version: count?.n || 0, is_default: true };
   }
   return out;
 }
