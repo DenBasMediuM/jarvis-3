@@ -1189,8 +1189,7 @@ function contractFormHtml(client, ct) {
       <label>Ссылка на скан (Google Drive и т.п.)<input name="file_url" value="${v("file_url")}" placeholder="https://drive.google.com/…" /></label>
       <label>Заметки<input name="notes" value="${v("notes")}" /></label>
       <div class="os-form-actions">
-        <button class="os-btn" type="button" id="cl-gen">Сформировать текст по шаблону</button>
-        ${ct?.body ? '<button class="os-btn" type="button" id="cl-print-saved">Печать сохранённого текста</button>' : ""}
+        <button class="os-btn" type="button" id="cl-gen">${ct?.body ? "Сформировать текст заново по шаблону" : "Сформировать текст по шаблону"}</button>
       </div>
       <div id="cl-gen-box"></div>
       <div class="os-form-actions">
@@ -1202,20 +1201,52 @@ function contractFormHtml(client, ct) {
 }
 function openContractForm(client, ct) {
   let body = ct?.body || null;
+  let edited = false; // текст правили вручную — не затираем без спроса
   openDialog(contractFormHtml(client, ct), (root) => {
     const form = $("#cl-contract-form", root);
+    const box = $("#cl-gen-box", root);
     const current = () => Object.fromEntries(new FormData(form).entries());
+    const note = () => {
+      const missing = (body.match(/_{8,}/g) || []).length;
+      return `${missing ? `пустых мест (подчёркивания): ${missing} — допишите вручную или заполните реквизиты в карточке клиента / «Настройках»` : "все поля заполнены"} · текст сохранится вместе с договором по кнопке «Сохранить»`;
+    };
+    const showPreview = () => {
+      if (!body) {
+        box.innerHTML = "";
+        return;
+      }
+      box.innerHTML = `<div class="cl-doc">${docHtml(body)}</div>
+        <div class="os-form-actions" style="margin-top:8px">
+          <button class="os-btn" type="button" id="cl-edit" data-write>Править текст этого договора</button>
+          <button class="os-btn" type="button" id="cl-print">Печать / PDF</button>
+          <span class="os-muted">${note()}</span></div>`;
+      $("#cl-print", root).addEventListener("click", () => printDoc(`Договір ${current().number}`, body));
+      $("#cl-edit", root)?.addEventListener("click", showEditor);
+    };
+    const showEditor = () => {
+      box.innerHTML = `<p class="os-muted" style="margin:0 0 6px">Правка касается только этого договора, общий шаблон не меняется.
+          Жирный текст — **так**. Пустые места — подчёркивания ________.</p>
+        <textarea class="cl-template" id="cl-body-edit">${esc(body)}</textarea>
+        <div class="os-form-actions" style="margin-top:8px">
+          <button class="os-btn is-primary" type="button" id="cl-edit-done">Готово — показать договор</button>
+          <span class="os-muted">не забудьте потом нажать «Сохранить» внизу</span></div>`;
+      const ta = $("#cl-body-edit", root);
+      ta.addEventListener("input", () => {
+        body = ta.value;
+        edited = true;
+      });
+      $("#cl-edit-done", root).addEventListener("click", showPreview);
+      ta.focus();
+    };
     $("#cl-gen", root).addEventListener("click", () => {
+      if ((edited || ct?.body) && body && !confirm("Сформировать текст заново по шаблону? Ручные правки текста этого договора пропадут.")) return;
       const b = current();
       const tpl = STATE.templates?.[b.kind]?.body || "";
       body = renderContractText(tpl, client, b);
-      const missing = (body.match(/_{8,}/g) || []).length;
-      $("#cl-gen-box", root).innerHTML = `<div class="cl-doc">${docHtml(body)}</div>
-        <div class="os-form-actions" style="margin-top:8px"><button class="os-btn" type="button" id="cl-print">Печать / PDF</button>
-        <span class="os-muted">${missing ? `не заполнено полей: ${missing} — реквизиты в «Настройках» и в карточке клиента` : "все поля заполнены"} · текст сохранится вместе с договором</span></div>`;
-      $("#cl-print", root).addEventListener("click", () => printDoc(`Договір ${b.number}`, body));
+      edited = false;
+      showPreview();
     });
-    $("#cl-print-saved", root)?.addEventListener("click", () => printDoc(`Договір ${ct.number}`, ct.body));
+    showPreview(); // у сохранённого договора сразу виден его текст
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
