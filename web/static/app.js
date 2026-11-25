@@ -686,6 +686,13 @@ function isPartsAttachLine(line) {
     return true;
   }
   // «122084 енкодер глайди 700» / «122361 акб 700»
+  // «125439 200 зч» / «125515 100 провод» — сумма сразу после №, потом название
+  const amtFirst = core.match(new RegExp(`^${oid}\\s+(\\d+(?:[.,]\\d+)?)\\s+(\\D.*)$`));
+  if (amtFirst && !isPaymentLabel(amtFirst[2])) {
+    const a = Number(String(amtFirst[1]).replace(",", "."));
+    const la = Math.abs(Number(line.amount) || 0);
+    return !la || Math.abs(a - la) <= 0.01;
+  }
   const space = core.match(
     new RegExp(`^${oid}\\s+(?![+\\-−–])(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*$`),
   );

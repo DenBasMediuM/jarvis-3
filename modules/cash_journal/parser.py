@@ -559,6 +559,7 @@ def _merge_paren_parts_without_amount(parts: list[str]) -> list[str]:
             _PAREN_HAS_AMT.search(part)
             or re.match(rf"^[+\-−–]\s*{MONEY_NUM}", part)
             or _PAREN_ORDER_LABEL_BARE.match(part)
+            or _PAREN_ORDER_AMT.match(part)
         ):
             chunk = _norm_space(" ".join([*buf, part])) if buf else part
             merged.append(chunk)
@@ -628,6 +629,40 @@ def _try_paren_breakdown(
         ops.append(op)
     total = sum(abs(o.amount) for o in ops)
     if abs(total - main_abs) > 1.0:
+        return None
+    return ops
+
+
+_TAIL_LEAD = re.compile(r"^\s*(?:грн|uah|₴)?\.?\s*[:\-−–—]?\s*", re.I)
+
+
+def _try_tail_breakdown(
+    body: str,
+    *,
+    main_sign: float,
+    main_abs: float,
+    bucket: str,
+    after: int,
+) -> list[JournalOp] | None:
+    """«-800 грн 125486 АКБ 200, 125439 200 зч, 125545 300 зч» — расшифровка по квитанциям без скобок.
+
+    Каждая позиция должна начинаться с № квитанции, позиций ≥ 2, сумма позиций ≈ итогу.
+    """
+    if CASH_PORTION.search(body) or CASH_PORTION_ALT.search(body):
+        return None
+    tail = _TAIL_LEAD.sub("", body[after:], count=1)
+    if "(" in tail or not re.match(r"\d{4,}\b", tail):
+        return None
+    parts = [p for p in (_norm_space(x) for x in re.split(r"\s*[,;]\s*", tail)) if p]
+    if len(parts) < 2 or not all(re.match(r"\d{4,}\s", p) for p in parts):
+        return None
+    ops: list[JournalOp] = []
+    for part in parts:
+        op = _parse_paren_breakdown_item(part, parent_sign=main_sign, parent_bucket=bucket)
+        if op is None or not op.order_id:
+            return None
+        ops.append(op)
+    if abs(sum(abs(o.amount) for o in ops) - main_abs) > 1.0:
         return None
     return ops
 
@@ -716,6 +751,12 @@ def _parse_operation_lines(body: str) -> list[JournalOp]:
         bucket = _bucket_for_amount(body, m.start("amount"), m.end("amount"))
         amount = _cash_portion_amount(body, sign * abs(val), bucket)
         paren_ops = _try_paren_breakdown(
+            body,
+            main_sign=sign,
+            main_abs=abs(val),
+            bucket=bucket,
+            after=m.end("amount"),
+        ) or _try_tail_breakdown(
             body,
             main_sign=sign,
             main_abs=abs(val),
@@ -1088,6 +1129,12 @@ def is_parts_attach_line(line: dict[str, Any]) -> bool:
     )
     if m and not _is_payment_label(m.group("label")):
         return True
+    # «125439 200 зч» / «125515 100 провод» — сумма сразу после №, потом название
+    m = re.match(rf"^{oid}\s+(?P<amt>\d+(?:[.,]\d+)?)\s*(?:грн|uah|₴)?\.?\s+(?P<label>\D.*)$", core, re.I)
+    if m and not _is_payment_label(m.group("label")):
+        amt = parse_money(m.group("amt")) or 0
+        line_amt = abs(float(line.get("amount") or 0))
+        return not line_amt or abs(amt - line_amt) < 0.01
     return False
 
 

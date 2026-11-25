@@ -762,3 +762,39 @@ def test_paren_breakdown_period_separator_and_grn_items():
     attach = [l["order_id"] for l in w["lines"] if is_parts_attach_line(l)]
     assert attach == ["124626", "125077"]
     assert w["closing_cash"] == 578.0
+
+
+def _widget_lines(text: str) -> list[dict]:
+    out = reconcile_cash_journal(text)
+    widget = next(v for v in out.values() if isinstance(v, dict) and "lines" in v)
+    return widget["lines"]
+
+
+def test_tail_breakdown_by_orders_without_parens():
+    from modules.cash_journal.parser import is_parts_attach_line
+
+    lines = _widget_lines(
+        "КАССА: 3686\n-800 грн 125486 АКБ 200, 125439 200 зч, 125545 300 зч, 125515 100 провод\nКАССА: 2886"
+    )
+    ops = [l for l in lines if l["action"] == "cash_out"]
+    assert [(l["order_id"], l["amount"]) for l in ops] == [
+        ("125486", 200.0),
+        ("125439", 200.0),
+        ("125545", 300.0),
+        ("125515", 100.0),
+    ]
+    assert all(is_parts_attach_line(l) for l in ops)
+
+
+def test_tail_breakdown_needs_matching_total():
+    lines = _widget_lines("КАССА: 3686\n-800 грн 125486 АКБ 200, 125439 200 зч\nКАССА: 2886")
+    ops = [l for l in lines if l["action"] == "cash_out"]
+    assert len(ops) == 1 and ops[0]["amount"] == 800.0
+
+
+def test_parts_line_amount_before_label():
+    from modules.cash_journal.parser import is_parts_attach_line
+
+    line = {"action": "cash_out", "order_id": "125439", "raw": "125439 200 зч", "amount": 200}
+    assert is_parts_attach_line(line)
+    assert not is_parts_attach_line({**line, "amount": 500})
