@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "exported_at": "2026-11-27T07:53:17.856872+00:00",
+  "exported_at": "2026-11-28T10:12:31.499209+00:00",
   "pbkdf2_iterations": 200000,
   "users": [
     {
@@ -34,7 +34,7 @@
       "iters": 200000,
       "algo": "sha256",
       "access": [
-        "processes.reviews",
+        "processes.clients",
         "processes.diag"
       ],
       "fb_salt": "5acf720bdc658a915175b3550ffb5e2b",
@@ -59,7 +59,7 @@
       "iters": 200000,
       "algo": "sha256",
       "access": [
-        "processes.clients"
+        "processes.reviews"
       ],
       "fb_salt": "4980e1a3677fca6faf327db8e686bf1c",
       "fb_verifier": "12f2209ae0f071a532c5b9363d25cd1fa5e3cc1078d2b2c5bf5d312a85d64d3a"
